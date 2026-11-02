@@ -16,11 +16,13 @@ import {
 } from "../src/server/whatsapp-meta-template-mapping.server";
 
 describe("WA-C11 4B.2.a — catálogo/mapeamento fechado", () => {
-  test("três (e apenas três) entradas na allowlist", () => {
+  test("cinco entradas (contas e Agenda) na allowlist", () => {
     const entries = listAllowedEntries();
-    expect(entries.length).toBe(3);
+    expect(entries.length).toBe(5);
     const names = entries.map((e) => e.metaName).sort();
     expect(names).toEqual([
+      "gi_agenda_financeiro_v1",
+      "gi_agenda_lembrete_v1",
       "gi_conta_atrasada_v1",
       "gi_conta_vencendo_amanha_v1",
       "gi_conta_vencendo_hoje_v1",

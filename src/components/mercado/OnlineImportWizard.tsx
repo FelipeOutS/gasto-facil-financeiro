@@ -525,7 +525,7 @@ export function OnlineImportWizard({
               </div>
             )}
 
-            <ul className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
+            <ul className="max-h-[calc(var(--app-viewport-height,100dvh)*0.55)] space-y-3 overflow-y-auto pr-1">
               {items.map((r, idx) => {
                 const invalidPrice =
                   r.include && (r.price == null || !Number.isFinite(r.price) || r.price <= 0);

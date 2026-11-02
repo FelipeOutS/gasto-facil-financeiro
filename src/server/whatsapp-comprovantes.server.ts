@@ -24,6 +24,8 @@ import {
 import { whatsappMessages as M } from "./whatsapp-messages";
 import { merchantKeyFor, recordMerchantMemory } from "./whatsapp-merchant-memory.server";
 import { createHash } from "crypto";
+import { financialIdForWhatsAppMessage } from "./whatsapp-financial-idempotency.server";
+import { parseValorRespostaReais } from "@/lib/whatsapp-valor-resposta";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
@@ -240,19 +242,45 @@ function dataPrecisaConfirmacao(iso: string | undefined): boolean {
   return diff > 0 || diff < -30;
 }
 
-function parseValor(texto: string): number | null {
-  const t = texto.replace(/[Rr]\$\s*/g, "").trim();
-  // dois grupos: "1.234,56" (BR) ou "1234.56" / "1234,56"
-  const m = t.match(/(\d{1,3}(?:[.\s]\d{3})*(?:,\d{1,2})?|\d+(?:[.,]\d{1,2})?)/);
-  if (!m) return null;
-  let s = m[1].replace(/\s/g, "");
-  // se contém ',' tratamos como BR
-  if (s.includes(",")) {
-    s = s.replace(/\./g, "").replace(",", ".");
+export type RespostaData =
+  | { kind: "nota" }
+  | { kind: "hoje" }
+  | { kind: "data"; data: string }
+  | { kind: "pedir_data" }
+  | { kind: "indefinida" };
+
+/**
+ * Interpreta a resposta à pergunta "usar a data da nota ou hoje?".
+ * `dataIncerta` = a pergunta foi "usar hoje ou informar outra data?" (sem
+ * data confiável da nota) — nesse caso "sim"/"essa" são ambíguos.
+ */
+export function interpretarRespostaData(texto: string, dataIncerta: boolean): RespostaData {
+  const t = normalize(texto).replace(/[.!?,;]+$/g, "").trim();
+  if (!t) return { kind: "indefinida" };
+  if (/^(usar )?(a )?(data de )?hoje$|^(registrar|registra|lanca|lancar) (como |com )?(a data de )?hoje$|^como hoje$/.test(t)) {
+    return { kind: "hoje" };
   }
-  const n = Number(s);
-  if (!Number.isFinite(n) || n <= 0) return null;
-  return Math.round(n * 100) / 100;
+  const resto = t
+    .replace(/^(sim,? )?(eu )?(pode |quero |prefiro )?(usar|use|uso|usa|manter|mantem|mantenha|fica com|fique com|ficar com)? ?/, "")
+    .trim();
+  const nota = /^((a|essa|esta|aquela|com) )?(data )?(essa|esta|ela|mesma|mesmo|da nota|do cupom|do comprovante|que esta na nota|indicada)?( data)?( mesmo| mesma)?$/.test(resto) &&
+    /(essa|esta|ela|mesm|nota|cupom|comprovante|indicada)/.test(resto) || /^(manter|mantem|mantenha)$/.test(t);
+  const afirmativo = /^(sim|s|ss|isso|pode|pode ser|ok|okay|certo|confirmo|confirmar|correto|isso mesmo|sim essa|sim pode|exato)$/.test(t);
+  if (nota || (afirmativo && !dataIncerta) || /^sim,? (essa|a da nota|usar essa)$/.test(t)) {
+    return dataIncerta ? { kind: "indefinida" } : { kind: "nota" };
+  }
+  if (afirmativo) return { kind: "indefinida" };
+  if (/^(nao|n|nao essa|outra|outra data|informar outra( data)?|quero outra( data)?)$/.test(t)) {
+    return { kind: "pedir_data" };
+  }
+  const d = parseData(texto);
+  if (d) return { kind: "data", data: d };
+  return { kind: "indefinida" };
+}
+
+// P0 FASE 2: delega ao parser central (1.950 → 1950), com guardas de resposta.
+function parseValor(texto: string): number | null {
+  return parseValorRespostaReais(texto);
 }
 
 function parseData(texto: string): string | null {
@@ -437,6 +465,7 @@ async function loadCategoriaHistory(
       .from("gastos")
       .select("categoria_id, data, created_at")
       .eq("user_id", userId)
+      .is("deleted_at", null)
       .gte("data", since);
     if (!Array.isArray(data)) return { recentIds: [], topIds: [] };
     const rows = data as Array<{
@@ -757,7 +786,7 @@ function ocrParaSessao(
   const categoriaNaoIdentificada = !ocr.categoriaSugerida || ocr.confianca === "baixa";
   // Data fica "incerta" quando o OCR trouxe uma data mas a confiança geral
   // é baixa — não confiar mesmo dentro da janela ±30 dias.
-  const dataIncerta = !!ocr.data && ocr.confianca === "baixa";
+  const dataIncerta = !!ocr.data && (ocr.confianca === "baixa" || ocr.dataIncerta === true);
   return {
     kind: "imagem_comprovante",
     descricao,
@@ -850,9 +879,13 @@ export async function persistirGastoComprovante(
 
   const obs = `WhatsApp (foto): ${s.mensagemOriginal}`.slice(0, 240);
 
+  // Id determinístico por (usuário, mensagem que confirmou): um retry do
+  // webhook com a mesma mensagem colide na PK em vez de criar outro gasto.
+  const gastoId = financialIdForWhatsAppMessage(userId, externalMessageId, "expense_receipt");
   const { data: row, error } = await supabaseAdmin
     .from("gastos")
     .insert({
+      id: gastoId,
       user_id: userId,
       categoria_id: cat.id,
       descricao: desc,
@@ -872,6 +905,18 @@ export async function persistirGastoComprovante(
     .select("id")
     .single();
 
+  if (error?.code === "23505") {
+    return {
+      ok: true,
+      gastoId,
+      resposta: M.imagem.salvo({
+        valor: formatBRL(s.valor),
+        descricao: desc,
+        categoria: cat.label,
+        pagamento: rotuloPagamento(s.formaPagamento),
+      }),
+    };
+  }
   if (error || !row) {
     console.error("[whatsapp-comprovante] gasto insert failed", error);
     return { ok: false, resposta: M.erroAoSalvar() };
@@ -1236,24 +1281,23 @@ export async function processarRespostaImagem(args: {
 
   // ----- aguardando confirmação de DATA (fora da janela ±30 dias OU incerta) -----
   if (status === "img_aguardando_data_confirmacao") {
-    const t = normalize(texto);
-    const usarNota =
-      /^(usar data da nota|usar a data da nota|manter data|manter|data da nota|nota)$/.test(t);
-    const usarHoje = /^(usar hoje|hoje|usar a data de hoje)$/.test(t);
-    // Quando o usuário responde com uma data direta ("15/06/2026", "ontem")
-    // também aceitamos — confirma a data informada manualmente.
-    const dataInformada = parseData(texto);
-    if (!usarNota && !usarHoje && !dataInformada) {
-      const resposta = session.dataIncerta
-        ? M.imagem.perguntaDataIncerta()
-        : M.imagem.perguntaDataConfirmacao(formatDataBR(session.data as string));
+    const escolha = interpretarRespostaData(texto, !!session.dataIncerta);
+    if (escolha.kind === "indefinida" || escolha.kind === "pedir_data") {
       return {
         status: "aguardando_data_confirmacao",
         newStatus: "img_aguardando_data_confirmacao",
         session,
-        resposta,
+        resposta:
+          escolha.kind === "pedir_data"
+            ? M.imagem.pedirNovaData()
+            : M.imagem.respostaDataNaoEntendida(
+                session.dataIncerta ? null : formatDataBR(session.data as string),
+              ),
       };
     }
+    const usarHoje = escolha.kind === "hoje";
+    const usarNota = escolha.kind === "nota";
+    const dataInformada = escolha.kind === "data" ? escolha.data : null;
     const next: ComprovanteSession = {
       ...session,
       dataConfirmada: true,
@@ -1261,7 +1305,9 @@ export async function processarRespostaImagem(args: {
     };
     if (usarHoje) next.data = todayLocalISO();
     if (dataInformada && !usarNota && !usarHoje) next.data = dataInformada;
-    return avancarAposConfirmacao(userId, next, cats, externalMessageId);
+    const out = await avancarAposConfirmacao(userId, next, cats, externalMessageId);
+    if (out.status === "erro" || !next.data) return out;
+    return { ...out, resposta: `📅 Data usada: ${formatDataBR(next.data)}\n\n${out.resposta}` };
   }
 
   // ----- aguardando categoria obrigatória -----

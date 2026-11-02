@@ -170,12 +170,12 @@ function periodToDate(period: string): Date | null {
 
 function AdminPage() {
   const { user, loading: authLoading } = useAuth();
-  const { isAdminMaster } = usePlan();
+  const { isAdminMaster, loading: planLoading, error: accessError, refresh: refreshAccess } = usePlan();
   const navigate = useNavigate();
   const [data, setData] = useState<AdminDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const authorized = authLoading || planLoading || accessError || !user ? null : isAdminMaster;
 
   // Filtros
   const [search, setSearch] = useState("");
@@ -189,24 +189,16 @@ function AdminPage() {
   const [editStatus, setEditStatus] = useState<AdminUserRow | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
-  // Guard de acesso
   useEffect(() => {
-    if (authLoading) return;
-    if (!user) {
-      void navigate({ to: "/login" });
-      return;
-    }
-    if (!isAdminMaster) {
-      setAuthorized(false);
-      return;
-    }
-    setAuthorized(true);
+    if (!authLoading && !user) void navigate({ to: "/login" });
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (authorized !== true) return;
     let cancel = false;
     setLoading(true);
+    setErr(null);
+    setData(null);
     getAdminDashboard()
       .then((d) => {
         if (!cancel) setData(d);
@@ -220,7 +212,7 @@ function AdminPage() {
     return () => {
       cancel = true;
     };
-  }, [authorized, reloadKey]);
+  }, [authorized, reloadKey, user?.id]);
 
   // A lista de e-mails de Admin Master vive server-side (fail-closed).
   // Client protege apenas o próprio usuário logado; ações destrutivas contra
@@ -365,6 +357,8 @@ function AdminPage() {
     URL.revokeObjectURL(url);
   }
 
+  if (accessError) return <MobileShell><div role="alert" className="p-6 text-center">Não foi possível verificar seu acesso administrativo.<Button onClick={() => void refreshAccess()}>Tentar novamente</Button></div></MobileShell>;
+
   if (authorized === false) {
     return (
       <MobileShell>
@@ -391,6 +385,8 @@ function AdminPage() {
       </MobileShell>
     );
   }
+
+  if (err && !data) return <MobileShell><div role="alert" className="p-6 text-center">Não foi possível carregar o painel. Os totais não estão disponíveis.<Button onClick={() => setReloadKey(k => k + 1)}>Tentar novamente</Button></div></MobileShell>;
 
   const t = data?.totals ?? {
     totalUsers: 0,
@@ -790,7 +786,7 @@ function AdminPage() {
                         variant="ghost"
                         className="h-8 px-2 gap-1 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 disabled:opacity-30"
                         disabled={protectedRow}
-                        onClick={() => setToDelete(u)}
+                        onClick={() => toast.info("Exclusão de contas temporariamente indisponível. Nenhum dado será alterado.")}
                       >
                         <Trash2 className="h-3.5 w-3.5" /> Excluir
                       </Button>
@@ -884,7 +880,7 @@ function AdminPage() {
                                   ? "Não é permitido excluir este usuário"
                                   : "Excluir usuário"
                               }
-                              onClick={() => setToDelete(u)}
+                              onClick={() => toast.info("Exclusão de contas temporariamente indisponível. Nenhum dado será alterado.")}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

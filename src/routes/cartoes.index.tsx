@@ -1,4 +1,4 @@
-import { cicloParaCompetencia } from "@/lib/fatura-competencia";
+import { cicloParaCompetencia, vencimentoDoFechamento } from "@/lib/fatura-competencia";
 import { createFileRoute } from "@tanstack/react-router";
 import { EditGastoDialog } from "@/components/EditGastoDialog";
 import { GastoForm } from "@/components/GastoForm";
@@ -133,7 +133,7 @@ import {
 } from "@/components/app-v2";
 
 export const Route = createFileRoute("/cartoes/")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { abrir?: string; importar?: string } => ({
     abrir: typeof search.abrir === "string" ? search.abrir : undefined,
     importar: typeof search.importar === "string" ? search.importar : undefined,
   }),
@@ -1721,11 +1721,7 @@ export function FaturaSheet({
   // mês seguinte (ou no próprio mês de fechamento se diaVenc>=diaFech).
   const _diaFechRef = cartao.diaFechamento || 1;
   const _diaVencRef = cartao.diaVencimento || 10;
-  let proxVencDate = new Date(ref.ano, ref.mes, _diaVencRef);
-  const _fechRef = new Date(ref.ano, ref.mes, _diaFechRef);
-  if (proxVencDate.getTime() < _fechRef.getTime()) {
-    proxVencDate = new Date(ref.ano, ref.mes + 1, _diaVencRef);
-  }
+  const proxVencDate = vencimentoDoFechamento(ref.ano, ref.mes, _diaFechRef, _diaVencRef);
   const diasParaVencer = Math.ceil(
     (proxVencDate.getTime() -
       new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime()) /
@@ -2191,7 +2187,7 @@ export function FaturaSheet({
 
       {/* Adicionar compra */}
       <Dialog open={openAdd} onOpenChange={setOpenAdd}>
-        <DialogContent className="max-h-[90vh] w-[calc(100vw-2rem)] overflow-y-auto p-0 sm:max-w-[560px]">
+        <DialogContent className="max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] w-[calc(100vw-2rem)] overflow-y-auto p-0 sm:max-w-[560px]">
           <DialogHeader className="border-b border-border px-6 pb-4 pt-6 text-left">
             <DialogTitle className="text-xl font-bold tracking-tight">
               {t("sheet.newPurchaseTitle")}

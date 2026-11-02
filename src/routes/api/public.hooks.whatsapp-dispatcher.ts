@@ -1,3 +1,4 @@
+import { isNotificationStale } from "@/server/whatsapp-notification-freshness";
 /**
  * WA-C8 — Rota dispatcher (DRY-RUN).
  * WA-C9.2 Fase B — Lease/ownership token + recuperação de processing preso.
@@ -178,6 +179,12 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
             continue;
           }
 
+          if (isNotificationStale(claimed.scheduled_at)) {
+            await markSkipped(n.id, "notification_expired", token);
+            summary.skipped++;
+            continue;
+          }
+
           // 1.5) WA-C9.1 — rechecagem da entidade vinculada.
           const reval = await revalidateContaForDispatch({
             user_id: claimed.user_id,
@@ -216,6 +223,7 @@ export const Route = createFileRoute("/api/public/hooks/whatsapp-dispatcher")({
               claimed.payload = {
                 ...(claimed.payload ?? {}),
                 agenda_params: ra.vars.params,
+                template_date: ra.vars.templateDate,
                 agenda_text: ra.vars.text,
                 ...(ra.vars.kind === "lembrete" ? {
                   agenda_titulo: ra.vars.params[0], agenda_quando: ra.vars.params[1],

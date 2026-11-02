@@ -26,12 +26,14 @@ const linkState: {
   subscription: { active: boolean; plan: string };
   email: string;
   rateBlocked: boolean;
+  rateDbError: boolean;
 } = {
   link: null,
   betaOk: false,
   subscription: { active: false, plan: "free" },
   email: "user@example.com",
   rateBlocked: false,
+  rateDbError: false,
 };
 
 const fakeAdmin = {
@@ -86,6 +88,7 @@ mock.module("./subscription.server", () => ({
 mock.module("@/server/rate-limit.server", () => ({
   checkRateLimit: async () => ({
     blocked: linkState.rateBlocked,
+    dbError: linkState.rateDbError,
     count: linkState.rateBlocked ? 2 : 1,
     limit: 1,
     retryAfterSeconds: 86400,
@@ -94,6 +97,7 @@ mock.module("@/server/rate-limit.server", () => ({
 mock.module("./rate-limit.server", () => ({
   checkRateLimit: async () => ({
     blocked: linkState.rateBlocked,
+    dbError: linkState.rateDbError,
     count: linkState.rateBlocked ? 2 : 1,
     limit: 1,
     retryAfterSeconds: 86400,
@@ -285,4 +289,10 @@ test("mensagem neutra de bloqueio não revela conta/plano", () => {
   expect(WHATSAPP_BLOCKED_REPLY).not.toMatch(
     /plano gratuito|free|conta inexistente|usuário não encontrado/i,
   );
+});
+
+test("falha no rate-limit impede resposta de bloqueio",async()=>{
+ linkState.rateDbError=true;
+ try { expect(await shouldSendBlockedReply("5511900000000")).toBe(false); }
+ finally { linkState.rateDbError=false; }
 });

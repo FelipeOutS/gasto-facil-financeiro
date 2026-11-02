@@ -933,6 +933,17 @@ export async function persistAndApplyEvents(
       }
     }
 
+    // Candidate reply outbox: authenticated HMAC callbacks only; no outbound send.
+    const { reconcileReply } = await import("./whatsapp-reply-outbox.server");
+    // Disabling sends must not discard callbacks for messages already sent.
+    if (list.some(ev => ev.client_reference?.startsWith("wa_reply:"))) {
+      for (const ev of list) {
+        try { await reconcileReply(ev.client_reference, ev.provider_message_id, ev.event_status,
+          client as unknown as import("./whatsapp-reply-outbox.server").ReplyRpc); }
+        catch { summary.retryableErrors++; summary.requiresWebhookRetry = true; }
+      }
+    }
+
     // 2.5) D.2A — Reconciliação attempt via RPC atômica.
     //      Ordem: PMID primeiro, client_reference como fallback (feito pela RPC).
     //      Uma chamada por PMID; a RPC é idempotente. Erros isolados por PMID.

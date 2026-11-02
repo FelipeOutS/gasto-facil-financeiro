@@ -66,7 +66,7 @@ export function SmartMonthSummaryCard({ mes, ano, className }: Props) {
     }
     void navigate({
       to: "/gasto-ai",
-      search: { q: t("smartSummary.suggestion") } as Record<string, unknown>,
+      search: { q: t("smartSummary.suggestion") },
     });
   }
 

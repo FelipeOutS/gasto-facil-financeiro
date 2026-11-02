@@ -35,10 +35,10 @@ const DrawerContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <DrawerPortal>
     <DrawerOverlay />
-    <DrawerPrimitive.Content
+    <DrawerPrimitive.Content data-safe-drawer="true"
       ref={ref}
       className={cn(
-        "fixed inset-x-0 bottom-0 z-[10000] mt-24 flex max-h-[calc(var(--app-viewport-height,100dvh)-1rem)] h-auto flex-col overflow-y-auto overscroll-contain rounded-t-2xl border bg-background pb-[max(1rem,var(--app-safe-bottom))] shadow-2xl shadow-black/50",
+        "fixed inset-x-0 bottom-0 z-[10000] mt-24 flex max-h-[calc(var(--app-viewport-height,100dvh)-var(--app-safe-top)-1rem)] h-auto flex-col overflow-y-auto overscroll-contain rounded-t-2xl border bg-background pb-[max(1rem,var(--app-safe-bottom))] shadow-2xl shadow-black/50",
         className,
       )}
       {...props}

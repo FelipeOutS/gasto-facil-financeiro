@@ -24,11 +24,16 @@ export type AgendaIntent =
       diasAntes: number;
     }
   | { type: "consultar"; periodo: "hoje" | "amanha" | "semana" | "proximos" | "recorrentes" }
-  | { type: "editar"; alvo: string; when: ParsedWhen; novoTitulo?: string }
+  | { type: "editar"; alvo: string; when: ParsedWhen; novoTitulo?: string; adiar?: boolean }
   | { type: "cancelar"; alvo: string }
   | { type: "concluir"; alvo: string }
+  /** Comando sem alvo ("cancelar lembrete", "concluir", "adiar para amanhã"): o usuário escolhe. */
+  | { type: "escolher"; acao: "cancelar" | "concluir" | "adiar"; when?: ParsedWhen }
   | { type: "editar_aviso"; alvo: string; diasAntes: number }
-  | { type: "acao_id"; acao: AgendaAcaoId; id: string };
+  | { type: "acao_id"; acao: AgendaAcaoId; id: string }
+  | { type: "cancel_page"; page: number }
+  | { type: "cancel_ok"; id: string; issuedMin: number; sig: string }
+  | { type: "historico" };
 
 /**
  * "ver" = genérico/legado (botões já enviados): abre a entidade conforme o
@@ -42,6 +47,10 @@ export const AGENDA_EDIT_PREFIX = "agenda_edit:";
 export const AGENDA_VIEW_PREFIX = "agenda_view:";
 export const AGENDA_VIEW_INVOICE_PREFIX = "agenda_view_invoice:";
 export const AGENDA_VIEW_BILL_PREFIX = "agenda_view_bill:";
+/** Cancelamento em 2 passos: página da lista → resumo → confirmação (com validade). */
+export const AGENDA_CANCEL_PAGE_PREFIX = "agenda_cpage:";
+export const AGENDA_CANCEL_OK_PREFIX = "agenda_cancel_ok:";
+export const AGENDA_CANCEL_BACK_ID = "agenda_cancel_back";
 
 function norm(s: string): string {
   return (s ?? "")
@@ -69,6 +78,13 @@ function cleanTitle(rest: string): string {
 export function detectAgendaIntent(text: string): AgendaIntent | null {
   const raw = (text ?? "").trim();
   if (!raw || raw.length > 400) return null;
+  const cpage = new RegExp(`^${AGENDA_CANCEL_PAGE_PREFIX}(\\d{1,4})$`).exec(raw);
+  if (cpage) return { type: "cancel_page", page: Number(cpage[1]) };
+  if (raw === AGENDA_CANCEL_BACK_ID) return { type: "cancel_page", page: 0 };
+  const cok = new RegExp(`^${AGENDA_CANCEL_OK_PREFIX}(${UUID}):([0-9a-z]{1,10}):([A-Za-z0-9_-]{22})$`).exec(raw);
+  if (cok) return { type: "cancel_ok", id: cok[1].toLowerCase(), issuedMin: parseInt(cok[2], 36), sig: cok[3] };
+  // Formato antigo/sem assinatura: nunca cancela; o handler pede para escolher de novo.
+  if (raw.startsWith(AGENDA_CANCEL_OK_PREFIX)) return { type: "cancel_ok", id: "", issuedMin: -1, sig: "" };
   const idDone = new RegExp(`^${AGENDA_DONE_PREFIX}(${UUID})$`, "i").exec(raw);
   if (idDone) return { type: "acao_id", acao: "concluir", id: idDone[1].toLowerCase() };
   const idCancel = new RegExp(`^${AGENDA_CANCEL_PREFIX}(${UUID})$`, "i").exec(raw);
@@ -97,13 +113,26 @@ export function detectAgendaIntent(text: string): AgendaIntent | null {
   if (ea) return { type: "editar_aviso", alvo: ea[1].trim(), diasAntes: Math.min(60, Number(ea[2])) };
 
   // Consultas
-  if (/^(?:minha agenda|agenda|meus lembretes|meus compromissos|lembretes|compromissos|ver (?:minha )?agenda|proximos (?:lembretes|compromissos))$/.test(n))
+  if (/^(?:(?:quais (?:sao )?)?(?:os )?meus (?:lembretes|compromissos)|minha agenda|agenda|meus lembretes|meus compromissos|lembretes|compromissos|ver (?:minha )?agenda|proximos (?:lembretes|compromissos))$/.test(n))
     return { type: "consultar", periodo: "proximos" };
   let m = /^(?:o que|oque|que) (?:eu )?(?:tenho|terei|tem)(?: (?:marcado|na agenda|agendado))?(?: para| pra)? (hoje|amanha|essa semana|esta semana|nesta semana|na semana)$/.exec(n);
   if (!m) m = /^(?:agenda|lembretes|compromissos|minha agenda) (?:de |para |pra |da )?(hoje|amanha|essa semana|esta semana|semana)$/.exec(n);
   if (m) {
     const p = m[1];
     return { type: "consultar", periodo: p === "hoje" ? "hoje" : p === "amanha" ? "amanha" : "semana" };
+  }
+
+  // Comandos sem alvo: nunca escolhem sozinhos; o handler lista para o usuário escolher.
+  if (/^(?:cancel(?:e|a|ar)|apag(?:ue|a|ar)|remov(?:e|a|er)|exclu(?:a|i|ir))\s+(?:o |meu )?(?:lembrete|compromisso)$/.test(n))
+    return { type: "escolher", acao: "cancelar" };
+  if (/^confirm(?:ar|o|e) (?:o )?cancelamento$/.test(n)) return { type: "escolher", acao: "cancelar" };
+  if (/^(?:lembretes (?:cancelados|concluidos|antigos)|historico (?:de |dos )?lembretes|historico da agenda)$/.test(n)) return { type: "historico" };
+  if (/^(?:conclu(?:a|i|ir|ido)|marc(?:a|ar|ue) (?:o lembrete )?como (?:feito|concluido)|finaliz(?:e|a|ar)(?: o lembrete)?|conclu(?:a|i|ir) (?:o )?lembrete)$/.test(n))
+    return { type: "escolher", acao: "concluir" };
+  m = /^(?:adi(?:e|a|ar)|remarc(?:a|ar)|remarque)(?: o lembrete)?\s+(?:para|pra)\s+(.+)$/.exec(n);
+  if (m) {
+    const w = parseWhen(m[1], new Date(0));
+    if (w.date || w.time || w.instant) return { type: "escolher", acao: "adiar", when: whenPlaceholder(m[1]) };
   }
 
   // Cancelar / concluir item da agenda (precisa citar lembrete/compromisso OU um alvo + "da agenda").
@@ -117,7 +146,7 @@ export function detectAgendaIntent(text: string): AgendaIntent | null {
   if (m && !/\b(vencimento|valor|conta|fatura|limite|fechamento|categoria|gasto|receita|pagamento)\b/.test(m[1])) {
     const when = parseWhen(m[2], new Date(0));
     // Só é edição de agenda se o destino é data/hora.
-    if (when.date || when.time || when.instant) return { type: "editar", alvo: m[1].trim(), when: whenPlaceholder(m[2]) };
+    if (when.date || when.time || when.instant) return { type: "editar", alvo: m[1].trim(), when: whenPlaceholder(m[2]), ...(/^adi/.test(n) ? { adiar: true } : {}) };
   }
 
   // Lembrete financeiro: "me lembra da fatura do Nubank 3 dias antes"

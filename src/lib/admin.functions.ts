@@ -1,9 +1,9 @@
+import { readAllAdminRows } from "@/server/admin-pagination";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getSubscriptionForUserIdentity } from "@/server/subscription.server";
-import { reconcilePendingCardPaymentsForUser } from "@/server/mercadopago.server";
 import { logAuditEvent } from "@/server/logs.server";
 import {
   diagnoseMercadoPagoPayment,
@@ -12,98 +12,13 @@ import {
 
 const ADMIN_EMAILS = ["felipe.out.silva@outlook.com", "michael@medeiroscenografia.com.br"];
 
-const USER_DATA_TABLES = [
-  "aprendizado_categoria",
-  "bancos",
-  "cartoes",
-  "categorias",
-  "contas_a_pagar",
-  "contas_a_receber",
-  "dinheiro_guardado",
-  "extratos_importados",
-  "faturas_cartao",
-  "gastos",
-  "investimentos_ativos",
-  "investimentos_atualizacoes",
-  "investimentos_importacoes",
-  "investimentos_movimentacoes",
-  "investimentos_rendimentos",
-  "limites",
-  "metas_financeiras",
-  "movimentacoes_meta",
-  "receitas",
-  "recorrencias",
-  "subscription_payments",
-  "transferencias_internas",
-  "user_plans",
-  "user_roles",
-  "whatsapp_links",
-  "whatsapp_messages",
-] as const;
-
+/** Legacy multi-request deletion cannot guarantee rollback across Auth and tables. */
 export const deleteUserById = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ targetUserId: z.string().uuid() }).parse(input))
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data, context }) => {
-    const { userId } = context;
-    const actorEmail = await ensureAdmin(context.supabase, userId);
-
-    if (data.targetUserId === userId) {
-      throw new Error("Você não pode excluir a própria conta de administrador.");
-    }
-
-    const { data: targetUser } = await supabaseAdmin.auth.admin.getUserById(data.targetUserId);
-    const targetEmail = (targetUser?.user?.email ?? "").toLowerCase();
-    if (ADMIN_EMAILS.includes(targetEmail)) {
-      throw new Error("Não é permitido excluir outro administrador.");
-    }
-    const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", data.targetUserId);
-    if ((roles ?? []).some((r: any) => r.role === "owner")) {
-      throw new Error("Não é permitido excluir um usuário com papel de owner.");
-    }
-
-    await supabaseAdmin.from("profiles").delete().eq("id", data.targetUserId);
-
-    for (const table of USER_DATA_TABLES) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabaseAdmin as any)
-        .from(table)
-        .delete()
-        .eq("user_id", data.targetUserId);
-      if (error) console.error(`[deleteUserById] ${table}`, error.message);
-    }
-
-    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(data.targetUserId);
-    if (authError) {
-      console.error("[deleteUserById] auth.admin.deleteUser", authError);
-      await logAuditEvent({
-        actor_user_id: userId,
-        actor_email: actorEmail,
-        action: "admin_delete_user",
-        target_user_id: data.targetUserId,
-        target_email: targetEmail,
-        entity_type: "user",
-        entity_id: data.targetUserId,
-        metadata: { ok: false, error: authError.message },
-      });
-      throw new Error("Não foi possível excluir o usuário no provedor de autenticação.");
-    }
-
-    await logAuditEvent({
-      actor_user_id: userId,
-      actor_email: actorEmail,
-      action: "admin_delete_user",
-      target_user_id: data.targetUserId,
-      target_email: targetEmail,
-      entity_type: "user",
-      entity_id: data.targetUserId,
-      metadata: { ok: true, tables_cleared: USER_DATA_TABLES.length },
-    });
-
-    return { ok: true };
+  .handler(async ({ context }) => {
+    await ensureAdmin(context.supabase, context.userId);
+    throw new Error("Exclusão de conta indisponível: o procedimento seguro de remoção ainda precisa ser homologado. Nenhum dado foi alterado.");
   });
 
 async function ensureAdmin(_supabase: any, userId: string): Promise<string> {
@@ -193,7 +108,7 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
       let page = 1;
       while (true) {
         const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
-        if (error) break;
+        if (error) throw new Error("Falha ao consultar usuários administrativos.");
         const list = data?.users ?? [];
         for (const u of list) {
           authMap.set(u.id, {
@@ -204,60 +119,25 @@ export const getAdminDashboard = createServerFn({ method: "GET" })
         }
         if (list.length < 1000) break;
         page += 1;
-        if (page > 20) break;
+        if (page > 1000) throw new Error("Volume de usuários excedeu o limite de consulta.");
       }
     } catch {
-      // ignore — fallback usa profiles
+      throw new Error("Não foi possível consultar todos os usuários. Tente novamente.");
     }
 
     // 2) Fonte primária = profiles (todo cadastrado tem profile via trigger)
     const [profilesRes, plansRes, paymentsRes, ownersRes, paymentsFullRes] = await Promise.all([
-      supabaseAdmin.from("profiles").select("id, nome, telefone, tipo_cadastro, created_at"),
-      supabaseAdmin.from("user_plans").select("*"),
-      supabaseAdmin
-        .from("subscription_payments")
-        .select(
-          "id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at",
-        )
-        .order("created_at", { ascending: false }),
-      supabaseAdmin.from("user_roles").select("user_id").eq("role", "owner"),
-      supabaseAdmin
-        .from("subscription_payments")
-        .select(
-          "id, user_id, plano, method, status, amount_cents, periodicidade, months, provider_payment_id, paid_at, created_at, payload",
-        )
-        .order("created_at", { ascending: false })
-        .limit(5000),
+      readAllAdminRows((from, to) => supabaseAdmin.from("profiles").select("id, nome, telefone, tipo_cadastro, created_at", { count: "exact" }).order("id").range(from, to)),
+      readAllAdminRows((from, to) => supabaseAdmin.from("user_plans").select("*", { count: "exact" }).order("user_id").range(from, to)),
+      readAllAdminRows((from, to) => supabaseAdmin.from("subscription_payments").select("id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at", { count: "exact" }).order("created_at", { ascending: false }).order("id").range(from, to)),
+      readAllAdminRows((from, to) => supabaseAdmin.from("user_roles").select("user_id", { count: "exact" }).eq("role", "owner").order("user_id").range(from, to)),
+      readAllAdminRows((from, to) => supabaseAdmin.from("subscription_payments").select("id, user_id, plano, method, status, amount_cents, periodicidade, months, provider_payment_id, paid_at, created_at, payload", { count: "exact" }).order("created_at", { ascending: false }).order("id").range(from, to)),
     ]);
 
-    // Reconcilia pagamentos por cartão pendentes (best-effort) para usuários
-    // com tentativas recentes — assim o admin reflete pagamentos aprovados no MP.
-    const pendingCardUsers = new Set<string>();
-    for (const p of (paymentsRes.data ?? []) as Array<{
-      user_id: string;
-      method: string;
-      status: string;
-      created_at: string;
-    }>) {
-      if (p.method !== "card" || p.status !== "pending") continue;
-      const ageMs = Date.now() - new Date(p.created_at).getTime();
-      if (ageMs > 3 * 24 * 60 * 60 * 1000) continue;
-      pendingCardUsers.add(p.user_id);
-    }
-    if (pendingCardUsers.size > 0) {
-      await Promise.allSettled(
-        Array.from(pendingCardUsers)
-          .slice(0, 25)
-          .map((uid) => reconcilePendingCardPaymentsForUser(uid)),
-      );
-      // Recarrega pagamentos pós-reconciliação
-      const refreshed = await supabaseAdmin
-        .from("subscription_payments")
-        .select(
-          "id, user_id, plano, method, status, amount_cents, periodicidade, months, discount_percent, paid_at, created_at",
-        )
-        .order("created_at", { ascending: false });
-      if (refreshed.data) paymentsRes.data = refreshed.data;
+    // Reading the dashboard must not reconcile payments or wait for the provider.
+    // Explicit reconciliation remains available through reconcileMpPaymentById.
+    for (const result of [profilesRes, plansRes, paymentsRes, ownersRes, paymentsFullRes]) {
+      if (result.error) throw new Error("Não foi possível carregar todos os dados administrativos. Tente novamente.");
     }
 
     const profiles = profilesRes.data ?? [];

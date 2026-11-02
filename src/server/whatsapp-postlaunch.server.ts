@@ -47,11 +47,35 @@ async function setEdit(action: Action, edit_state: Action["edit_state"], edit_fi
 async function readFinancial(action: Action) {
   const table = action.entity_kind === "expense" || action.entity_kind === "installment" ? "gastos" : "receitas";
   let q = db.from(table).select("*").eq("id", action.entity_id).eq("user_id", action.user_id).eq("origem", "whatsapp");
-  if (table === "receitas") q = q.is("deleted_at", null);
+  q = q.is("deleted_at", null); // gastos e receitas: só ativos
   const { data, error } = await q.maybeSingle();
   if (error || !data) return null;
   return data as Record<string, unknown>;
 }
+
+export const MSG_UNDO_GASTO_EXCLUIDO =
+  "Esse gasto está excluído e pode ser restaurado. Não é possível desfazer antes da restauração.";
+const MSG_UNDO_FALHA_LEITURA = "Não consegui desfazer agora. Confira o lançamento no app e tente novamente.";
+
+/**
+ * Pré-checagem do Desfazer (gasto/parcelado): retorna mensagem de bloqueio ou null.
+ * Lê o gasto (e o grupo, se parcelado) SEM filtrar deleted_at, de propósito.
+ * soft-delete-exceção: precisa enxergar marcados para recusar o DELETE físico.
+ * Erro de leitura (inclusive coluna ausente) => falha fechada, nunca "sem vínculo".
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function checkUndoSoftDelete(client: any, action: Pick<Action, "user_id" | "entity_kind" | "entity_id" | "related_id">): Promise<string | null> {
+  // soft-delete-exceção: lê marcados de propósito para recusar o Desfazer.
+  let q = client.from("gastos").select("id, deleted_at").eq("user_id", action.user_id);
+  q = action.entity_kind === "installment" && action.related_id
+    ? q.or(`id.eq.${action.entity_id},grupo_parcelamento_id.eq.${action.related_id}`)
+    : q.eq("id", action.entity_id);
+  const { data, error } = await q;
+  if (error || !Array.isArray(data)) return MSG_UNDO_FALHA_LEITURA;
+  if (data.some((g: { deleted_at?: string | null }) => g.deleted_at != null)) return MSG_UNDO_GASTO_EXCLUIDO;
+  return null;
+}
+const undoSoftDeleteGuard = (action: Action) => checkUndoSoftDelete(db, action);
 
 async function receipt(action: Action, title = "✅ Lançamento registrado"): Promise<PostlaunchReply> {
   const row = await readFinancial(action);
@@ -71,7 +95,7 @@ async function receipt(action: Action, title = "✅ Lançamento registrado"): Pr
     } else if (row.forma_pagamento) lines.push(String(row.forma_pagamento));
     if (action.entity_kind === "installment" && action.related_id) {
       const { data } = await db.from("gastos").select("valor")
-        .eq("user_id", action.user_id).eq("grupo_parcelamento_id", action.related_id);
+        .eq("user_id", action.user_id).eq("grupo_parcelamento_id", action.related_id).is("deleted_at", null);
       if (Array.isArray(data)) lines.push(`${data.length} parcelas · total ${brl(data.reduce((v: number, p: { valor: number }) => v + Number(p.valor), 0))}`);
     } else if (Number(row.total_parcelas ?? 0) > 1) lines.push(`${row.total_parcelas} parcelas`);
     if (row.fatura_competencia) lines.push(`Fatura ${String(row.fatura_competencia)}`);
@@ -124,7 +148,7 @@ export async function postlaunchReceipt(args: {
 export async function installmentReceipt(args: { userId: string; phone: string; externalId: string | null; expenseId: string }): Promise<PostlaunchReply | null> {
   try {
   const { data } = await db.from("gastos").select("grupo_parcelamento_id")
-    .eq("id", args.expenseId).eq("user_id", args.userId).eq("origem", "whatsapp").maybeSingle();
+    .eq("id", args.expenseId).eq("user_id", args.userId).eq("origem", "whatsapp").is("deleted_at", null).maybeSingle();
   if (!data?.grupo_parcelamento_id) return null;
   return postlaunchReceipt({ ...args, kind: "installment", entityId: args.expenseId,
     relatedId: data.grupo_parcelamento_id });
@@ -257,10 +281,20 @@ export async function handlePostlaunchInput(args: {
     if (command === "undo" || command === "scope") {
       const scope = command === "scope" ? token?.[3] : "single";
       if (action.entity_kind === "recurring_income" && scope !== "occurrence" && scope !== "series") return { resposta: "Escolha uma das opções de recorrência." };
-      const { data, error } = await db.rpc("whatsapp_undo_recent_action", {
+      // P0 soft-delete: nunca desfazer (DELETE físico) gasto já excluído de forma
+      // reversível. Pré-checagem falha fechada; a garantia atômica definitiva
+      // depende do SQL candidato docs/migrations-candidate/whatsapp-undo-soft-delete.sql.
+      if (action.entity_kind === "expense" || action.entity_kind === "installment") {
+        const guard = await undoSoftDeleteGuard(action);
+        if (guard) return { resposta: guard };
+      }
+      if (process.env.WHATSAPP_FINANCIAL_MUTATIONS_VERSION !== "2") return { resposta: "O desfazer está temporariamente indisponível. Nada foi alterado." };
+      const { data, error } = await db.rpc("whatsapp_undo_recent_action_v2", {
         p_user_id: args.userId, p_phone: args.phone, p_action_id: action.id, p_scope: scope,
       });
       if (error) return { resposta: "Não consegui desfazer agora. Confira o lançamento no app e tente novamente." };
+      if (data === "modified") return { resposta: "Esse lançamento foi alterado depois da confirmação. Confira a versão atual no app; não desfiz a alteração." };
+      if (data === "soft_deleted") return { resposta: MSG_UNDO_GASTO_EXCLUIDO };
       if (data === "undone") return { resposta: action.entity_kind === "recurring_income" && scope === "occurrence" ? "Pronto, removi só esta receita. A recorrência continua ativa." : "Pronto, desfiz esse lançamento." };
       if (data === "already_undone") return { resposta: "Esse lançamento já foi desfeito." };
       return { resposta: data === "expired" ? expired : unavailable };

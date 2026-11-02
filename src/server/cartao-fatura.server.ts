@@ -26,7 +26,11 @@ import {
   cicloParaCompetencia,
   competenciaDoGasto,
   competenciaParaCiclo,
+  fechamentoNoMes,
   isYm,
+  periodoCiclo,
+  proximoFechamento,
+  vencimentoDoFechamento,
 } from "@/lib/fatura-competencia";
 
 // Lazy live-binding: garante que mock.module() em testes seja
@@ -99,23 +103,15 @@ export function faturaCorrenteRef(diaFech: number, hoje: Date): { mes: number; a
   return { mes: m0 + 1, ano: y };
 }
 
-/** Espelha `cicloFatura` do store. */
+/** Espelha `cicloFatura` do store (dia 29-31 limitado ao último dia do mês). */
 export function cicloFatura(diaFech: number, mes: number, ano: number) {
-  const d = diaFech > 0 ? diaFech : 1;
-  const inicio = new Date(ano, mes - 1, d + 1, 0, 0, 0, 0);
-  const fim = new Date(ano, mes, d, 23, 59, 59, 999);
-  return { inicio, fim };
+  return periodoCiclo(diaFech > 0 ? diaFech : 1, mes, ano);
 }
 
 /** Espelha `proximoFechamentoData` do store. */
 export function proximoFechamentoData(diaFech: number, hoje: Date): Date | null {
   if (!diaFech) return null;
-  const ref = new Date(hoje.getFullYear(), hoje.getMonth(), diaFech, 23, 59, 59, 999);
-  const startOfToday = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
-  if (ref.getTime() < startOfToday.getTime()) {
-    return new Date(hoje.getFullYear(), hoje.getMonth() + 1, diaFech, 23, 59, 59, 999);
-  }
-  return ref;
+  return proximoFechamento(diaFech, hoje);
 }
 
 /** Espelha `proximoVencimentoFaturaAberta` do store. */
@@ -127,11 +123,7 @@ export function proximoVencimentoFaturaAberta(
   if (!diaVenc) return null;
   const fech = proximoFechamentoData(diaFech, hoje);
   if (!fech) return null;
-  let venc = new Date(fech.getFullYear(), fech.getMonth(), diaVenc);
-  if (venc.getTime() <= fech.getTime()) {
-    venc = new Date(fech.getFullYear(), fech.getMonth() + 1, diaVenc);
-  }
-  return venc;
+  return vencimentoDoFechamento(fech.getFullYear(), fech.getMonth(), diaFech, diaVenc);
 }
 
 /** Carrega cartões do próprio usuário. */
@@ -166,6 +158,25 @@ export async function findCartoesDoUsuarioByTerm(
   const t = norm(termo);
   if (!t) return [];
   const cartoes = await loadCartoesDoUsuario(userId);
+  return selecionarCartoesPorTermo(cartoes, t);
+}
+
+/**
+ * P1 15/10/2026: nome EXATO (normalizado) tem prioridade sobre inclusão —
+ * "Itaú Visa" não pode ficar ambíguo com "Itaú" (desde que nenhum outro nome contenha o termo). Homônimos exatos continuam
+ * ambíguos (nunca escolhe um deles sozinho).
+ */
+export function selecionarCartoesPorTermo<T extends { nome?: string | null; banco?: string | null }>(
+  cartoes: T[],
+  termo: string,
+): T[] {
+  const t = norm(termo);
+  if (!t) return [];
+  // Exato só decide se nenhum OUTRO nome contém o termo ("Nubank" x
+  // "Nubank Ouro" continua ambíguo — o usuário pode querer qualquer um).
+  const exatos = cartoes.filter((c) => norm(c.nome ?? "") === t);
+  const maiores = cartoes.filter((c) => { const n = norm(c.nome ?? ""); return n !== t && n.includes(t); });
+  if (exatos.length > 0 && maiores.length === 0) return exatos;
   return cartoes.filter((c) => {
     const n = norm(c.nome ?? "");
     const b = norm(c.banco ?? "");
@@ -195,6 +206,7 @@ async function fetchGastosDaFatura(
       .select(select)
       .eq("user_id", userId)
       .eq("cartao_id", cartaoId)
+      .is("deleted_at", null)
       .gte("data", fromIso)
       .lt("data", toIso),
     supabaseAdmin
@@ -202,12 +214,14 @@ async function fetchGastosDaFatura(
       .select(select)
       .eq("user_id", userId)
       .eq("cartao_id", cartaoId)
+      .is("deleted_at", null)
       .eq("invoice_month", targetYm),
     supabaseAdmin
       .from("gastos")
       .select(select)
       .eq("user_id", userId)
       .eq("cartao_id", cartaoId)
+      .is("deleted_at", null)
       .eq("fatura_competencia", targetComp),
   ]);
   for (const result of [byDate, byYm, byComp]) {
@@ -506,11 +520,8 @@ export async function getFaturaPorMes(
   }
 
   // Datas de fechamento/vencimento DO MÊS alvo (não do ciclo aberto).
-  const fechamento = new Date(ano, mes - 1, diaFech, 23, 59, 59, 999);
-  let vencimento = new Date(ano, mes - 1, diaVenc);
-  if (vencimento.getTime() <= fechamento.getTime()) {
-    vencimento = new Date(ano, mes, diaVenc);
-  }
+  const fechamento = fechamentoNoMes(ano, mes - 1, diaFech);
+  const vencimento = vencimentoDoFechamento(ano, mes - 1, diaFech, diaVenc);
 
   const limite = Number(cartao.limite_total ?? 0) || 0;
   const disponivel = Math.max(0, limite - total);
@@ -620,7 +631,8 @@ async function loadParcelasDoUsuario(userId: string): Promise<ParcelaRow[]> {
     .select(
       "id, descricao, estabelecimento, valor, data, invoice_month, fatura_competencia, forma_pagamento, confirmado, parcela_atual, total_parcelas, grupo_parcelamento_id, cartao_id",
     )
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .is("deleted_at", null);
   const rows = Array.isArray(data) ? (data as Array<Record<string, unknown>>) : [];
   const out: ParcelaRow[] = [];
   for (const g of rows) {

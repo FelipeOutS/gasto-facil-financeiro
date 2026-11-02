@@ -1,3 +1,4 @@
+import { approvedCatalog } from "./_whatsapp-approved-catalog";
 /**
  * WA-C9.2 Fase D.2B.2 (hardening) — Testes complementares.
  *
@@ -69,7 +70,7 @@ function fullEnv(overrides: Record<string, string | undefined> = {}) {
 }
 
 test("gate: todas as flags 'true' + graph válida → allowed", () => {
-  process.env.WHATSAPP_GRAPH_VERSION = "v20.0";
+  process.env.WHATSAPP_GRAPH_VERSION = "v25.0";
   const r = isOutboundHttpAllowed({ env: fullEnv() });
   expect(r.allowed).toBe(true);
 });
@@ -85,7 +86,7 @@ test.each([
   ["' true'", " true"], // trim ok
   ["''", ""],
 ])("gate: WHATSAPP_DISPATCH_ENABLED=%s → correta classificação", (_label, value) => {
-  process.env.WHATSAPP_GRAPH_VERSION = "v20.0";
+  process.env.WHATSAPP_GRAPH_VERSION = "v25.0";
   const r = isOutboundHttpAllowed({
     env: fullEnv({ WHATSAPP_DISPATCH_ENABLED: value }),
   });
@@ -98,7 +99,7 @@ test.each([
 });
 
 test("gate: outbound_http_disabled acumulado com dispatch_disabled", () => {
-  process.env.WHATSAPP_GRAPH_VERSION = "v20.0";
+  process.env.WHATSAPP_GRAPH_VERSION = "v25.0";
   const r = isOutboundHttpAllowed({
     env: fullEnv({
       WHATSAPP_DISPATCH_ENABLED: "0",
@@ -113,7 +114,7 @@ test("gate: outbound_http_disabled acumulado com dispatch_disabled", () => {
 });
 
 test("gate: phone_number_id não-numérico → invalid", () => {
-  process.env.WHATSAPP_GRAPH_VERSION = "v20.0";
+  process.env.WHATSAPP_GRAPH_VERSION = "v25.0";
   const r = isOutboundHttpAllowed({
     env: fullEnv({ WHATSAPP_PHONE_NUMBER_ID: "abc123" }),
   });
@@ -122,7 +123,7 @@ test("gate: phone_number_id não-numérico → invalid", () => {
 });
 
 test("gate: access_token vazio → access_token_missing", () => {
-  process.env.WHATSAPP_GRAPH_VERSION = "v20.0";
+  process.env.WHATSAPP_GRAPH_VERSION = "v25.0";
   const r = isOutboundHttpAllowed({
     env: fullEnv({ WHATSAPP_ACCESS_TOKEN: "" }),
   });
@@ -131,7 +132,7 @@ test("gate: access_token vazio → access_token_missing", () => {
 });
 
 test("gate: usuário fora do canary → user_not_in_canary", () => {
-  process.env.WHATSAPP_GRAPH_VERSION = "v20.0";
+  process.env.WHATSAPP_GRAPH_VERSION = "v25.0";
   const r = isOutboundHttpAllowed({
     userId: "u-external",
     canaryUserIds: ["u-canary-1"],
@@ -235,7 +236,7 @@ test("revert: id inexistente → false", async () => {
 test("factory Meta com phone_number_id ausente → factory falha", () => {
   delete process.env.WHATSAPP_PHONE_NUMBER_ID;
   process.env.WHATSAPP_ACCESS_TOKEN = "tok";
-  process.env.WHATSAPP_GRAPH_VERSION = "v20.0";
+  process.env.WHATSAPP_GRAPH_VERSION = "v25.0";
   const r = createMetaWhatsAppNotificationTransport();
   expect(r.ok).toBe(false);
   expect(fetchCalls).toBe(0);
@@ -244,7 +245,7 @@ test("factory Meta com phone_number_id ausente → factory falha", () => {
 test("factory Meta com access_token ausente → factory falha", () => {
   process.env.WHATSAPP_PHONE_NUMBER_ID = "1234567890";
   delete process.env.WHATSAPP_ACCESS_TOKEN;
-  process.env.WHATSAPP_GRAPH_VERSION = "v20.0";
+  process.env.WHATSAPP_GRAPH_VERSION = "v25.0";
   const r = createMetaWhatsAppNotificationTransport();
   expect(r.ok).toBe(false);
   expect(fetchCalls).toBe(0);
@@ -256,6 +257,7 @@ test("runOutbound: configuração inválida → transport_unavailable sem loop, 
   const NID = "n-cfg";
   let executeCalls = 0;
   const deps: RunOutboundDeps = {
+    catalogLoader: approvedCatalog(),
     supabaseClient: { from: () => ({}) } as SupabaseLike,
     gate: () => ({ allowed: true }),
     transportFactory: () => ({ ok: false, reason: "access_token_missing" }),
@@ -276,7 +278,7 @@ test("runOutbound: configuração inválida → transport_unavailable sem loop, 
     logger: () => {},
   };
   const out = await runOutboundForNotification(
-    { id: NID, user_id: "u-1", notification_type: "gi_conta_vencendo_hoje", payload: {} },
+    { id: NID, user_id: "u-1", notification_type: "gi_conta_vencendo_hoje", payload: { due_date: "2026-07-12",} },
     "TOKEN",
     deps,
   );
@@ -290,6 +292,7 @@ test("runOutbound: configuração inválida → transport_unavailable sem loop, 
 test("runOutbound: chamado 3× para a mesma notification (execute injetado idempotente)", async () => {
   let calls = 0;
   const deps: RunOutboundDeps = {
+    catalogLoader: approvedCatalog(),
     supabaseClient: { from: () => ({}) } as SupabaseLike,
     gate: () => ({ allowed: true }),
     transportFactory: () => ({
@@ -323,7 +326,7 @@ test("runOutbound: chamado 3× para a mesma notification (execute injetado idemp
     id: "n-idem",
     user_id: "u-1",
     notification_type: "gi_conta_vencendo_hoje",
-    payload: {},
+    payload: { due_date: "2026-07-12",},
   };
   await runOutboundForNotification(notif, "T1", deps);
   await runOutboundForNotification(notif, "T2", deps);

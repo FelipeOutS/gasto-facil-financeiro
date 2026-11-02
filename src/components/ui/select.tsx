@@ -64,12 +64,14 @@ const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => (
+  // Android WebView can resolve vh/dvh to zero. Use the measured root viewport
+  // for the cap, while retaining Radix collision bounds and viewport scrolling.
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
       collisionPadding={12}
       className={cn(
-        "relative z-[10000] max-h-[min(var(--radix-select-content-available-height),calc(100vh-1.5rem))] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover text-popover-foreground shadow-md shadow-black/40",
+        "relative z-[10000] max-h-[min(var(--radix-select-content-available-height),calc(var(--app-viewport-height,100dvh)-1.5rem))] min-w-[8rem] overflow-y-auto overflow-x-hidden rounded-md border bg-popover text-popover-foreground shadow-md shadow-black/40",
         position === "popper" && "",
         className,
       )}

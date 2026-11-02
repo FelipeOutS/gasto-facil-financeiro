@@ -668,7 +668,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
                 <p className="text-xs text-muted-foreground">
                   {t("communityPrices.batch.selectedPhotos", { count: photos.length })}
                 </p>
-                <ul className="grid max-h-[40vh] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
+                <ul className="grid max-h-[calc(var(--app-viewport-height,100dvh)*0.4)] grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-3">
                   {photos.map((p, idx) => (
                     <li
                       key={p.id}
@@ -736,7 +736,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
               </p>
             </div>
 
-            <ul className="max-h-[45vh] space-y-2 overflow-y-auto pr-1">
+            <ul className="max-h-[calc(var(--app-viewport-height,100dvh)*0.45)] space-y-2 overflow-y-auto pr-1">
               {photos.map((p, idx) => (
                 <li
                   key={p.id}
@@ -925,7 +925,7 @@ export function BatchScanWizard({ open, onOpenChange, onSaved }: BatchScanWizard
             )}
 
             {reviewItems.length > 0 && (
-              <ul className="max-h-[45vh] space-y-3 overflow-y-auto pr-1">
+              <ul className="max-h-[calc(var(--app-viewport-height,100dvh)*0.45)] space-y-3 overflow-y-auto pr-1">
                 {reviewItems.map((r, idx) => {
                   const invalidPrice =
                     r.include && (r.price == null || !Number.isFinite(r.price) || r.price <= 0);

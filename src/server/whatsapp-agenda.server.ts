@@ -11,6 +11,7 @@ import {
   getAgendaItem,
   itemWhenLabel,
   listAgenda,
+  listActivePage,
   financialAvisoAt,
   resolveFinancialSource,
   setAgendaStatus,
@@ -20,6 +21,9 @@ import {
 } from "./agenda.server";
 import {
   AGENDA_CANCEL_PREFIX,
+  AGENDA_CANCEL_PAGE_PREFIX,
+  AGENDA_CANCEL_OK_PREFIX,
+  AGENDA_CANCEL_BACK_ID,
   AGENDA_DONE_PREFIX,
   AGENDA_EDIT_PREFIX,
   AGENDA_VIEW_PREFIX,
@@ -31,6 +35,8 @@ import {
   type AgendaAcaoId,
 } from "@/lib/agenda/intent";
 import { nomeMesYm } from "@/lib/fatura-competencia";
+import { nextOccurrence, type RecurrenceFreq } from "@/lib/agenda/recurrence";
+import { CANCEL_TTL_MIN, signCancel, verifyCancel } from "./agenda-confirm-token.server";
 import {
   DEFAULT_TZ,
   addDaysYmd,
@@ -40,7 +46,6 @@ import {
   resolveWhen,
   formatWhen,
 } from "@/lib/agenda/datetime";
-import {nextOccurrence, type RecurrenceFreq} from "@/lib/agenda/recurrence";
 
 export type AgendaReply = {
   resposta: string;
@@ -296,7 +301,13 @@ export async function handleAgendaIntent(
     switch (intent.type) {
       case "criar": {
         const { titulo, when } = tituloFromBody(intent.when.rest, now, tz);
-        const at = resolveWhen(when, now, tz);
+        let at = resolveWhen(when, now, tz);
+        if (at && at.getTime() <= now.getTime()) {
+          // Recorrente: começa na próxima ocorrência futura. Único: não agenda no passado.
+          at = intent.recurrence ? nextOccurrence(at, { freq: intent.recurrence }, now, tz) : null;
+          if (!at)
+            return { resposta: `Esse horário já passou. Para quando é "${titulo || intent.titulo}"? Ex.: *amanhã às 9* ou *hoje às 20h*.` };
+        }
         if (!at) {
           return {
             resposta: `Para quando é "${titulo || intent.titulo}"? Ex.: *amanhã às 9*, *sexta às 14h* ou *10/10 às 08:30*.`,
@@ -404,6 +415,8 @@ export async function handleAgendaIntent(
         if (found.length > 1)
           return { resposta: `Encontrei ${found.length} itens com "${intent.alvo}". Diga o nome completo para eu alterar o certo.` };
         const item = found[0];
+        if (intent.adiar && item.recurrence_freq)
+          return { resposta: `"${item.titulo}" se repete (${item.recurrence_freq}). Adiar mudaria todas as próximas vezes, então não alterei. Para mudar o horário da série, diga por exemplo *mude ${item.titulo} para 15h*, ou ajuste na Agenda do site.` };
         if (item.source_type)
           return { resposta: `"${item.titulo}" segue o vencimento do item financeiro. Para mudar a data, altere o vencimento em Contas/Cartões.` };
         const w = parseWhen(intent.when.rest, now, item.timezone);
@@ -431,9 +444,49 @@ export async function handleAgendaIntent(
       case "concluir": {
         const r = await sameOrPick(userId, intent.alvo, intent.type, deps);
         if (!("id" in r)) return r;
+        if (intent.type === "cancelar") return await askCancel(userId, r.id, deps, now);
         return await applyAction(userId, r.id, intent.type, deps, now);
       }
+      case "escolher": {
+        const ativos = await listAgenda(userId, { status: "ativo" }, deps);
+        if (intent.acao === "adiar") {
+          const elegiveis = ativos.filter((r) => !r.source_type && !r.recurrence_freq);
+          if (!elegiveis.length)
+            return { resposta: "Não há lembrete único para adiar. Lembretes que se repetem e avisos de contas/faturas não são adiados por aqui." };
+          const lines: string[] = [];
+          for (const r of elegiveis.slice(0, 10)) lines.push(`${ICON(r)} ${r.titulo} — ${await itemWhenLabel(r, deps)}`);
+          return { resposta: `Qual lembrete quer adiar?\n\n${lines.join("\n")}\n\nResponda com o nome, ex.: *adie o lembrete ${elegiveis[0].titulo} para ${intent.when?.rest ?? "amanhã"}*.` };
+        }
+        if (intent.acao === "cancelar") return await cancelPage(userId, 0, deps);
+        if (!ativos.length) return { resposta: "Você não tem lembretes ativos na agenda." };
+        const labels = new Map<string, string>();
+        for (const r of ativos.slice(0, 10)) labels.set(r.id, await itemWhenLabel(r, deps));
+        const verbo = "marcar como concluído";
+        const body = `Qual item você quer ${verbo}? Toque em um da lista.`;
+        return {
+          resposta: `${body}\n${ativos.slice(0, 10).map((r, i) => `${i + 1}. ${r.titulo} — ${labels.get(r.id)}`).join("\n")}`,
+          graphInteractive: pickList(body, ativos, AGENDA_DONE_PREFIX, labels),
+        };
+      }
+      case "cancel_page":
+        return await cancelPage(userId, intent.page, deps);
+      case "cancel_ok": {
+        const check = intent.id ? verifyCancel(userId, intent.id, intent.issuedMin, intent.sig, now) : "invalid";
+        if (check === "expired")
+          return { resposta: "Essa confirmação expirou e nada foi cancelado. Envie *cancelar lembrete* para escolher de novo." };
+        if (check !== "ok")
+          return { resposta: "Não consegui validar essa confirmação, então nada foi cancelado. Envie *cancelar lembrete* para escolher de novo." };
+        const r = await applyAction(userId, intent.id, "cancelar", deps, now);
+        return r.resposta.startsWith("Tudo certo") ? { ...r, resposta: `${r.resposta}\nO histórico fica preservado na Agenda do site.` } : r;
+      }
+      case "historico": {
+        const old = (await listAgenda(userId, { status: "todos" }, deps)).filter((r) => r.status !== "ativo").slice(-10).reverse();
+        if (!old.length) return { resposta: "Você ainda não tem lembretes cancelados ou concluídos." };
+        return { resposta: `🗂️ Histórico (últimos ${old.length})\n\n${old.map((r) => `• ${r.titulo} — ${r.status}`).join("\n")}` };
+      }
       case "acao_id":
+        // Cancelar por botão sempre passa por um resumo + confirmação.
+        if (intent.acao === "cancelar") return await askCancel(userId, intent.id, deps, now);
         return await applyAction(userId, intent.id, intent.acao, deps, now);
     }
   } catch (err) {
@@ -442,6 +495,54 @@ export async function handleAgendaIntent(
     }
     throw err;
   }
+}
+
+const CANCEL_PAGE_SIZE = 8; // + até 2 linhas de navegação = 10 (limite da Meta)
+const FREQ_TXT: Record<string, string> = { diaria: "todo dia", semanal: "toda semana", mensal: "todo mês", anual: "todo ano" };
+const ORIGEM_TXT = (o: string | null | undefined) => (o === "whatsapp" ? "WhatsApp" : o === "site" ? "Site" : "");
+
+async function cancelPage(userId: string, page: number, deps: AgendaDeps): Promise<AgendaReply> {
+  const { rows, hasMore } = await listActivePage(userId, page, CANCEL_PAGE_SIZE, deps);
+  if (!rows.length && page === 0) return { resposta: "Você não tem lembretes ativos na agenda. Nada para cancelar. ✨" };
+  if (!rows.length) return await cancelPage(userId, 0, deps);
+  const labels = new Map<string, string>();
+  for (const r of rows) {
+    const extra = [r.recurrence_freq ? FREQ_TXT[r.recurrence_freq] : "", ORIGEM_TXT(r.origem)].filter(Boolean).join(" · ");
+    labels.set(r.id, `${await itemWhenLabel(r, deps)}${extra ? ` · ${extra}` : ""}`);
+  }
+  const body = `Qual item você quer cancelar? (página ${page + 1})\nAvisos de conta/fatura: cancelar o aviso não apaga a conta, o cartão nem lançamentos.`;
+  const navRows: Array<{ id: string; title: string; description: string }> = [];
+  if (page > 0) navRows.push({ id: `${AGENDA_CANCEL_PAGE_PREFIX}${page - 1}`, title: "⬅️ Anteriores", description: `Página ${page}` });
+  if (hasMore) navRows.push({ id: `${AGENDA_CANCEL_PAGE_PREFIX}${page + 1}`, title: "➡️ Próximos", description: `Página ${page + 2}` });
+  const list = pickList(body, rows, AGENDA_CANCEL_PREFIX, labels) as { action: { sections: Array<{ rows: unknown[] }> } };
+  list.action.sections[0].rows.push(...navRows);
+  const start = page * CANCEL_PAGE_SIZE;
+  return {
+    resposta: `${body}\n${rows.map((r, i) => `${start + i + 1}. ${ICON(r)} ${r.titulo} — ${labels.get(r.id)}`).join("\n")}${hasMore ? "\n… há mais itens: toque em *Próximos*." : ""}`,
+    graphInteractive: list as unknown as Record<string, unknown>,
+  };
+}
+
+async function askCancel(userId: string, id: string, deps: AgendaDeps, now: Date): Promise<AgendaReply> {
+  const cur = await getAgendaItem(userId, id, deps);
+  if (!cur) return { resposta: "Esse item não está mais na sua agenda." };
+  if (cur.status !== "ativo") return { resposta: `"${cur.titulo}" já está ${cur.status === "cancelado" ? "cancelado" : "concluído"}. Nada foi alterado.` };
+  const when = await itemWhenLabel(cur, deps);
+  const rec = cur.recurrence_freq ? `\n🔁 ${FREQ_TXT[cur.recurrence_freq]} — todas as próximas vezes serão canceladas.` : "";
+  const fin = cur.source_type ? "\n\nIsso cancela só o aviso. A conta/fatura e seus lançamentos continuam como estão." : "";
+  const origem = ORIGEM_TXT(cur.origem);
+  const body = `Cancelar este item?\n\n${ICON(cur)} ${cur.titulo}\n🗓️ ${when}${origem ? `\nCriado no ${origem}` : ""}${rec}${fin}`;
+  const token = signCancel(userId, cur.id, now);
+  if (!token) return { resposta: "Não consigo confirmar cancelamentos agora. Nada foi alterado; tente pela Agenda do site." };
+  const okId = `${AGENDA_CANCEL_OK_PREFIX}${cur.id}:${token}`;
+  return {
+    resposta: `${body}\n\nToque em *Confirmar cancelamento* (vale por ${CANCEL_TTL_MIN} min).`,
+    graphInteractive: buttonsMsg(body, [
+      { id: okId, title: "❌ Confirmar cancel." },
+      { id: AGENDA_CANCEL_BACK_ID, title: "↩️ Voltar" },
+    ]),
+    itemId: cur.id,
+  };
 }
 
 async function applyAction(
@@ -477,7 +578,15 @@ async function applyAction(
   }
   if (cur.status !== "ativo")
     return { resposta: `"${cur.titulo}" já está ${cur.status === "cancelado" ? "cancelado" : "concluído"}.` };
-  const { row, advanced } = await setAgendaStatus(userId, id, acao, deps);
+  let res: Awaited<ReturnType<typeof setAgendaStatus>>;
+  try {
+    res = await setAgendaStatus(userId, id, acao, deps);
+  } catch (e) {
+    if (e instanceof AgendaError && e.code === "already")
+      return { resposta: `"${cur.titulo}" já foi atualizado. Nada foi alterado de novo.`, itemId: cur.id };
+    throw e;
+  }
+  const { row, advanced } = res;
   if (acao === "cancelar")
     return { resposta: row.source_type ? `Tudo certo, cancelei o aviso "${row.titulo}". ❌` : `Tudo certo, cancelei "${row.titulo}". ❌`, itemId: row.id };
   if (advanced && row.starts_at)

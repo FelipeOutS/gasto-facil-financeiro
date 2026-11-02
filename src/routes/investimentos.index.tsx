@@ -1116,7 +1116,7 @@ function AddAtivoDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-lg max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {editing ? tInv("dialogs.addAsset.titleEdit") : tInv("dialogs.addAsset.titleCreate")}
@@ -1549,7 +1549,7 @@ function HistoricoImportacoesDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{tInv("dialogs2.importHistory.title")}</DialogTitle>
             <DialogDescription>{tInv("dialogs2.importHistory.description")}</DialogDescription>
@@ -1633,7 +1633,7 @@ function HistoricoImportacoesDialog({
 
       {/* Detalhes */}
       <Dialog open={!!detalhe} onOpenChange={(v) => !v && setDetalhe(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{tInv("dialogs2.importHistory.details.title")}</DialogTitle>
             <DialogDescription>
@@ -2121,7 +2121,7 @@ function AtualizarLoteDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[calc(var(--app-viewport-height,100dvh)*0.85)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <RefreshCw className="h-4 w-4" /> {tInv("dialogs2.batchUpdate.title")}
@@ -2358,7 +2358,7 @@ function MovimentacaoDialog({
 
   return (
     <Dialog open={state.open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ArrowRightLeft className="h-4 w-4" />
@@ -2715,7 +2715,7 @@ function DetalheAtivoDialog({
 
   return (
     <Dialog open={!!ativo} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <span className="truncate">{ativo.nome}</span>

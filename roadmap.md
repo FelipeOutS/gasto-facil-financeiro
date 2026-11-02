@@ -1,0 +1,42 @@
+
+- [x] Corrigir avisos JSX restantes do WhatsApp e revisar condicionais; atualizar relatório e validar localmente, sem publicação.
+- [x] Atualizar comunicação visível PT/EN do WhatsApp disponível, revisar CTAs e validar localmente; sem publicação ou alteração de acesso (antes/depois em docs/COMUNICACAO_WHATSAPP_DISPONIVEL_2026-10-14.md).
+- [x] Ativar áudio WhatsApp em produção (flag WHATSAPP_AUDIO_ENABLED + publicar) após ajuste de valores sem "reais"
+- [x] UX compras: resposta compacta (fixture 626 caracteres), links sob pedido, query limpa; compras 109/0, WhatsApp 160 arquivos/2792 testes/0 falhas. DEV somente, piloto publicado inalterado.
+- [x] P1 Lembretes automáticos — correções internas (recorrência mensal/semanal, fuso do perfil, sem passado, consulta)
+- [ ] P1 Lembretes — ativação real: templates Meta gi_agenda_*, cron do dispatcher e WHATSAPP_DISPATCH_ENABLED (aguarda autorização)
+- [ ] Assistente de Compras WhatsApp (Fases A/B/C) — bloqueado: aguarda conclusão dos lembretes e chave SERPAPI_API_KEY
+- [x] Exclusão reversível de gastos F1 (auditoria/plano) e F2 (migration CANDIDATA + RPCs + testes SQL locais) — NÃO aplicada
+- [x] F3 código/testes: leitores de gastos filtram deleted_at (NÃO publicar antes da F2 aplicada)
+- [x] P0 nº1: estorno de conta bloqueia gasto vinculado soft-excluído (código; depende da F2)
+- [x] P0 undo WhatsApp/site: código + SQL candidato docs/migrations-candidate/whatsapp-undo-soft-delete.sql (NÃO aplicado; aplicar junto com F2)
+- [ ] Release rápido WhatsApp: candidato = commit 388a742c (sem deleted_at em gastos); exige regressão e autorização para publicar
+- [ ] F3 pendências: reversão de extrato, edit WhatsApp, aviso site, cache offline, RPC transacional de estorno (F4)
+- [ ] F4 fluxo WhatsApp exclusão/restauração / F5 ativação — aguardam autorização
+- [ ] Cadastro conversacional de cartões
+- [ ] Smoke test de áudio real
+- [ ] Botões de gasto: versionar sessão após "Ajustar" (tarefa independente)
+
+- [x] Compras MVP (dev): intenção, adaptador SerpApi mockado, cota 10/200 em memória, estimador puro — sem chave, sem pipeline, sem banco
+- [ ] Compras: cota persistente (migration candidata, aprovação), ligar ao pipeline com flag desligada, leitura financeira real read-only, chave SERPAPI_API_KEY pelo dono
+- [ ] Assistente de Compras: aplicar `docs/migrations-candidate/whatsapp-shopping-quota.sql` (aguarda aprovação), cadastrar `SERPAPI_API_KEY`, ligar `WHATSAPP_SHOPPING_ENABLED` só após homologação; continuações (10x/12x, guardar até mês, qual loja, variante) prontas em DEV com contexto 20 min no mesmo SQL candidato.
+- [x] Preparação lote mensal + F4 sem F2 (teste combinado 40/0) e vínculo determinístico no cadastro de cartão — aguardando autorização para migrar/publicar
+- [x] Revisão P1 cartões/faturas WhatsApp (nome exato, homônimos, vínculo) — docs/audits/CARTOES_FATURAS_WHATSAPP_P1_2026-10-15.md
+- [x] Open Finance Pluggy Fase 2 (código Sandbox + testes 29/0) — SQL candidato NÃO aplicado
+- [ ] Open Finance: aplicar docs/migrations-candidate/pluggy-open-finance.sql (aguarda aprovação) e cadastrar PLUGGY_CLIENT_ID/SECRET
+- [ ] Open Finance: teste Sandbox ponta a ponta no preview; gravação em Gastos/Receitas e Live (Fases 3–5) aguardam autorização
+- [x] Pluggy Fase 3: adaptador, prévia autenticada, vínculo/revisão/histórico/desfazer, consentimento individual e hook incremental preparados e testados; gravação bloqueada, sem migrar/ativar/publicar.
+- [ ] Pluggy Fase 3 ativação: estrutura aprovada e aplicada com trava incondicional; liberação de gravação e testes de escrita aguardam nova autorização; reversão de mutações incrementais exige journal adicional; proteção F4 preparada no candidato, não aplicada.
+- [x] Pluggy validação dos vínculos: 40 movimentos explicados, destinos/categorias/duplicações detalhados, duas opções próprias simuladas sem salvar, correção/desvínculo seguro em código/SQL candidato; 98 testes e 110 verificações SQL descartáveis aprovados, relatório atualizado; nenhuma ativação ou migração.
+- [x] Pluggy revisão final: bloqueio financeiro incondicional no SQL candidato, FKs/triggers nas tabelas novas, F4 candidata protegida, status real POSTED 40/CREDIT 20/DEBIT 20, 134 verificações SQL e suíte 4125/0/9; dados compartilhados intactos, nada aplicado/ativado. Typecheck independente não confirmado nesta execução.
+- [x] Pluggy estrutura 19/10: SQL exato SHA-256 9a4816ff… aplicado em 0010; 3 tabelas vazias, 7 funções, 3 políticas, 4 triggers, 7 índices válidos; ACL/RLS/FKs confirmados e 7 hashes antes/depois idênticos; 38 testes/0 falhas, build automático OK. Typecheck dispensado excepcionalmente, não executado. Nenhuma outra migração ou ativação.
+- [ ] Pluggy validação de chamada financeira sob service_role: corpo persistido bloqueia incondicionalmente antes de writes, mas ferramenta read-only usa supabase_read_only_user e rejeita por ACL; chamada real do servidor não verificada. Aguarda mecanismo autorizado de teste service_role sem ampliar permissões ou criar endpoint.
+- [ ] Preparação final de publicação 19/10: auditoria concluída e webhook corrigido/testado; BLOQUEADO para aprovação final por configuração publicada MP/flags não verificável, typecheck independente indisponível, timeout intermitente do cofre na suíte final e rollback operacional não homologado. Build automático OK; sem publicar/migrar/ativar/criar backup. Relatório entregue em Files.
+- [ ] Fechamento mínimo 19/10 17:54 concluído: fallback MP e OAuth oficial aceitos no ambiente disponível (não prova do processo publicado); Shopping flag ativa mas trava independente false e chamada sem override; dispatcher false no ambiente disponível; Pluggy/lote false em código. Código candidato idêntico ao testado, build automático 17:55 OK, testes reutilizados. Patch de retorno com quatro awaits preparado e equivalência exata conferida, não aplicado. BLOQUEADO: confirmação runtime publicado e aprovação final das exceções typecheck/cofre e do escopo/retorno ainda pendentes; sem publicar/migrar/ativar.
+
+- [x] Pluggy MP 606 real (verificado; publicação aguarda autorização): verificar tela Open Finance no celular + parecer de publicação (aguardando autorização para publicar)
+
+## Pluggy / Contas a Receber (pendente)
+- [ ] Lote real 1 (adc45cd8…): migração 3038a110… APLICADA 19/10; aguarda aprovação do SQL de autorização pluggy-real-batch-grant-1.sql (hash 4ac3465f…), depois ligar botão
+- [ ] "Adiantamento — Mãe" R$ 185 (Pix R$ 35 Maria Celia vinculado; Pix R$ 150 sem vínculo) — aguarda autorização de criação e data prevista
+- [ ] Investigar recorrência "Cabelo" inexistente (gastos 27/09 e 27/10 preservados) — futura

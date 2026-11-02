@@ -11,6 +11,7 @@ export const Route = createFileRoute("/")({
           "Organize sua vida financeira com o Gasto Inteligente. Controle de gastos, faturas de cartão, metas e relatórios avançados em um só lugar.",
       },
       { property: "og:title", content: "Gasto Inteligente — Controle Financeiro Inteligente" },
+      { property: "og:type", content: "website" },
       {
         property: "og:description",
         content:

@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/MobileShell";
 import { AdminMasterGate } from "@/components/AdminMasterGate";
@@ -27,6 +27,8 @@ import {
 import { toast } from "sonner";
 import {
   whatsappAdminReadRuntimeSnapshot,
+  whatsappAdminListOwnReplyOutbox,
+  whatsappAdminRecoverOwnReply,
   whatsappAdminListPlanQuotas,
   whatsappAdminGetUsageSnapshot,
 } from "@/lib/whatsapp-runtime-admin.functions";
@@ -60,7 +62,7 @@ type Usage = Awaited<ReturnType<typeof whatsappAdminGetUsageSnapshot>>;
 function BoolBadge({ v }: { v: boolean }) {
   return (
     <Badge variant={v ? "default" : "secondary"} className={v ? "" : "opacity-70"}>
-      {v ? "ATIVO" : "DESATIVADO"}
+      {v ? "HABILITADO" : "DESATIVADO"}
     </Badge>
   );
 }
@@ -79,11 +81,15 @@ function PanelInner() {
   const [templates, setTemplates] = useState<Awaited<
     ReturnType<typeof whatsappAdminListLocalTemplates>
   > | null>(null);
+  const requestId = useRef(0);
+  const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [submittingId, setSubmittingId] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
+    const request = ++requestId.current;
+    setLoadError(false);
     setLoading(true);
     try {
       const [s, q, u, t] = await Promise.all([
@@ -92,22 +98,28 @@ function PanelInner() {
         readUsage(),
         readTemplates(),
       ]);
+      if (request !== requestId.current) return;
       setSnap(s);
       setQuotas(q);
       setUsage(u);
       setTemplates(t);
     } catch (err) {
+      if (request !== requestId.current) return;
+      setLoadError(true);
       toast.error("Falha ao carregar painel");
 
-      console.error(err);
+      console.error({event:"whatsapp_admin_load_failed"});
     } finally {
-      setLoading(false);
+      if (request === requestId.current) setLoading(false);
     }
-  }, [readSnap, readQuotas, readUsage]);
+  }, [readSnap, readQuotas, readUsage, readTemplates]);
 
   useEffect(() => {
     void refresh();
+    return () => { requestId.current++; };
   }, [refresh]);
+
+  if (loadError && !snap) return <div role="alert" className="p-6">Não foi possível carregar o painel WhatsApp.<Button onClick={() => void refresh()}>Tentar novamente</Button></div>;
 
   return (
     <div className="mx-auto max-w-5xl space-y-4 pb-16 pt-4">
@@ -124,6 +136,11 @@ function PanelInner() {
         </Button>
       </div>
 
+      <p role="status" className="rounded-lg border p-3 text-sm text-muted-foreground">
+        Flags habilitadas não comprovam entrega. Confirme o catálogo aprovado e os callbacks de entrega. Recuperação durável de respostas está em homologação e permanece bloqueada; não reenvie tentativas ambíguas.
+      </p>
+      {snap && snap.outbound_blockers.length > 0 && <p className="break-words text-sm text-muted-foreground">Bloqueios de envio para esta conta: {snap.outbound_blockers.join(", ")}</p>}
+      <ReplyRecoveryPanel />
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2 text-base">
@@ -497,4 +514,24 @@ function Metric({ label, value }: { label: string; value: number }) {
       <div className="text-lg font-semibold">{value}</div>
     </div>
   );
+}
+
+function ReplyRecoveryPanel() {
+  const list=useServerFn(whatsappAdminListOwnReplyOutbox);
+  const recover=useServerFn(whatsappAdminRecoverOwnReply);
+  const [snapshot,setSnapshot]=useState<Awaited<ReturnType<typeof whatsappAdminListOwnReplyOutbox>> | null>(null);
+  const [busy,setBusy]=useState(false);
+  const refresh=async()=>{try{setSnapshot(await list());}catch{toast.error("Não foi possível consultar as respostas.");}};
+  return <Card><CardHeader><CardTitle className="text-base">Recuperação de respostas da minha conta</CardTitle></CardHeader><CardContent className="space-y-3 text-sm">
+    <p>Somente respostas originais armazenadas. Entrega incerta exige análise; recuperar não executa a operação financeira novamente.</p>
+    <Button variant="outline" disabled={busy} onClick={refresh}>Consultar estados</Button>
+    {snapshot && !snapshot.enabled && <p>Preparado e bloqueado para homologação. Migração, chave e autorização de ativação ainda são necessárias.</p>}
+    {snapshot?.rows.map(row=><div key={row.id} className="flex flex-wrap items-center justify-between gap-2 rounded border p-3">
+      <span>{row.state} · {row.attempts} tentativa(s) · {new Date(row.created_at).toLocaleString("pt-BR")}</span>
+      {snapshot.enabled && ["pending","rejected"].includes(row.state) && <Button disabled={busy} variant="outline" onClick={async()=>{
+        if(!window.confirm("Enviar a confirmação original à sua conta? A operação financeira não será repetida. Envios ambíguos e fora da janela são bloqueados."))return;
+        setBusy(true);try{const r=await recover({data:{id:row.id,confirm:true}});toast.info("Resultado: "+r.state);await refresh();}catch{toast.error("Recuperação não confirmada. Consulte o estado antes de tentar novamente.");}finally{setBusy(false);}
+      }}>Recuperar confirmação</Button>}
+    </div>)}
+  </CardContent></Card>;
 }

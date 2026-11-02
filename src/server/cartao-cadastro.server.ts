@@ -79,17 +79,20 @@ export async function criarCartaoViaWhatsApp(
   const { userId, telefone, requestKey } = args;
   if (!userId || !telefone || !requestKey) return { status: "sem_vinculo" };
 
-  // 1/2. Vínculo ativo do número com ESTE usuário.
-  const { data: link, error: linkErr } = await admin
+  // 1/2. Vínculo ativo do número com ESTE usuário. As variantes do telefone
+  // (com/sem 55) podem ser linhas distintas; ler todas e exigir que exista uma
+  // ativa deste usuário — nunca depender de qual linha `limit(1)` devolve.
+  const { data: links, error: linkErr } = await admin
     .from("whatsapp_links")
     .select("user_id, ativo, opt_in_em, revogado_em")
     .in("telefone", telefoneCandidatos(telefone))
-    .limit(1)
-    .maybeSingle();
+    .limit(10);
   if (linkErr) return { status: "erro" };
-  if (!link || link.user_id !== userId || !link.ativo || !link.opt_in_em || link.revogado_em) {
-    return { status: "sem_vinculo" };
-  }
+  const vinculos = (links ?? []) as Array<{ user_id: string; ativo: boolean; opt_in_em: string | null; revogado_em: string | null }>;
+  // Número ativo vinculado a OUTRO usuário → ambíguo: falha fechada.
+  if (vinculos.some((l) => l.ativo && !l.revogado_em && l.user_id !== userId)) return { status: "sem_vinculo" };
+  const link = vinculos.find((l) => l.user_id === userId && l.ativo && l.opt_in_em && !l.revogado_em);
+  if (!link) return { status: "sem_vinculo" };
 
   // 3. Mesmo critério da regra de acesso do banco para gravar cartões.
   const { data: podeCartoes, error: featErr } = await admin.rpc("has_feature_access", {

@@ -444,6 +444,19 @@ function makeBuilder(table: string): any {
 export const fakeAdmin = {
   from: (t: string) => makeBuilder(t),
   rpc: async (n: string, a: any) => {
+    if (n === "whatsapp_entry_mutate_v2") {
+      const r=rowsOf(a.p_table).find((r:any)=>r.id===a.p_id && r.user_id===a.p_user_id);
+      if(!state.featureAccess) return {data:"blocked",error:null};
+      if(!r) return {data:"gone",error:null};
+      if(a.p_operation==="delete" && r.deleted_at) return {data:"gone",error:null};
+      if(a.p_operation==="restore" && !r.deleted_at) return {data:"already",error:null};
+      if(r.updated_at!==a.p_expected_at) return {data:"changed",error:null};
+      const deleted=a.p_operation==="delete"; const now=new Date().toISOString();
+      r.deleted_at=deleted?now:null; r.updated_at=now;
+      if(a.p_table==="gastos") { r.deleted_by=deleted?a.p_user_id:null; r.deletion_batch_id=deleted?a.p_request_id:null; r.deletion_source=deleted?"whatsapp":null; }
+      else {r.deleted_source=deleted?"whatsapp":null; r.deleted_reason=deleted?"exclusao_usuario":null;}
+      return {data:deleted?"deleted":"restored",error:null};
+    }
     if (n === "has_feature_access") return { data: state.featureAccess, error: null };
     if (n === "whatsapp_advance_card_session") {
       if (state.failNextCardTransition) {

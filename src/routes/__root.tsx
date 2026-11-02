@@ -9,7 +9,6 @@ import {
 } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { z } from "zod";
-import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { Toaster } from "@/components/ui/sonner";
 import { ConfirmDialogHost } from "@/components/ConfirmDialog";
 import { AuthProvider } from "@/lib/auth-context";
@@ -44,7 +43,7 @@ import appCss from "../styles.css?url";
 // Ver docs/INCIDENTE_P0_CARREGAMENTO_RECORRENTE_2026-08-07.md.
 
 const rootSearchSchema = z.object({
-  lang: fallback(z.enum(["pt", "en"]).optional(), undefined).optional(),
+  lang: z.enum(["pt", "en"]).optional().catch(undefined),
 });
 
 // Cores aproximadas de --background light/dark (oklch convertido p/ hex)
@@ -81,7 +80,7 @@ function NotFoundComponent() {
 }
 
 export const Route = createRootRoute({
-  validateSearch: zodValidator(rootSearchSchema),
+  validateSearch: rootSearchSchema,
   search: { middlewares: [retainSearchParams(["lang"])] },
   head: () => ({
     meta: [
@@ -392,7 +391,7 @@ function OfflineQueueMount() {
   useOfflineExpenseQueue(user?.id ?? null);
   useOfflineIncomeQueue(user?.id ?? null);
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-2 z-40 mx-auto flex max-w-md flex-col items-center gap-2 px-3">
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(var(--app-safe-top)+0.5rem)] z-40 mx-auto flex max-w-md flex-col items-center gap-2 px-3">
       <div className="pointer-events-auto w-full">
         <OfflineSyncStatus />
       </div>

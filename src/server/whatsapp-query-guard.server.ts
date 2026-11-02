@@ -191,8 +191,8 @@ function respostaPorArea(area: KnownArea): string {
   switch (area) {
     case "cartoes":
       return base(
-        "Consulta de cartões ainda não está disponível pelo WhatsApp. 💳",
-        "Para ver seus cartões cadastrados, abra o site ou o app do Gasto Inteligente. Aqui eu já consigo mostrar sua fatura: peça “minha fatura” ou “fatura do Nubank”.",
+        "Não entendi qual informação de cartão você quer. 💳",
+        "Para ver a lista, peça “meus cartões”. Para a fatura, peça “minha fatura” ou “fatura do Nubank”. Detalhes completos ficam no site ou no app do Gasto Inteligente.",
       );
     case "bancos":
       return base(

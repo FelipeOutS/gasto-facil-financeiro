@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MessageCircle, X, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
 
 const STORAGE_KEY = "gi.whatsapp-banner-dismissed-v1";
 
@@ -51,15 +53,20 @@ export function AvisoWhatsAppBanner() {
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
             {t("whatsappBanner.subtitle")}
           </p>
+          <Button asChild variant="link" size="sm" className="mt-2 h-auto p-0">
+            <Link to="/whatsapp">{t("whatsappBanner.cta")}</Link>
+          </Button>
         </div>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={dismiss}
           aria-label={t("whatsappBanner.dispensar")}
           className="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-card-elevated hover:text-foreground"
         >
           <X className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );

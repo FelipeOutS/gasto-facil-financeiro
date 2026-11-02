@@ -14,6 +14,9 @@ import {
   sendWhatsAppInteractiveReply,
   WHATSAPP_HANDLER_VERSION,
 } from "@/server/whatsapp.server";
+import * as waServer from "@/server/whatsapp.server";
+import { EXPENSE_CONFIRM_FALLBACK } from "@/server/whatsapp-messages";
+import { CARD_NEW_FALLBACK } from "@/server/whatsapp-cartao-messages";
 import { logWebhookEvent, updateWebhookLog } from "@/server/logs.server";
 import { checkRateLimit, getClientIp, RATE_LIMIT_PRESETS } from "@/server/rate-limit.server";
 import {
@@ -49,7 +52,6 @@ import {
 import { runTranscriber } from "@/server/whatsapp-transcription.server";
 import { normalizeVoiceMoney } from "@/server/whatsapp-voice-number-normalizer.server";
 import {splitAudioInstructions, multiAudioReply} from "@/server/whatsapp-audio-intents.server";
-import {readBoundedMedia,trustedMetaMediaUrl} from "@/server/whatsapp-media-download.server";
 import { runInboundProductionGate } from "@/server/whatsapp-c11-gates.server";
 import { detectOptout, executeOptoutForSender } from "@/server/whatsapp-optout.server";
 import { completeWhatsAppLinkVerification } from "@/server/whatsapp-link-verification.server";
@@ -438,39 +440,20 @@ async function downloadWhatsappMedia(
   mimeFromMeta: string | undefined,
   maxBytes: number,
 ): Promise<{ buffer: Buffer; declaredMime?: string } | null> {
-  const controller=new AbortController();
-  const timeout=setTimeout(()=>controller.abort(),15_000);
-  try {
-    const token = process.env.WHATSAPP_ACCESS_TOKEN;
-    if (!token) return null;
-    const { buildWhatsAppGraphUrl } = await import("@/server/whatsapp-graph-version.server");
-    const lookupBuild = buildWhatsAppGraphUrl({ kind: "media_lookup", mediaId });
-    if (!lookupBuild.ok) return null;
-    const lookup = await fetch(lookupBuild.url, {
-      headers: { Authorization: `Bearer ${token}` },
-      signal:controller.signal,redirect:"error",
-    });
-    if (!lookup.ok) return null;
-    const metadata=await readBoundedMedia(lookup,16*1024);
-    if(!metadata) return null;
-    const meta = JSON.parse(new TextDecoder().decode(metadata)) as { url?: string; mime_type?: string };
-    if (!meta.url || !trustedMetaMediaUrl(meta.url)) return null;
-    const dl = await fetch(meta.url, { headers: { Authorization: `Bearer ${token}` },signal:controller.signal,redirect:"error" });
-    if (!dl.ok) return null;
-    // Limite duro: paramos de ler se passar de `maxBytes`, sem
-    // bufferizar 100 MB de lixo enviado por um atacante.
-    const bytes=await readBoundedMedia(dl,maxBytes);
-    if(!bytes) return null;
-    const buf = Buffer.from(bytes);
-    if (buf.byteLength === 0 || buf.byteLength > maxBytes) return null;
-    return { buffer: buf, declaredMime: (meta.mime_type ?? mimeFromMeta)?.toLowerCase() };
-  } catch (err) {
-    // Não logamos `err.message`: pode conter a URL assinada da Meta.
-    console.error("[whatsapp] media download failed:", err instanceof Error ? err.name : "unknown");
+  const token = process.env.WHATSAPP_ACCESS_TOKEN;
+  if (!token) return null;
+  const { buildWhatsAppGraphUrl } = await import("@/server/whatsapp-graph-version.server");
+  const lookupBuild = buildWhatsAppGraphUrl({ kind: "media_lookup", mediaId });
+  if (!lookupBuild.ok) return null;
+  // Pacote 2/C: tempo limite em lookup e download; limite de bytes durante o streaming.
+  const { downloadWhatsappMediaBounded } = await import("@/server/whatsapp-bounded-fetch.server");
+  const r = await downloadWhatsappMediaBounded({ lookupUrl: lookupBuild.url, token, mimeFromMeta, maxBytes });
+  if (!r.ok) {
+    // Só o tipo da falha; nunca URL, token ou conteúdo.
+    console.error("[whatsapp] media download failed:", r.reason);
     return null;
-  } finally {
-    clearTimeout(timeout);
   }
+  return { buffer: r.buffer, declaredMime: r.declaredMime };
 }
 
 const MAX_RAW_BODY = 64 * 1024; // 64KB
@@ -567,16 +550,13 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
           return jsonResponse({ error: "payload_too_large" }, 413);
         }
 
-        const rawBody = await request.text();
-        if (rawBody.length > MAX_RAW_BODY) {
-          await logWebhookEvent({
-            provider: "whatsapp",
-            status: "failed",
-            http_status: 413,
-            error_message: "payload_too_large",
-            processing_time_ms: Date.now() - startedAt,
-          });
-          return jsonResponse({ error: "payload_too_large" }, 413);
+        let rawBody: string;
+        try {
+          const {readBodyLimited} = await import("@/server/whatsapp-bounded-fetch.server");
+          rawBody=(await readBodyLimited(new Response(request.body),MAX_RAW_BODY,5000)).toString("utf8");
+        } catch (error) {
+          const kind=(error as {kind?:string}).kind;
+          return jsonResponse({error:kind==="oversized"?"payload_too_large":"invalid_payload"},kind==="oversized"?413:400);
         }
 
         // Verificação HMAC obrigatória.
@@ -848,10 +828,12 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
               // sem `source` definido e nada muda para elas.
               source?: "audio";
               flowReply?: { responseJson: string };
+              replyId?: string;
             } = {
               external_id: msg.external_id,
               telefone: msg.telefone,
               texto: msg.texto,
+              replyId: msg.replyId,
               recebida_em: msg.recebida_em,
               authorizedUserId: elig.userId,
               ...(msg.flowReply ? { flowReply: msg.flowReply } : {}),
@@ -1193,36 +1175,56 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                 // preferimos a mensagem com botão CTA URL. Se o envio
                 // interativo falhar (`sent=false`), caímos para o texto
                 // plano `out.resposta` (que já inclui o link de fallback).
-                let sentOk = false;
-                if (out.interactive) {
-                  const r = await sendWhatsAppInteractiveCtaUrl(msg.telefone, out.interactive);
-                  sentOk = r.sent;
-                } else if (out.graphInteractive) {
-                  // Ex.: abrir o WhatsApp Flow de cadastro de cartão. Mesmo
-                  // sender/rastreio; falhou → texto (cadastro por conversa).
-                  try {
-                    const r = await sendWhatsAppInteractiveReply(msg.telefone, out.graphInteractive);
-                    sentOk = r.sent;
-                  } catch {
-                    sentOk = false;
-                  }
-                } else {
-                  // Botões/listas para perguntas conhecidas. Falhou → texto.
-                  const ir = buildInteractiveFromReply(out.resposta);
-                  if (ir) {
-                    try {
-                      const r = await sendWhatsAppInteractiveReply(
-                        msg.telefone,
-                        toGraphInteractive(ir),
-                      );
-                      sentOk = r.sent;
-                    } catch {
-                      sentOk = false;
-                    }
-                  }
+                // Pacote 2/A: a resposta é entregue SEM reprocessar a mensagem.
+                // Interativo ambíguo (timeout) → não manda texto por cima (duplicaria).
+                // Revisão corretiva: qualquer exceção ou 5xx/429/timeout no
+                // interativo é AMBÍGUA → nunca manda texto por cima.
+                const { isReplyOutboxEnabled } = await import("@/server/whatsapp-reply-outbox.server");
+                if (isReplyOutboxEnabled() && elig.userId && msg.external_id) {
+                  const { deliverDurableReply } = await import("@/server/whatsapp-reply-outbox-runtime.server");
+                  await deliverDurableReply({ userId: elig.userId, externalId: msg.external_id,
+                    phone: msg.telefone, receivedAt: new Date(msg.recebida_em ?? Date.now()),
+                    snapshot: { text: out.resposta, cta: out.interactive, interactive: out.graphInteractive } });
+                  continue; // Financial result is already saved; never fall back after uncertain send.
                 }
-                if (!sentOk) {
-                  await sendWhatsAppReply(msg.telefone, out.resposta);
+                const { deliverReplyPlan } = await import("@/server/whatsapp-reply-delivery.server");
+                const tel = msg.telefone;
+                let interactiveSend: (() => Promise<{ sent: boolean; reason?: string; status?: number }>) | null = null;
+                if (out.interactive) {
+                  const p = out.interactive;
+                  interactiveSend = () => sendWhatsAppInteractiveCtaUrl(tel, p);
+                } else if (out.graphInteractive) {
+                  // Ex.: abrir o WhatsApp Flow de cadastro de cartão. Recusado → texto.
+                  const g = out.graphInteractive;
+                  interactiveSend = () => sendWhatsAppInteractiveReply(tel, g);
+                } else {
+                  // Botões/listas para perguntas conhecidas. Recusado → texto.
+                  // Botões de gasto só saem presos à sessão criada por
+                  // ESTA mensagem; sem vínculo → só texto (1/2/3).
+                  const vinculo =
+                    elig.userId &&
+                    (out.resposta.includes(EXPENSE_CONFIRM_FALLBACK) ||
+                      out.resposta.includes(CARD_NEW_FALLBACK))
+                      ? ((await waServer.buscarVinculoBotaoGasto?.(
+                          elig.userId,
+                          msg.telefone,
+                          msg.external_id,
+                          out.resposta,
+                        )) ?? null)
+                      : null;
+                  const ir = buildInteractiveFromReply(
+                    out.resposta,
+                    vinculo && elig.userId
+                      ? { userId: elig.userId, telefone: msg.telefone, rowId: vinculo.rowId, rev: vinculo.rev }
+                      : null,
+                  );
+                  if (ir) interactiveSend = () => sendWhatsAppInteractiveReply(tel, toGraphInteractive(ir));
+                }
+                const texto = out.resposta;
+                const plan = await deliverReplyPlan(interactiveSend, () => sendWhatsAppReply(tel, texto));
+                if (plan.outcome !== "accepted") {
+                  // Efeito financeiro independe disto. Só classe e canal, sem PII.
+                  console.error({ event: "wa_reply_undelivered", outcome: plan.outcome, channel: plan.channel, status: out.status });
                 }
               } catch (replyErr) {
                 // WA-B3.4 — NUNCA logar err.message; pode conter URL

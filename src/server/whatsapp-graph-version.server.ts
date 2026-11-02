@@ -6,7 +6,7 @@
  *  - lê SOMENTE `process.env.WHATSAPP_GRAPH_VERSION` (nenhum fallback,
  *    nenhuma env alternativa);
  *  - valida estruturalmente com `^v[0-9]+\.[0-9]+$`;
- *  - autoriza somente `v20.0` na etapa atual (U-B);
+ *  - autoriza somente `v25.0` na etapa atual (U-B);
  *  - NÃO executa `trim()` para "salvar" entradas com espaço — espaço é
  *    tratado como valor inválido;
  *  - retorna um discriminado `{ ok: false, reason }` para permitir
@@ -26,8 +26,8 @@
  */
 
 const VERSION_PATTERN = /^v[0-9]+\.[0-9]+$/;
-/** Versão autorizada operacionalmente nesta etapa (U-B). */
-export const AUTHORIZED_GRAPH_VERSION = "v20.0" as const;
+/** Versão autorizada operacionalmente para homologação local em 25/10/2026. */
+export const AUTHORIZED_GRAPH_VERSION = "v25.0" as const;
 
 export type WhatsAppGraphVersionResult =
   | { ok: true; version: typeof AUTHORIZED_GRAPH_VERSION }
@@ -42,7 +42,7 @@ export type WhatsAppGraphVersionResult =
  *  - formato estrutural inválido (inclui espaços, caixa alta,
  *    números soltos, URL, `latest`, etc.) → `invalid`;
  *  - versão estruturalmente válida porém diferente da autorizada
- *    nesta etapa (ex.: `v25.0`) → `unsupported`.
+ *    nesta etapa (ex.: `v20.0`) → `unsupported`.
  *
  * Nunca retorna a versão sem validação. Nunca imprime `process.env`.
  * Nunca lança exceção — o chamador decide como falhar fechado.

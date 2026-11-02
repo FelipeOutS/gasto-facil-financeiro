@@ -1,7 +1,9 @@
 import type { MouseEvent } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Home, Ellipsis } from "lucide-react";
+import { Home, Plus } from "lucide-react";
+import { Fragment } from "react";
+import { MobileQuickActionsSheet } from "@/components/MobileQuickActionsSheet";
 import { useAlertaContas } from "@/lib/contas-alertas";
 import { NAV_GROUPS, type NavLeaf } from "@/lib/nav-groups";
 import { PRODUCT_EVENTS, trackProductEvent } from "@/lib/product-analytics";
@@ -18,9 +20,8 @@ function menuItem(to: string): NavLeaf {
 export const MOBILE_TABS: readonly NavLeaf[] = [
   { to: "/app", labelKey: "dashboard", icon: Home },
   menuItem("/gastos"),
-  menuItem("/renda"),
   menuItem("/cartoes"),
-  { to: "/app/mais", labelKey: "more", icon: Ellipsis },
+  menuItem("/app/cofre-pessoal"),
 ];
 
 export function mobileTabIndex(pathname: string): number {
@@ -28,10 +29,10 @@ export function mobileTabIndex(pathname: string): number {
   const tab = MOBILE_TABS.findIndex(({ to }) =>
     to === "/app" ? path === to : path === to || path.startsWith(to + "/"),
   );
-  if (tab !== -1) return tab;
-  // Secondary destinations come from the same menu used by Mais.
-  const morePaths = [...menuItems.map((item) => item.to), "/app/perfil", "/conta", "/app/idioma"];
-  return morePaths.some((to) => path === to || path.startsWith(to + "/")) ? 4 : -1;
+  // The middle slot is an action, never a selected destination.
+  if (tab !== -1) return tab < 2 ? tab : tab + 1;
+  // Secondary screens belong to the top menu, not to the vault.
+  return -1;
 }
 
 export function BottomNav() {
@@ -48,6 +49,12 @@ export function BottomNav() {
       aria-label={t("aria.primary")}
       hidden={keyboardOpen}
     >
+      <svg className="mobile-nav-surface" viewBox="0 0 420 64" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path
+          d="M26 .5 H158 C172 .5 169 10 178 29 C187 58 233 58 242 29 C251 10 248 .5 262 .5 H394 Q419.5 .5 419.5 26 V38 Q419.5 63.5 394 63.5 H26 Q.5 63.5 .5 38 V26 Q.5 .5 26 .5 Z"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
       <ul className="mobile-nav-track">
         <li
           ref={indicator}
@@ -61,10 +68,24 @@ export function BottomNav() {
           <span />
         </li>
         {MOBILE_TABS.map(({ to, labelKey, icon: Icon }, index) => {
-          const active = index === selected;
+          const slot = index < 2 ? index : index + 1;
+          const active = slot === selected;
           const showDot = to === "/app" && alerta !== "nenhum";
           return (
-            <li key={to} className="mobile-nav-item">
+            <Fragment key={to}>
+            {index === 2 && (
+              <li className="mobile-nav-item mobile-nav-create-item">
+                <MobileQuickActionsSheet
+                  financialOnly
+                  trigger={
+                    <button type="button" className="mobile-nav-create" aria-label={t("mobile.create")}>
+                      <Plus size={24} strokeWidth={1.7} aria-hidden="true" />
+                    </button>
+                  }
+                />
+              </li>
+            )}
+            <li className="mobile-nav-item">
               <Link
                 to={to}
                 preload="intent"
@@ -93,7 +114,7 @@ export function BottomNav() {
                 }}
               >
                 <span className="mobile-nav-icon">
-                  <Icon aria-hidden="true" size={22} strokeWidth={active ? 2.3 : 1.8} />
+                  <Icon aria-hidden="true" size={20} strokeWidth={active ? 2.2 : 1.7} fill={active && to === "/app" ? "currentColor" : "none"} />
                   {showDot && (
                     <span
                       aria-hidden="true"
@@ -101,6 +122,7 @@ export function BottomNav() {
                     />
                   )}
                 </span>
+                <span className="mobile-nav-label">{t(to === "/app" ? "mobile.home" : to === "/app/cofre-pessoal" ? "mobile.vault" : `items.${labelKey}`)}</span>
                 {showDot && (
                   <span className="sr-only">
                     {t(alerta === "vermelho" ? "aria.overdueAccounts" : "aria.soonAccounts")}
@@ -108,6 +130,7 @@ export function BottomNav() {
                 )}
               </Link>
             </li>
+            </Fragment>
           );
         })}
       </ul>

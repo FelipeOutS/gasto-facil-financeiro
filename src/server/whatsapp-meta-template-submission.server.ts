@@ -19,6 +19,8 @@ import type {
   CatalogLoader,
 } from "@/server/whatsapp-meta-templates-catalog.server";
 
+export const META_SUBMIT_TIMEOUT_MS = 15_000;
+
 function isSubmissionEnabled(): boolean {
   return process.env.WHATSAPP_META_SUBMISSION_ENABLED === "true";
 }
@@ -37,8 +39,12 @@ export type SubmissionResult =
         | "meta_error"
         | "token_missing"
         | "forbidden"
-        | "not_found";
+        | "not_found"
+        | "timeout"
+        | "persist_failed";
       detail?: string;
+      /** Presente em persist_failed: a Meta JÁ recebeu; não reenviar, sincronizar. */
+      provider_template_id?: string;
     }
   | { ok: true; provider_template_id: string; status: string };
 
@@ -47,7 +53,8 @@ export type SubmissionResult =
  */
 export async function submitTemplateToMeta(
   local: CatalogTemplateRow,
-  opts: { fetchFn?: typeof fetch } = {},
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  opts: { fetchFn?: typeof fetch; timeoutMs?: number; client?: any } = {},
 ): Promise<SubmissionResult> {
   if (!isSubmissionEnabled()) return { ok: false, reason: "disabled" };
 
@@ -65,50 +72,65 @@ export async function submitTemplateToMeta(
   if (!url.ok) return { ok: false, reason: "meta_error", detail: url.reason };
 
   const fetchFn = opts.fetchFn ?? fetch;
+  const timeoutMs = opts.timeoutMs ?? META_SUBMIT_TIMEOUT_MS;
 
+  let res: Response;
   try {
-    const res = await fetchFn(url.url, {
+    res = await fetchFn(url.url, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(prepared.payload),
+      signal: AbortSignal.timeout(timeoutMs),
     });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("[submitTemplateToMeta] Erro Meta:", data);
-      return {
-        ok: false,
-        reason: "meta_error",
-        detail: data?.error?.message || "Erro desconhecido",
-      };
-    }
-
-    // Sucesso: Meta retorna { id: "...", status: "PENDING" | "APPROVED" ... }
-    const providerId = data.id;
-    const status = (data.status || "submitted").toLowerCase();
-
-    // Persiste no banco local
-    const { error: updateError } = await supabaseAdmin
-      .from("whatsapp_meta_templates")
-      .update({
-        provider_template_id: providerId,
-        status: status,
-        submitted_at: new Date().toISOString(),
-        last_synced_at: new Date().toISOString(),
-      })
-      .eq("id", local.id);
-
-    if (updateError) {
-      console.error("[submitTemplateToMeta] Erro ao atualizar banco:", updateError);
-    }
-
-    return { ok: true, provider_template_id: providerId, status };
   } catch (err) {
-    console.error("[submitTemplateToMeta] Exceção:", err);
-    return { ok: false, reason: "meta_error", detail: String(err) };
+    const name = (err as { name?: string } | null)?.name;
+    const isTimeout = name === "TimeoutError" || name === "AbortError";
+    console.error("[submitTemplateToMeta] falha de rede", { kind: isTimeout ? "timeout" : "network" });
+    // Resultado incerto: a Meta pode ter recebido. O admin deve sincronizar antes de reenviar.
+    return { ok: false, reason: isTimeout ? "timeout" : "meta_error", detail: isTimeout ? "Tempo esgotado; sincronize antes de tentar de novo." : "Falha de rede" };
   }
+
+  let data: { id?: unknown; status?: unknown; error?: { message?: unknown; code?: unknown } } | null = null;
+  try {
+    data = await res.json();
+  } catch {
+    data = null;
+  }
+
+  if (!res.ok) {
+    // Log sem corpo bruto da Meta (pode conter dados da conta).
+    console.error("[submitTemplateToMeta] Erro Meta", { status: res.status, code: data?.error?.code ?? null });
+    const msg = typeof data?.error?.message === "string" ? data.error.message.slice(0, 200) : "Erro desconhecido";
+    return { ok: false, reason: "meta_error", detail: msg };
+  }
+
+  const providerId = typeof data?.id === "string" && data.id ? data.id : null;
+  if (!providerId) {
+    console.error("[submitTemplateToMeta] resposta sem id", { status: res.status });
+    return { ok: false, reason: "meta_error", detail: "Resposta da Meta sem identificador" };
+  }
+  const status = (typeof data?.status === "string" ? data.status : "submitted").toLowerCase();
+
+  const client = opts.client ?? supabaseAdmin;
+  const nowIso = new Date().toISOString();
+  try {
+    const { error: updateError } = await client
+      .from("whatsapp_meta_templates")
+      .update({ provider_template_id: providerId, status, submitted_at: nowIso, last_synced_at: nowIso })
+      .eq("id", local.id);
+    if (updateError) throw new Error("update_failed");
+  } catch {
+    console.error("[submitTemplateToMeta] Meta aceitou, mas gravação local falhou", { templateId: local.id });
+    return {
+      ok: false,
+      reason: "persist_failed",
+      provider_template_id: providerId,
+      detail: "Enviado à Meta, mas não registrado localmente. Sincronize; não reenvie.",
+    };
+  }
+
+  return { ok: true, provider_template_id: providerId, status };
 }

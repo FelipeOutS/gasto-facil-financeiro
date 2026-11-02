@@ -75,17 +75,25 @@ function normalize(text: string): string {
 // ---------- valor ----------
 
 export function parseValor(text: string): number | null {
-  // R$ 1.234,56 | 1234,56 | 1234.56 | 950 | 19,90
-  const re = /(?:r\$\s*)?(\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?|\d+(?:[,.]\d{1,2})?)/i;
-  const m = text.match(re);
+  // R$ 1.234,56 | 1.950 | 1234,56 | 1234.56 | 950 | 19,90
+  // Pega o primeiro token numérico completo (dígitos com . e ,) e
+  // classifica: milhar PT-BR, decimal com vírgula, decimal com ponto
+  // (até 2 casas) ou inteiro. Token malformado/ambíguo => null.
+  const m = text.match(/\d[\d.,]*/);
   if (!m) return null;
-  let raw = m[1];
-  // Se tem vírgula, é separador decimal br
-  if (raw.includes(",")) {
-    raw = raw.replace(/\./g, "").replace(",", ".");
+  const raw = m[0].replace(/[.,]+$/, "");
+  let norm: string;
+  if (/^\d{1,3}(?:\.\d{3})+(?:,\d{1,2})?$/.test(raw)) {
+    norm = raw.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d+,\d{1,2}$/.test(raw)) {
+    norm = raw.replace(",", ".");
+  } else if (/^\d+(?:\.\d{1,2})?$/.test(raw)) {
+    norm = raw;
+  } else {
+    return null;
   }
-  const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : null;
+  const n = Math.round(Number(norm) * 100) / 100;
+  return Number.isFinite(n) && n > 0 && n < 1e12 ? n : null;
 }
 
 // ---------- data ----------

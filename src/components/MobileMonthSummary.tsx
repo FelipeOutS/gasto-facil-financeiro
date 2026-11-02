@@ -49,7 +49,7 @@ export function MobileMonthSummary({
   const [hidden, setHidden] = useState(false);
 
   return (
-    <section aria-label={t("sections.visao")} className="mt-3 animate-rise">
+    <section aria-label={t("sections.visao")} className="premium-mobile-summary mt-3">
       {/* Cabeçalho — "resumo de {mês}" + switcher */}
       <div className="flex items-center justify-between gap-2 px-1">
         <h2 className="flex items-center gap-1.5 text-[15px] font-semibold capitalize tracking-tight">
@@ -85,7 +85,7 @@ export function MobileMonthSummary({
             </span>
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
-                {t("kpi.saldo")}
+                Resultado do mês
               </p>
               <p
                 className={cn(

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { MailCheck, RefreshCw } from "lucide-react";
@@ -44,6 +44,7 @@ function CadastroForm() {
   const [touched, setTouched] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [reenviando, setReenviando] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
   const senhaOk = useMemo(() => senhaForte(password), [password]);
   const confereSenha = confirm.length > 0 && password === confirm;
@@ -71,8 +72,14 @@ function CadastroForm() {
     setEnviado(true);
   }
 
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(id);
+  }, [cooldown]);
+
   async function reenviar() {
-    if (!email) return;
+    if (!email || cooldown > 0) return;
     setReenviando(true);
     const { error } = await supabase.auth.resend({
       type: "signup",
@@ -80,6 +87,7 @@ function CadastroForm() {
       options: { emailRedirectTo: (await import("@/lib/public-url")).buildPublicUrl("/") },
     });
     setReenviando(false);
+    setCooldown(60);
     if (error) {
       toast.error(traduzirErroAuth(error.message));
       return;
@@ -116,10 +124,14 @@ function CadastroForm() {
             variant="outline"
             className="h-12 w-full rounded-2xl text-base font-semibold"
             onClick={reenviar}
-            disabled={reenviando}
+            disabled={reenviando || cooldown > 0}
           >
             <RefreshCw className={`mr-2 h-4 w-4 ${reenviando ? "animate-spin" : ""}`} />
-            {reenviando ? t("signup.resending") : t("signup.resend")}
+            {reenviando
+              ? t("signup.resending")
+              : cooldown > 0
+                ? `${t("signup.resend")} (${cooldown}s)`
+                : t("signup.resend")}
           </Button>
 
           <Button

@@ -157,6 +157,8 @@ async function callGemini(input: BoletoOcrInput): Promise<
   try {
     resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
+      // Pacote 2/C: tempo limite (cai no catch → gateway_error).
+      signal: AbortSignal.timeout(45_000),
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",

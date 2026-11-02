@@ -6,6 +6,7 @@
 // aparelho pode usar a biometria para autorizar o uso da sessão Supabase
 // já persistida (refresh token gerenciado pelo próprio SDK).
 //
+import { saveSecureSession, clearSecureSession } from "./secure-session";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -240,7 +241,8 @@ export function clearLoginBioSessionOnly(): void {
   setLoginBioInProgress(false);
 }
 
-export function clearLoginBio(): void {
+export async function clearLoginBio(): Promise<void> {
+  if (!(await clearSecureSession())) throw new Error("Não foi possível desativar o acesso seguro. Tente novamente.");
   try {
     const email = window.localStorage.getItem(LOGIN_BIO_EMAIL_KEY);
     if (email) window.localStorage.removeItem(userEnabledKey(email));
@@ -542,7 +544,11 @@ export async function enableLoginBio(email: string): Promise<void> {
     console.log("[EnableBiometric] user id:", session.user.id);
 
     const normalizedEmail = (session.user.email || email || "").trim().toLowerCase();
-    if (!persistLoginBioSession(session)) {
+    // The native bridge must acknowledge encrypted persistence before enabling login.
+    const saved = window.AndroidSecureSession
+      ? await saveSecureSession(session)
+      : persistLoginBioSession(session);
+    if (!saved) {
       throw new Error("Não foi possível salvar a sessão para entrada por biometria.");
     }
     try {

@@ -1,3 +1,4 @@
+import { needsIncomeReconciliation, INCOME_RECONCILIATION_REPLY } from "./whatsapp-income-reconciliation";
 /**
  * Fase WA-G1 — Lançamento de RECEITAS via WhatsApp.
  *
@@ -360,6 +361,7 @@ export async function persistirReceita(
   externalMessageId?: string,
   pendingSessionId?: string,
 ): Promise<PersistirReceitaResult> {
+  if (needsIncomeReconciliation(`${s.mensagemOriginal} ${s.descricao ?? ""} ${s.tipoLabel ?? ""}`)) return {ok:false,resposta:INCOME_RECONCILIATION_REPLY};
   // WA-C11 3B.2.C.1 Block 3 — Fail-closed sem external_id: a idempotência
   // da quota financeira depende dele. Não consulta plano, não abre RPC,
   // não insere. Log sanitizado (sem PII).
@@ -554,6 +556,7 @@ export function buildConfirmacao(s: ReceitaSession): string {
  * Decide o próximo estado.
  */
 export function startReceitaFromText(texto: string): StepResult {
+  if (needsIncomeReconciliation(texto)) return {status:"cancelada",session:{kind:"receita",mensagemOriginal:texto},resposta:INCOME_RECONCILIATION_REPLY};
   const tipoMatch = detectTipoReceita(texto);
   const valor = parseValor(texto);
   const base: ReceitaSession = {
@@ -600,6 +603,7 @@ export function nextStepReceita(
   resposta: "confirm" | "cancel" | "outro",
 ): StepResult {
   const s: ReceitaSession = { ...session };
+  if(needsIncomeReconciliation(texto)) return {status:"cancelada",session:s,resposta:INCOME_RECONCILIATION_REPLY};
 
   if (current === "rec_aguardando_tipo") {
     const t = detectTipoReceita(texto);

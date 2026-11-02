@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useRef, useCallback, useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { MobileShell } from "@/components/MobileShell";
 import { AdminMasterGate } from "@/components/AdminMasterGate";
@@ -54,6 +54,7 @@ export const Route = createFileRoute("/admin_/uso-produto")({
 const WINDOWS = [7, 30, 90] as const;
 
 function UsoProdutoPage() {
+  const requestId = useRef(0);
   const fetchReport = useServerFn(getProductUsageReport);
   const [days, setDays] = useState<number>(30);
   const [data, setData] = useState<ProductUsageReport | null>(null);
@@ -75,15 +76,18 @@ function UsoProdutoPage() {
 
   const load = useCallback(
     async (windowDays: number) => {
+      const request = ++requestId.current;
       setLoading(true);
       setError(null);
       try {
         const result = await fetchReport({ data: { days: windowDays } });
+        if (request !== requestId.current) return;
         setData(result);
       } catch (e) {
+        if (request !== requestId.current) return;
         setError(e instanceof Error ? e.message : "Falha ao carregar métricas.");
       } finally {
-        setLoading(false);
+        if (request === requestId.current) setLoading(false);
       }
     },
     [fetchReport],
@@ -91,6 +95,7 @@ function UsoProdutoPage() {
 
   useEffect(() => {
     void load(days);
+    return () => { requestId.current++; };
   }, [days, load]);
 
   return (

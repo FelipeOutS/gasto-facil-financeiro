@@ -1,6 +1,7 @@
 import { describe, expect, test, mock, beforeEach } from "bun:test";
 
 mock.module("@/integrations/supabase/client.server", () => ({ supabaseAdmin: {} }));
+process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET = "test-only-fake-secret-0123456789abcdef";
 
 const { parseWhen, resolveWhen, localParts, localToUtc } = await import("../src/lib/agenda/datetime");
 const { nextOccurrence } = await import("../src/lib/agenda/recurrence");
@@ -21,17 +22,20 @@ const at = (t: string, now = NOW) => local(resolveWhen(parseWhen(t, now, TZ), no
 type Row = Record<string, unknown>;
 let db: Record<string, Row[]>;
 let queue: Row[];
+let failDb = false;
 function fakeClient() {
   return {
     from(table: string) {
       const filters: Array<(r: Row) => boolean> = [];
       let op: "select" | "insert" | "update" = "select";
       let payload: Row | null = null;
+      let rng: [number, number] | null = null;
       const q = {
         select: () => q,
         eq: (k: string, v: unknown) => (filters.push((r) => r[k] === v), q),
         in: (k: string, v: unknown[]) => (filters.push((r) => v.includes(r[k])), q),
         order: () => q,
+        range: (a: number, b: number) => ((rng = [a, b]), q),
         limit: () => q,
         insert: (r: Row) => ((op = "insert"), (payload = r), q),
         update: (r: Row) => ((op = "update"), (payload = r), q),
@@ -47,7 +51,9 @@ function fakeClient() {
             t.push(row);
             return { data: [row], error: null };
           }
-          const rows = t.filter((r) => filters.every((f) => f(r)));
+          if (failDb) return { data: null, error: { message: "db down" } };
+          let rows = t.filter((r) => filters.every((f) => f(r)));
+          if (rng) rows = rows.slice(rng[0], rng[1] + 1);
           if (op === "update") rows.forEach((r) => Object.assign(r, payload, { updated_at: String(Math.random()) }));
           return { data: rows, error: null };
         },
@@ -125,6 +131,7 @@ beforeEach(() => {
     recorrencias: [],
   };
   queue = [];
+  failDb = false;
   fatura = { total: 56, venc: new Date(2026, 10, 5) };
 });
 
@@ -217,7 +224,10 @@ describe("site + WhatsApp na mesma agenda", () => {
     expect(site[0].starts_at).toBe("2026-10-02T12:00:00.000Z");
     await W.handleAgendaIntent(U1, detectAgendaIntent("mude a internet para 15h")!, { now: NOW, deps: d });
     expect((await A.getAgendaItem(U1, site[0].id, d))!.starts_at).toBe("2026-10-02T18:00:00.000Z");
-    await W.handleAgendaIntent(U1, detectAgendaIntent("cancele o lembrete da internet")!, { now: NOW, deps: d });
+    const ask = await W.handleAgendaIntent(U1, detectAgendaIntent("cancele o lembrete da internet")!, { now: NOW, deps: d });
+    expect((await A.getAgendaItem(U1, site[0].id, d))!.status).toBe("ativo"); // pede confirmação antes
+    const okId = (ask.graphInteractive as any).action.buttons[0].reply.id as string;
+    await W.handleAgendaIntent(U1, detectAgendaIntent(okId)!, { now: NOW, deps: d });
     expect((await A.getAgendaItem(U1, site[0].id, d))!.status).toBe("cancelado");
     expect(pending(site[0].id)).toHaveLength(0);
   });
@@ -386,5 +396,319 @@ describe("UX pós-criação (sem Concluir imediato)", () => {
     expect(ids(v).map((x: { title: string }) => x.title)).toEqual(["✅ Concluir", "✏️ Editar", "❌ Cancelar"]);
     const done = await W.handleAgendaIntent(U1, detectAgendaIntent(`agenda_done:${row.id}`)!, { now: NOW, deps: d });
     expect(done.resposta).toContain("concluído");
+  });
+});
+
+describe("comandos sem alvo (2026-10-12)", () => {
+  const run = (u: string, t: string, d: ReturnType<typeof deps>) =>
+    W.handleAgendaIntent(u, detectAgendaIntent(t)!, { now: NOW, tz: TZ, deps: d });
+
+  test("frases sem nome viram 'escolher', nunca cancelar/concluir direto", () => {
+    expect(detectAgendaIntent("cancelar lembrete")).toEqual({ type: "escolher", acao: "cancelar" });
+    expect(detectAgendaIntent("marcar como concluído")).toEqual({ type: "escolher", acao: "concluir" });
+    expect(detectAgendaIntent("concluir")).toEqual({ type: "escolher", acao: "concluir" });
+    expect(detectAgendaIntent("adiar para amanhã")?.type).toBe("escolher");
+    expect(detectAgendaIntent("cancelar")).toBeNull(); // pertence às sessões pendentes
+  });
+
+  test("cancelar lembrete lista só itens do próprio usuário e não altera nada", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    await run(U2, "me lembra amanhã às 10 de ligar pro banco", d);
+    const r = await run(U1, "cancelar lembrete", d);
+    expect(r.resposta).toContain("Pagar a internet");
+    expect(r.resposta).not.toContain("igar pro banco");
+    const rows = (r.graphInteractive as any).action.sections[0].rows;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].id.startsWith("agenda_cancel:")).toBe(true);
+    expect(db.agenda_items.every((x) => x.status === "ativo")).toBe(true);
+  });
+
+  test("outro usuário não consegue cancelar pelo id", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    const id = db.agenda_items[0].id as string;
+    await run(U2, `agenda_cancel:${id}`, d);
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("sem itens: resposta útil", async () => {
+    expect((await run(U1, "concluir", deps())).resposta).toContain("não tem lembretes ativos");
+  });
+
+  test("adiar sem nome lista só lembretes únicos e pede o nome", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    await run(U1, "me lembra todo dia às 8h de tomar remedio", d);
+    const r = await run(U1, "adiar para amanhã", d);
+    expect(r.resposta).toContain("Pagar a internet");
+    expect(r.resposta).not.toContain("omar remedio");
+  });
+
+  test("adiar lembrete recorrente explica o limite e não altera a série", async () => {
+    const d = deps();
+    await run(U1, "me lembra todo dia às 8h de tomar remedio", d);
+    const before = db.agenda_items[0].starts_at;
+    const r = await run(U1, "adie o lembrete tomar remedio para amanhã", d);
+    expect(r.resposta).toContain("se repete");
+    expect(db.agenda_items[0].starts_at).toBe(before);
+  });
+
+  test("adiar lembrete único move no fuso do item, mantendo a hora", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    await run(U1, "adie o lembrete pagar a internet para depois de amanhã", d);
+    expect(local(new Date(db.agenda_items[0].starts_at as string))).toBe("2026-10-03 09:00");
+  });
+});
+
+describe("cancelar lembrete com páginas e confirmação (2026-10-12)", () => {
+  const run = (u: string, t: string, d: ReturnType<typeof deps>, now = NOW) =>
+    W.handleAgendaIntent(u, detectAgendaIntent(t)!, { now, tz: TZ, deps: d });
+  const rowsOf = (r: { graphInteractive?: unknown }) => (r.graphInteractive as any).action.sections[0].rows as Array<{ id: string; title: string }>;
+  const btnsOf = (r: { graphInteractive?: unknown }) => (r.graphInteractive as any).action.buttons.map((b: any) => b.reply.id) as string[];
+  const seed = (n: number, u = U1, extra: Row = {}) => {
+    for (let i = 0; i < n; i++)
+      db.agenda_items.push({ id: crypto.randomUUID(), user_id: u, status: "ativo", kind: "lembrete", titulo: `Item ${i + 1}`,
+        starts_at: new Date(NOW.getTime() + (i + 1) * 3600_000).toISOString(), timezone: TZ, origem: i % 2 ? "site" : "whatsapp", ...extra });
+  };
+
+  test("lista inclui itens do site, do WhatsApp, recorrentes e avisos financeiros; nunca de outro usuário", async () => {
+    const d = deps();
+    await run(U1, "me lembra todo dia às 8h de tomar remedio", d);
+    await run(U1, "me lembra da conta internet 2 dias antes", d);
+    seed(1, U1, { titulo: "Dentista", origem: "site" });
+    seed(3, U2, { titulo: "Segredo do outro" });
+    const r = await run(U1, "cancelar lembrete", d);
+    expect(r.resposta).toContain("omar remedio");
+    expect(r.resposta).toContain("todo dia");
+    expect(r.resposta).toContain("Dentista");
+    expect(r.resposta).toContain("Site");
+    expect(r.resposta).toContain("não apaga a conta");
+    expect(r.resposta).not.toContain("Segredo do outro");
+    expect(rowsOf(r).filter((x) => x.id.startsWith("agenda_cancel:"))).toHaveLength(db.agenda_items.filter((x) => x.user_id === U1).length);
+  });
+
+  test(">10 itens: páginas de 8 + navegação, todos acessíveis sem repetir", async () => {
+    seed(25);
+    const d = deps();
+    const seen = new Set<string>();
+    let r = await run(U1, "cancelar lembrete", d);
+    for (let p = 0; p < 10; p++) {
+      const rows = rowsOf(r);
+      expect(rows.length).toBeLessThanOrEqual(10);
+      for (const x of rows.filter((x) => x.id.startsWith("agenda_cancel:"))) {
+        expect(seen.has(x.id)).toBe(false);
+        seen.add(x.id);
+      }
+      const next = rows.find((x) => x.id.startsWith("agenda_cpage:") && x.title.includes("Próximos"));
+      if (!next) break;
+      r = await run(U1, next.id, d);
+    }
+    expect(seen.size).toBe(25);
+    const back = rowsOf(r).find((x) => x.title.includes("Anteriores"));
+    expect(back).toBeTruthy();
+  });
+
+  test(">200 itens: a última página continua alcançável (sem limite de 200)", async () => {
+    seed(205);
+    const r = await run(U1, "agenda_cpage:25", deps());
+    expect(r.resposta).toContain("Item 201");
+    expect(r.resposta).toContain("Item 205");
+  });
+
+  test("tocar no item NÃO cancela: mostra resumo com Confirmar/Voltar", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    const id = db.agenda_items[0].id as string;
+    const r = await run(U1, `agenda_cancel:${id}`, d);
+    expect(db.agenda_items[0].status).toBe("ativo");
+    const ids = btnsOf(r);
+    expect(ids[0].startsWith(`agenda_cancel_ok:${id}:`)).toBe(true);
+    expect(ids[1]).toBe("agenda_cancel_back");
+  });
+
+  test("confirmar cancela (soft), retry não repete, histórico preservado", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    const id = db.agenda_items[0].id as string;
+    const ok = btnsOf(await run(U1, `agenda_cancel:${id}`, d))[0];
+    const r1 = await run(U1, ok, d);
+    expect(r1.resposta).toContain("histórico fica preservado");
+    expect(db.agenda_items).toHaveLength(1);
+    expect(db.agenda_items[0].status).toBe("cancelado");
+    const cancelledAt = db.agenda_items[0].cancelled_at;
+    const r2 = await run(U1, ok, d);
+    expect(r2.resposta).toContain("já está cancelado");
+    expect(db.agenda_items[0].cancelled_at).toBe(cancelledAt);
+  });
+
+  test("Voltar não altera nada e reabre a lista", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    const r = await run(U1, "agenda_cancel_back", d);
+    expect(r.resposta).toContain("Qual item você quer cancelar");
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("confirmação expirada (>30 min) não cancela", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    const id = db.agenda_items[0].id as string;
+    const ok = btnsOf(await run(U1, `agenda_cancel:${id}`, d))[0];
+    const later = new Date(NOW.getTime() + 31 * 60_000);
+    const r = await run(U1, ok, deps(), later);
+    expect(r.resposta).toContain("expirou");
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("confirmação de A usada por B não cancela o item de A", async () => {
+    const d = deps();
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    const id = db.agenda_items[0].id as string;
+    const ok = btnsOf(await run(U1, `agenda_cancel:${id}`, d))[0];
+    const r = await run(U2, ok, d);
+    expect(r.resposta).toContain("nada foi cancelado");
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("aviso financeiro: cancelar só o aviso, a conta continua pendente", async () => {
+    const d = deps();
+    await run(U1, "me lembra da conta internet 2 dias antes", d);
+    const id = db.agenda_items[0].id as string;
+    const ask = await run(U1, `agenda_cancel:${id}`, d);
+    expect(ask.resposta).toContain("cancela só o aviso");
+    await run(U1, btnsOf(ask)[0], d);
+    expect(db.agenda_items[0].status).toBe("cancelado");
+    expect(db.contas_a_pagar.find((x) => x.id === "k-net")!.status).toBe("pendente");
+  });
+
+  test("'sim' ou 'não' soltos não confirmam cancelamento", () => {
+    expect(detectAgendaIntent("sim")).toBeNull();
+    expect(detectAgendaIntent("não")).toBeNull();
+    expect(detectAgendaIntent("confirmar cancelamento")).toEqual({ type: "escolher", acao: "cancelar" });
+  });
+
+  test("0 itens ativos: mensagem clara", async () => {
+    expect((await run(U1, "cancelar lembrete", deps())).resposta).toContain("não tem lembretes ativos");
+  });
+
+  test("falha do banco: mensagem amigável, nada alterado", async () => {
+    seed(2);
+    failDb = true;
+    const r = await run(U1, "cancelar lembrete", deps());
+    expect(r.resposta).toContain("Não consegui abrir sua agenda");
+  });
+
+  test("histórico mostra cancelados quando pedido", async () => {
+    seed(1, U1, { status: "cancelado", titulo: "Velho" });
+    expect((await run(U1, "historico de lembretes", deps())).resposta).toContain("Velho");
+  });
+
+  test("IDs de página/confirmação passam pelo conversor de botões", async () => {
+    const { replyIdToTexto } = await import("../src/server/whatsapp-interactive.server");
+    expect(replyIdToTexto("agenda_cpage:3", "➡️ Próximos")).toBe("agenda_cpage:3");
+    expect(replyIdToTexto("agenda_cancel_back", "Voltar")).toBe("agenda_cancel_back");
+    const ok = `agenda_cancel_ok:${crypto.randomUUID()}:abc`;
+    expect(replyIdToTexto(ok, "Confirmar")).toBe(ok);
+  });
+});
+
+describe("confirmação assinada e cancelamento atômico (2026-10-12)", () => {
+  const run = (u: string, t: string, d: ReturnType<typeof deps>, now = NOW) =>
+    W.handleAgendaIntent(u, detectAgendaIntent(t)!, { now, tz: TZ, deps: d });
+  const okOf = (r: { graphInteractive?: unknown }) => (r.graphInteractive as any).action.buttons[0].reply.id as string;
+  const mk = async (d: ReturnType<typeof deps>) => {
+    await run(U1, "me lembra amanhã às 9 de pagar a internet", d);
+    return db.agenda_items[0].id as string;
+  };
+  const minute = (Math.floor(NOW.getTime() / 60_000)).toString(36);
+
+  test("ID forjado com minuto atual e sem assinatura válida não cancela", async () => {
+    const d = deps();
+    const id = await mk(d);
+    for (const forged of [
+      `agenda_cancel_ok:${id}:${minute}`,
+      `agenda_cancel_ok:${id}:${minute}:${"A".repeat(22)}`,
+    ]) {
+      const r = await run(U1, forged, d);
+      expect(r.resposta).toContain("nada foi cancelado");
+    }
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("assinatura de um item não vale para outro item do mesmo usuário", async () => {
+    const d = deps();
+    const id1 = await mk(d);
+    await run(U1, "me lembra amanhã às 10 de ligar pro banco", d);
+    const id2 = db.agenda_items[1].id as string;
+    const ok1 = okOf(await run(U1, `agenda_cancel:${id1}`, d));
+    const swapped = ok1.replace(id1, id2);
+    expect((await run(U1, swapped, d)).resposta).toContain("nada foi cancelado");
+    expect(db.agenda_items.every((x) => x.status === "ativo")).toBe(true);
+  });
+
+  test("token de A usado por B é recusado pela assinatura", async () => {
+    const d = deps();
+    const id = await mk(d);
+    const ok = okOf(await run(U1, `agenda_cancel:${id}`, d));
+    expect((await run(U2, ok, d)).resposta).toContain("nada foi cancelado");
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("minuto adulterado invalida a assinatura (não estende a validade)", async () => {
+    const d = deps();
+    const id = await mk(d);
+    const ok = okOf(await run(U1, `agenda_cancel:${id}`, d));
+    const parts = ok.split(":");
+    parts[2] = (parseInt(parts[2], 36) + 40).toString(36);
+    expect((await run(U1, parts.join(":"), d, new Date(NOW.getTime() + 45 * 60_000))).resposta).toContain("nada foi cancelado");
+  });
+
+  test("dois cliques simultâneos: só um altera e a fila é sincronizada uma vez", async () => {
+    const d = deps();
+    const id = await mk(d);
+    const ok = okOf(await run(U1, `agenda_cancel:${id}`, d));
+    let syncs = 0;
+    const d2 = { ...d, cancelPending: async (...a: [string, string, string]) => (syncs++, d.cancelPending(...a)) };
+    const [a, b] = await Promise.all([run(U1, ok, d2), run(U1, ok, d2)]);
+    const textos = [a.resposta, b.resposta];
+    expect(textos.filter((t) => t.startsWith("Tudo certo"))).toHaveLength(1);
+    expect(db.agenda_items[0].status).toBe("cancelado");
+    expect(syncs).toBe(1);
+  });
+
+  test("item concluído depois do resumo não é cancelado", async () => {
+    const d = deps();
+    const id = await mk(d);
+    const ok = okOf(await run(U1, `agenda_cancel:${id}`, d));
+    await run(U1, `agenda_done:${id}`, d);
+    const r = await run(U1, ok, d);
+    expect(r.resposta).toContain("já está concluído");
+    expect(db.agenda_items[0].status).toBe("concluido");
+  });
+
+  test("sem segredo no servidor: falha fechada, nada é cancelado", async () => {
+    const d = deps();
+    const id = await mk(d);
+    const ok = okOf(await run(U1, `agenda_cancel:${id}`, d));
+    const saved = process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET;
+    delete process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET;
+    try {
+      expect((await run(U1, ok, d)).resposta).toContain("nada foi cancelado");
+      expect((await run(U1, `agenda_cancel:${id}`, d)).resposta).toContain("Nada foi alterado");
+    } finally {
+      process.env.WHATSAPP_BOLETO_FINGERPRINT_SECRET = saved;
+    }
+    expect(db.agenda_items[0].status).toBe("ativo");
+  });
+
+  test("UPDATE condicional: setAgendaStatus em item já cancelado lança 'already'", async () => {
+    const d = deps();
+    const id = await mk(d);
+    await A.setAgendaStatus(U1, id, "cancelar", d);
+    const before = db.agenda_items[0].cancelled_at;
+    await expect(A.setAgendaStatus(U1, id, "cancelar", d)).rejects.toThrow();
+    expect(db.agenda_items[0].cancelled_at).toBe(before);
   });
 });

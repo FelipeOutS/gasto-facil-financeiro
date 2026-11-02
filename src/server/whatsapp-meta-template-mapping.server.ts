@@ -5,7 +5,7 @@
  * de qualquer camada não-servidora. Este módulo é a fonte única de verdade
  * da correlação evento → template aprovado.
  *
- * Regra: apenas os três eventos abaixo são elegíveis nesta fase. Qualquer
+ * Regra: apenas os cinco eventos abaixo são elegíveis nesta fase. Qualquer
  * outra chave (fatura, metas, mercado, orçamento, IA, canary, hello_world,
  * pending, recorrente, etc.) é bloqueada com `not_allowed`.
  */
@@ -13,12 +13,16 @@
 export type AllowedNotificationKey =
   | "gi_conta_vencendo_hoje"
   | "gi_conta_vencendo_amanha"
-  | "gi_conta_atrasada";
+  | "gi_conta_atrasada"
+  | "gi_agenda_lembrete"
+  | "gi_agenda_financeiro";
 
 export type AllowedMetaName =
   | "gi_conta_vencendo_hoje_v1"
   | "gi_conta_vencendo_amanha_v1"
-  | "gi_conta_atrasada_v1";
+  | "gi_conta_atrasada_v1"
+  | "gi_agenda_lembrete_v1"
+  | "gi_agenda_financeiro_v1";
 
 interface MappingEntry {
   readonly notificationKey: AllowedNotificationKey;
@@ -29,6 +33,8 @@ interface MappingEntry {
 }
 
 const ALLOWLIST: Readonly<Record<AllowedNotificationKey, MappingEntry>> = Object.freeze({
+  gi_agenda_lembrete: { notificationKey: "gi_agenda_lembrete", metaName: "gi_agenda_lembrete_v1", language: "pt_BR", category: "UTILITY", version: 1 },
+  gi_agenda_financeiro: { notificationKey: "gi_agenda_financeiro", metaName: "gi_agenda_financeiro_v1", language: "pt_BR", category: "UTILITY", version: 1 },
   gi_conta_vencendo_hoje: {
     notificationKey: "gi_conta_vencendo_hoje",
     metaName: "gi_conta_vencendo_hoje_v1",
@@ -58,6 +64,7 @@ export type MappingLookupResult =
 
 export function resolveAllowedMapping(notificationKey: unknown): MappingLookupResult {
   if (typeof notificationKey !== "string") return { ok: false, reason: "not_allowed" };
+  if (!Object.prototype.hasOwnProperty.call(ALLOWLIST, notificationKey)) return { ok: false, reason: "not_allowed" };
   const entry = (ALLOWLIST as Record<string, MappingEntry | undefined>)[notificationKey];
   if (!entry) return { ok: false, reason: "not_allowed" };
   return { ok: true, entry };

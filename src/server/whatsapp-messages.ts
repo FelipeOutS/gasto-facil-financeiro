@@ -789,6 +789,19 @@ export const whatsappMessages = {
         `Quer usar essa data ou registrar como hoje?`,
       ].join("\n");
     },
+    respostaDataNaoEntendida(dataFmt: string | null) {
+      return dataFmt
+        ? [
+            `Não entendi qual data usar.`,
+            ``,
+            `Responda "essa" para usar ${dataFmt}, "hoje" para usar a data de hoje, ou envie a data (ex.: 11/10/2026).`,
+          ].join("\n")
+        : [
+            `Não entendi qual data usar.`,
+            ``,
+            `Responda "hoje" ou envie a data da compra (ex.: 11/10/2026).`,
+          ].join("\n");
+    },
     perguntaDataIncerta() {
       return [
         `Não consegui confirmar a data da nota.`,

@@ -236,10 +236,8 @@ export function filterVisibleGroups(
  * Lista itens bloqueados (com `feature` indisponível no plano atual),
  * usados nos cards de upgrade em Dashboard / Meu Plano.
  *
- * WhatsApp é tratado como recurso futuro (whitelist vazia em plans.ts)
- * e NÃO deve aparecer em cards de upgrade comerciais. Filtramos aqui.
+ * A apresentação segue o acesso real de cada feature, inclusive WhatsApp.
  */
-const UPGRADE_CARD_FEATURE_BLOCKLIST: ReadonlyArray<FeatureKey> = ["whatsapp"];
 
 export function getLockedNavItems(
   groups: NavGroup[],
@@ -252,7 +250,7 @@ export function getLockedNavItems(
     .flatMap((g) =>
       g.items.filter(
         (it) =>
-          !!it.feature && !UPGRADE_CARD_FEATURE_BLOCKLIST.includes(it.feature) && !can(it.feature),
+          !!it.feature && !can(it.feature),
       ),
     );
 }

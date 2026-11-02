@@ -29,7 +29,10 @@ export function AppPageHeader({
 
   return (
     <header
-      className={cn("flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between", className)}
+      className={cn(
+        "gi-page-header flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between",
+        className,
+      )}
     >
       <div className="flex items-start gap-3">
         {icon && (

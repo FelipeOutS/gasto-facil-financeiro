@@ -39,7 +39,7 @@ export function AppSummaryCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-card",
+        "gi-summary-card relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 shadow-card",
         className,
       )}
     >

@@ -1,4 +1,5 @@
 import { SubscriptionPending } from "@/components/SubscriptionPending";
+import { WhatsAppConsentAccess } from "@/components/whatsapp/WhatsAppConsentAccess";
 import { useNavigate, Link, useRouterState } from "@tanstack/react-router";
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
@@ -111,6 +112,7 @@ function ResolvedAuthGate({
   const subscriptionRedirect = useRef<string | null>(null);
 
   const premiumRule = findPremiumRule(pathname);
+  const whatsappPrivacyAccess = pathname === "/whatsapp";
   const featureAllowed = premiumRule
     ? isAdmin || (hasActiveAccess && planAllowsFeature(plan.plan, premiumRule.feature))
     : true;
@@ -134,7 +136,7 @@ function ResolvedAuthGate({
       subscriptionRedirect.current = null;
       return;
     }
-    if (isSubscriptionAllowed(pathname)) return;
+    if (isSubscriptionAllowed(pathname) || whatsappPrivacyAccess) return;
     if (subscriptionRedirect.current === pathname) return;
     subscriptionRedirect.current = pathname;
     void navigate({ to: "/meu-plano", replace: true });
@@ -147,6 +149,7 @@ function ResolvedAuthGate({
     isAdmin,
     hasActiveAccess,
     pathname,
+    whatsappPrivacyAccess,
     navigate,
   ]);
 
@@ -214,6 +217,10 @@ function ResolvedAuthGate({
 
   // Bloqueio: usuário sem plano ativo em rota protegida espera o redirect.
   const subscriptionAllowed = isSubscriptionAllowed(pathname);
+  // Only the privacy panel is rendered here, never the paid route's children.
+  if (whatsappPrivacyAccess && (plan.error || (!plan.loading && !rolesLoading && !featureAllowed))) {
+    return <WhatsAppConsentAccess />;
+  }
   if ((!subscriptionAllowed || premiumRule) && (plan.loading || rolesLoading || plan.error)) {
     return <SubscriptionPending error={plan.error} retry={plan.refresh} />;
   }

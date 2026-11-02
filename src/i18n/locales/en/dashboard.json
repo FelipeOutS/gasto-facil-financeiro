@@ -277,11 +277,11 @@
     "moedaEstrangeira": "foreign currency"
   },
   "whatsappBanner": {
-    "title": "WhatsApp entries coming soon",
-    "novo": "Coming soon",
-    "subtitle": "In a future version, you’ll be able to send expenses through WhatsApp to make daily tracking easier.",
+    "title": "Financial assistant on WhatsApp — available",
+    "novo": "Available",
+    "subtitle": "Available on eligible paid plans after linking your number and authorizing access.",
     "dispensar": "Close notice",
-    "cta": "Got it"
+    "cta": "Link my WhatsApp"
   },
   "trialBanner": {
     "title": "Your trial ends soon",

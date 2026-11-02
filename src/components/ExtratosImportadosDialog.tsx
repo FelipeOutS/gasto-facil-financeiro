@@ -168,7 +168,7 @@ export function ExtratosImportadosDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-3xl p-0 gap-0 max-h-[90vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-3xl p-0 gap-0 max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] flex flex-col overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-4 border-b shrink-0">
             <DialogTitle className="flex items-center gap-2 text-lg">
               {selected ? (

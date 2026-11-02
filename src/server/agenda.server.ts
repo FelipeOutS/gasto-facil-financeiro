@@ -72,7 +72,7 @@ const nowOf = (d?: AgendaDeps) => d?.now?.() ?? new Date();
 
 export class AgendaError extends Error {
   constructor(
-    public code: "not_found" | "invalid" | "source_not_owned",
+    public code: "not_found" | "invalid" | "source_not_owned" | "already",
     message: string,
   ) {
     super(message);
@@ -251,14 +251,20 @@ export async function setAgendaStatus(
       advanced = true;
     } else upd = { status: "concluido", completed_at: nowOf(deps).toISOString() };
   } else upd = { status: "concluido", completed_at: nowOf(deps).toISOString() };
-  const { data, error } = await c(deps)
-    .from("agenda_items")
-    .update(upd)
-    .eq("id", id)
-    .eq("user_id", userId)
-    .select("*")
-    .single();
-  if (error || !data) throw new AgendaError("invalid", "Não foi possível salvar.");
+  let q = c(deps).from("agenda_items").update(upd).eq("id", id).eq("user_id", userId);
+  // Concluir/cancelar: UPDATE condicional (só se ainda ativo e na mesma
+  // ocorrência). Em dois cliques/retries simultâneos só um altera a linha;
+  // o outro recebe "already" e não re-sincroniza a fila.
+  if (action !== "reativar") {
+    q = q.eq("status", "ativo");
+    if (advanced) q = q.eq("starts_at", cur.starts_at);
+  }
+  const { data, error } = await q.select("*").maybeSingle();
+  if (error) throw new AgendaError("invalid", "Não foi possível salvar.");
+  if (!data) {
+    if (action === "reativar") throw new AgendaError("invalid", "Não foi possível salvar.");
+    throw new AgendaError("already", "Esse item já foi atualizado. Nada foi alterado de novo.");
+  }
   await syncAgendaNotification(data as AgendaRow, deps);
   return { row: data as AgendaRow, advanced };
 }
@@ -281,6 +287,30 @@ export async function listAgenda(
     });
   }
   return rows;
+}
+
+/**
+ * Página estável de itens ativos (ordem por data e id), direto do banco com
+ * range — não depende do limite de 200 nem de memória do worker.
+ */
+export async function listActivePage(
+  userId: string,
+  page: number,
+  size: number,
+  deps?: AgendaDeps,
+): Promise<{ rows: AgendaRow[]; hasMore: boolean }> {
+  const from = Math.max(0, page) * size;
+  const { data, error } = await c(deps)
+    .from("agenda_items")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "ativo")
+    .order("starts_at", { ascending: true, nullsFirst: false })
+    .order("id", { ascending: true })
+    .range(from, from + size);
+  if (error) throw new AgendaError("invalid", "Não consegui abrir sua agenda agora. Tente de novo em instantes.");
+  const rows = ((data as AgendaRow[]) ?? []).filter((r) => r.user_id === userId);
+  return { rows: rows.slice(0, size), hasMore: rows.length > size };
 }
 
 function normTxt(s: string): string {
@@ -456,6 +486,7 @@ export type AgendaTemplateVars = {
   kind: "lembrete" | "financeiro";
   /** Variáveis na ordem do template Meta sugerido. */
   params: string[];
+  templateDate: string;
   text: string;
 };
 
@@ -502,6 +533,7 @@ export async function revalidateAgendaForDispatch(
       ok: true,
       vars: {
         kind: "financeiro",
+        templateDate: dueTxt,
         params: [nome, quando, valor, dueTxt],
         text: `🔔 Lembrete do Gasto Inteligente\n${nome} vence ${dias <= 1 ? quando : `em ${quando}`}.\nValor atual: ${valor}\nVencimento: ${dueTxt}`,
       },
@@ -530,6 +562,7 @@ export async function revalidateAgendaForDispatch(
     ok: true,
     vars: {
       kind: "lembrete",
+      templateDate: new Intl.DateTimeFormat("pt-BR", { timeZone: tz }).format(occ),
       params: [item.titulo, quando],
       text: `🔔 Lembrete do Gasto Inteligente\n${item.titulo}\n🗓️ ${quando}`,
     },

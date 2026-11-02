@@ -141,13 +141,14 @@ function LoginForm() {
       setLoginBioInProgress(true);
       let navigatedWithSession = false;
       try {
-        const { session, error } = await loginWithSecureSession();
+        const { session, error, warning } = await loginWithSecureSession();
         if (session) {
           setHasSupabaseSession(true);
           setBiometricUnlocked(true);
           setLoginBioUnlocked(true);
           notifyLoginBioSessionRestored(session);
           toast.success(t("login.welcomeBack"));
+          if (warning) toast.warning(warning);
           navigatedWithSession = true;
           finishBioProgressSoon();
           console.log("[SecureSession] navegando para dashboard");

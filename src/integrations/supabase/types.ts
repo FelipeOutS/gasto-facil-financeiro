@@ -1868,6 +1868,7 @@ export type Database = {
           confirmado: boolean
           created_at: string
           data: string
+          deleted_at: string | null
           descricao: string
           essencial: boolean | null
           estabelecimento: string
@@ -1902,6 +1903,7 @@ export type Database = {
           confirmado?: boolean
           created_at?: string
           data: string
+          deleted_at?: string | null
           descricao: string
           essencial?: boolean | null
           estabelecimento?: string
@@ -1936,6 +1938,7 @@ export type Database = {
           confirmado?: boolean
           created_at?: string
           data?: string
+          deleted_at?: string | null
           descricao?: string
           essencial?: boolean | null
           estabelecimento?: string
@@ -2931,6 +2934,594 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pluggy_accounts: {
+        Row: {
+          account_id: string
+          available_credit: number | null
+          balance: number | null
+          balance_due_date: string | null
+          credit_limit: number | null
+          currency: string
+          id: string
+          is_sandbox: boolean
+          item_id: string
+          name: string | null
+          number_last4: string | null
+          subtype: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          available_credit?: number | null
+          balance?: number | null
+          balance_due_date?: string | null
+          credit_limit?: number | null
+          currency?: string
+          id?: string
+          is_sandbox: boolean
+          item_id: string
+          name?: string | null
+          number_last4?: string | null
+          subtype?: string | null
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          available_credit?: number | null
+          balance?: number | null
+          balance_due_date?: string | null
+          credit_limit?: number | null
+          currency?: string
+          id?: string
+          is_sandbox?: boolean
+          item_id?: string
+          name?: string | null
+          number_last4?: string | null
+          subtype?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_accounts_user_id_item_id_is_sandbox_fkey"
+            columns: ["user_id", "item_id", "is_sandbox"]
+            isOneToOne: false
+            referencedRelation: "pluggy_items"
+            referencedColumns: ["user_id", "item_id", "is_sandbox"]
+          },
+        ]
+      }
+      pluggy_card_links: {
+        Row: {
+          account_id: string
+          active: boolean
+          cartao_id: string
+          confirmed_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          active?: boolean
+          cartao_id: string
+          confirmed_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          active?: boolean
+          cartao_id?: string
+          confirmed_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_card_links_user_id_account_id_fkey"
+            columns: ["user_id", "account_id"]
+            isOneToOne: true
+            referencedRelation: "pluggy_accounts"
+            referencedColumns: ["user_id", "account_id"]
+          },
+        ]
+      }
+      pluggy_import_entries: {
+        Row: {
+          account_id: string
+          batch_id: string
+          created_at: string
+          entry_id: string
+          entry_table: string
+          id: string
+          snapshot: Json
+          state: string
+          transaction_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          batch_id: string
+          created_at?: string
+          entry_id: string
+          entry_table: string
+          id?: string
+          snapshot: Json
+          state?: string
+          transaction_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          batch_id?: string
+          created_at?: string
+          entry_id?: string
+          entry_table?: string
+          id?: string
+          snapshot?: Json
+          state?: string
+          transaction_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_import_entries_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "extratos_importados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pluggy_import_entries_user_id_account_id_transaction_id_fkey"
+            columns: ["user_id", "account_id", "transaction_id"]
+            isOneToOne: true
+            referencedRelation: "pluggy_transactions"
+            referencedColumns: ["user_id", "account_id", "transaction_id"]
+          },
+        ]
+      }
+      pluggy_items: {
+        Row: {
+          connector_id: number | null
+          connector_name: string | null
+          consent_expires_at: string | null
+          created_at: string
+          deleted_at: string | null
+          execution_status: string | null
+          id: string
+          is_sandbox: boolean
+          item_id: string
+          last_error: string | null
+          last_synced_at: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connector_id?: number | null
+          connector_name?: string | null
+          consent_expires_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          execution_status?: string | null
+          id?: string
+          is_sandbox: boolean
+          item_id: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connector_id?: number | null
+          connector_name?: string | null
+          consent_expires_at?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          execution_status?: string | null
+          id?: string
+          is_sandbox?: boolean
+          item_id?: string
+          last_error?: string | null
+          last_synced_at?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pluggy_real_batch_grant_items: {
+        Row: {
+          account_id: string
+          batch_id: string
+          categoria_id: string | null
+          data: string
+          entry_table: string
+          tipo: string | null
+          transaction_id: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          account_id: string
+          batch_id: string
+          categoria_id?: string | null
+          data: string
+          entry_table: string
+          tipo?: string | null
+          transaction_id: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          account_id?: string
+          batch_id?: string
+          categoria_id?: string | null
+          data?: string
+          entry_table?: string
+          tipo?: string | null
+          transaction_id?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_real_batch_grant_items_batch_id_fkey"
+            columns: ["batch_id"]
+            isOneToOne: false
+            referencedRelation: "pluggy_real_batch_grants"
+            referencedColumns: ["batch_id"]
+          },
+          {
+            foreignKeyName: "pluggy_real_batch_grant_items_user_id_account_id_transacti_fkey"
+            columns: ["user_id", "account_id", "transaction_id"]
+            isOneToOne: true
+            referencedRelation: "pluggy_transactions"
+            referencedColumns: ["user_id", "account_id", "transaction_id"]
+          },
+        ]
+      }
+      pluggy_real_batch_grants: {
+        Row: {
+          active_txid: number | null
+          batch_id: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          item_count: number
+          revert_kept: number | null
+          revert_outcome: string | null
+          reverted_at: string | null
+          total: number
+          user_id: string
+        }
+        Insert: {
+          active_txid?: number | null
+          batch_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          item_count: number
+          revert_kept?: number | null
+          revert_outcome?: string | null
+          reverted_at?: string | null
+          total: number
+          user_id: string
+        }
+        Update: {
+          active_txid?: number | null
+          batch_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          item_count?: number
+          revert_kept?: number | null
+          revert_outcome?: string | null
+          reverted_at?: string | null
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pluggy_real_import_grants: {
+        Row: {
+          account_id: string
+          active_txid: number | null
+          batch_id: string
+          consumed_at: string | null
+          created_at: string
+          data: string
+          entry_table: string
+          expires_at: string
+          id: string
+          revert_kept: number | null
+          revert_outcome: string | null
+          reverted_at: string | null
+          transaction_id: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          account_id: string
+          active_txid?: number | null
+          batch_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          data: string
+          entry_table: string
+          expires_at: string
+          id?: string
+          revert_kept?: number | null
+          revert_outcome?: string | null
+          reverted_at?: string | null
+          transaction_id: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          account_id?: string
+          active_txid?: number | null
+          batch_id?: string
+          consumed_at?: string | null
+          created_at?: string
+          data?: string
+          entry_table?: string
+          expires_at?: string
+          id?: string
+          revert_kept?: number | null
+          revert_outcome?: string | null
+          reverted_at?: string | null
+          transaction_id?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_real_import_grants_user_id_account_id_transaction_i_fkey"
+            columns: ["user_id", "account_id", "transaction_id"]
+            isOneToOne: true
+            referencedRelation: "pluggy_transactions"
+            referencedColumns: ["user_id", "account_id", "transaction_id"]
+          },
+        ]
+      }
+      pluggy_review_decisions: {
+        Row: {
+          account_id: string
+          decided_at: string
+          decision: string | null
+          id: string
+          previous: string | null
+          transaction_id: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          decided_at?: string
+          decision?: string | null
+          id?: string
+          previous?: string | null
+          transaction_id: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          decided_at?: string
+          decision?: string | null
+          id?: string
+          previous?: string | null
+          transaction_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_review_decisions_user_id_account_id_transaction_id_fkey"
+            columns: ["user_id", "account_id", "transaction_id"]
+            isOneToOne: false
+            referencedRelation: "pluggy_transactions"
+            referencedColumns: ["user_id", "account_id", "transaction_id"]
+          },
+        ]
+      }
+      pluggy_settings: {
+        Row: {
+          access_state: string
+          auto_categorize: boolean
+          auto_import: boolean
+          history_days: number
+          paused_reason: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_state?: string
+          auto_categorize?: boolean
+          auto_import?: boolean
+          history_days?: number
+          paused_reason?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_state?: string
+          auto_categorize?: boolean
+          auto_import?: boolean
+          history_days?: number
+          paused_reason?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pluggy_transactions: {
+        Row: {
+          account_id: string
+          amount: number
+          amount_original: number | null
+          categoria_manual: string | null
+          categoria_sugerida: string | null
+          classification: string
+          classification_reason: string
+          created_at: string
+          currency: string
+          date: string
+          dedupe_key: string
+          deleted_at: string | null
+          description: string | null
+          id: string
+          imported_gasto_id: string | null
+          imported_receita_id: string | null
+          installment_number: number | null
+          is_sandbox: boolean
+          item_id: string
+          mp_match_ids: string[] | null
+          operation_type: string | null
+          pluggy_category: string | null
+          review_status: string | null
+          status: string
+          total_installments: number | null
+          transaction_id: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          amount_original?: number | null
+          categoria_manual?: string | null
+          categoria_sugerida?: string | null
+          classification: string
+          classification_reason: string
+          created_at?: string
+          currency?: string
+          date: string
+          dedupe_key: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          imported_gasto_id?: string | null
+          imported_receita_id?: string | null
+          installment_number?: number | null
+          is_sandbox: boolean
+          item_id: string
+          mp_match_ids?: string[] | null
+          operation_type?: string | null
+          pluggy_category?: string | null
+          review_status?: string | null
+          status: string
+          total_installments?: number | null
+          transaction_id: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          amount_original?: number | null
+          categoria_manual?: string | null
+          categoria_sugerida?: string | null
+          classification?: string
+          classification_reason?: string
+          created_at?: string
+          currency?: string
+          date?: string
+          dedupe_key?: string
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          imported_gasto_id?: string | null
+          imported_receita_id?: string | null
+          installment_number?: number | null
+          is_sandbox?: boolean
+          item_id?: string
+          mp_match_ids?: string[] | null
+          operation_type?: string | null
+          pluggy_category?: string | null
+          review_status?: string | null
+          status?: string
+          total_installments?: number | null
+          transaction_id?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pluggy_transactions_user_id_item_id_account_id_is_sandbox_fkey"
+            columns: ["user_id", "item_id", "account_id", "is_sandbox"]
+            isOneToOne: false
+            referencedRelation: "pluggy_accounts"
+            referencedColumns: [
+              "user_id",
+              "item_id",
+              "account_id",
+              "is_sandbox",
+            ]
+          },
+        ]
+      }
+      pluggy_webhook_events: {
+        Row: {
+          attempts: number
+          claim_token: string | null
+          error: string | null
+          event: string
+          event_id: string
+          id: string
+          item_id: string | null
+          locked_until: string | null
+          max_attempts: number
+          next_attempt_at: string
+          processed_at: string | null
+          received_at: string
+          status: string
+          transaction_ids: string[]
+        }
+        Insert: {
+          attempts?: number
+          claim_token?: string | null
+          error?: string | null
+          event: string
+          event_id: string
+          id?: string
+          item_id?: string | null
+          locked_until?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+          transaction_ids?: string[]
+        }
+        Update: {
+          attempts?: number
+          claim_token?: string | null
+          error?: string | null
+          event?: string
+          event_id?: string
+          id?: string
+          item_id?: string | null
+          locked_until?: string | null
+          max_attempts?: number
+          next_attempt_at?: string
+          processed_at?: string | null
+          received_at?: string
+          status?: string
+          transaction_ids?: string[]
+        }
+        Relationships: []
       }
       product_analytics_events: {
         Row: {
@@ -4440,6 +5031,7 @@ export type Database = {
           avisos_sistema: boolean
           contas_a_pagar: boolean
           created_at: string
+          faturas: boolean
           ia_insights: boolean
           mercado: boolean
           metas: boolean
@@ -4447,6 +5039,9 @@ export type Database = {
           quiet_hours_end: number | null
           quiet_hours_start: number | null
           recorrencias: boolean
+          renovacao_assinatura: boolean
+          resumo_mensal: boolean
+          resumo_semanal: boolean
           updated_at: string
           user_id: string
         }
@@ -4455,6 +5050,7 @@ export type Database = {
           avisos_sistema?: boolean
           contas_a_pagar?: boolean
           created_at?: string
+          faturas?: boolean
           ia_insights?: boolean
           mercado?: boolean
           metas?: boolean
@@ -4462,6 +5058,9 @@ export type Database = {
           quiet_hours_end?: number | null
           quiet_hours_start?: number | null
           recorrencias?: boolean
+          renovacao_assinatura?: boolean
+          resumo_mensal?: boolean
+          resumo_semanal?: boolean
           updated_at?: string
           user_id: string
         }
@@ -4470,6 +5069,7 @@ export type Database = {
           avisos_sistema?: boolean
           contas_a_pagar?: boolean
           created_at?: string
+          faturas?: boolean
           ia_insights?: boolean
           mercado?: boolean
           metas?: boolean
@@ -4477,6 +5077,9 @@ export type Database = {
           quiet_hours_end?: number | null
           quiet_hours_start?: number | null
           recorrencias?: boolean
+          renovacao_assinatura?: boolean
+          resumo_mensal?: boolean
+          resumo_semanal?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -4870,6 +5473,102 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_planning_actions: {
+        Row: {
+          applied_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          kind: string
+          payload: Json
+          result_id: string | null
+          source_external_id: string
+          state: string
+          target_id: string | null
+          telefone: string
+          user_id: string
+        }
+        Insert: {
+          applied_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          result_id?: string | null
+          source_external_id: string
+          state?: string
+          target_id?: string | null
+          telefone: string
+          user_id: string
+        }
+        Update: {
+          applied_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          result_id?: string | null
+          source_external_id?: string
+          state?: string
+          target_id?: string | null
+          telefone?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_recent_actions: {
+        Row: {
+          created_at: string
+          edit_field: string | null
+          edit_state: string
+          entity_id: string
+          entity_kind: string
+          expires_at: string
+          id: string
+          pending_patch: Json | null
+          related_id: string | null
+          source_external_id: string
+          state: string
+          telefone: string
+          undone_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          edit_field?: string | null
+          edit_state?: string
+          entity_id: string
+          entity_kind: string
+          expires_at?: string
+          id?: string
+          pending_patch?: Json | null
+          related_id?: string | null
+          source_external_id: string
+          state?: string
+          telefone: string
+          undone_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          edit_field?: string | null
+          edit_state?: string
+          entity_id?: string
+          entity_kind?: string
+          expires_at?: string
+          id?: string
+          pending_patch?: Json | null
+          related_id?: string | null
+          source_external_id?: string
+          state?: string
+          telefone?: string
+          undone_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       whatsapp_runtime_config: {
         Row: {
           global_daily_outbound_limit: number
@@ -4948,6 +5647,75 @@ export type Database = {
           new_value?: Json
           previous_value?: Json
           reason?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_shopping_contexts: {
+        Row: {
+          collected_at: string
+          expires_at: string
+          offers: Json
+          phone_hash: string
+          query: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          collected_at: string
+          expires_at: string
+          offers: Json
+          phone_hash: string
+          query: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          collected_at?: string
+          expires_at?: string
+          offers?: Json
+          phone_hash?: string
+          query?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_shopping_searches: {
+        Row: {
+          api_calls: number
+          created_at: string
+          external_id: string
+          finished_at: string | null
+          id: string
+          month_key: string
+          reply: string | null
+          reserved_calls: number
+          state: string
+          user_id: string
+        }
+        Insert: {
+          api_calls?: number
+          created_at?: string
+          external_id: string
+          finished_at?: string | null
+          id?: string
+          month_key: string
+          reply?: string | null
+          reserved_calls?: number
+          state?: string
+          user_id: string
+        }
+        Update: {
+          api_calls?: number
+          created_at?: string
+          external_id?: string
+          finished_at?: string | null
+          id?: string
+          month_key?: string
+          reply?: string | null
+          reserved_calls?: number
+          state?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -5379,6 +6147,105 @@ export type Database = {
         }
         Returns: number
       }
+      pluggy_assert_financial_release: { Args: never; Returns: undefined }
+      pluggy_assert_owner: { Args: { p_user_id: string }; Returns: undefined }
+      pluggy_import_apply: {
+        Args: { p_actions: Json; p_batch_id: string; p_user_id: string }
+        Returns: Json
+      }
+      pluggy_import_apply_real_batch: {
+        Args: { p_batch_id: string; p_rows: Json; p_user_id: string }
+        Returns: Json
+      }
+      pluggy_import_apply_real_once: {
+        Args: {
+          p_account_id: string
+          p_batch_id: string
+          p_row: Json
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      pluggy_import_revert: {
+        Args: { p_batch_id: string; p_user_id: string }
+        Returns: Json
+      }
+      pluggy_import_revert_real_batch: {
+        Args: { p_batch_id: string; p_user_id: string }
+        Returns: Json
+      }
+      pluggy_import_revert_real_once: {
+        Args: { p_batch_id: string; p_user_id: string }
+        Returns: Json
+      }
+      pluggy_is_allowed: { Args: never; Returns: boolean }
+      pluggy_link_card: {
+        Args: { p_account_id: string; p_cartao_id: string; p_user_id: string }
+        Returns: undefined
+      }
+      pluggy_real_batch_in_use: {
+        Args: {
+          p_account_id: string
+          p_batch_id: string
+          p_entry_table: string
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      pluggy_real_grant_in_use: {
+        Args: {
+          p_account_id: string
+          p_batch_id: string
+          p_entry_table: string
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
+      pluggy_review_decide: {
+        Args: {
+          p_account_id: string
+          p_decision: string
+          p_transaction_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      pluggy_webhook_claim: {
+        Args: { p_lease_seconds: number; p_limit: number }
+        Returns: {
+          attempts: number
+          claim_token: string
+          event: string
+          id: string
+          item_id: string
+          max_attempts: number
+          transaction_ids: string[]
+        }[]
+      }
+      pluggy_webhook_enqueue: {
+        Args: {
+          p_event: string
+          p_event_id: string
+          p_item_id: string
+          p_transaction_ids: string[]
+        }
+        Returns: {
+          is_new: boolean
+          status: string
+        }[]
+      }
+      pluggy_webhook_finish: {
+        Args: {
+          p_claim_token: string
+          p_error: string
+          p_id: string
+          p_ok: boolean
+        }
+        Returns: string
+      }
       rate_limit_hit: {
         Args: {
           _ip_address?: string
@@ -5438,56 +6305,24 @@ export type Database = {
         }
         Returns: Json
       }
-      whatsapp_begin_link_verification: {
-        Args: {
-          p_consent_version: string
-          p_phone: string
-          p_token_hash: string
-          p_user_agent?: string | null
-          p_user_id: string
-        }
-        Returns: Json
-      }
-      whatsapp_complete_link_verification: {
-        Args: { p_external_id: string; p_phone: string; p_token_hash: string }
-        Returns: string
-      }
-      whatsapp_revoke_links: {
-        Args: { p_user_id: string; p_link_id?: string | null }
-        Returns: number
-      }
-      whatsapp_create_recurring_income_once: {
-        Args: {
-          p_data: string
-          p_descricao: string
-          p_dia_mes?: number | null
-          p_dia_semana?: number | null
-          p_external_id: string
-          p_frequencia: string
-          p_tipo: string
-          p_user_id: string
-          p_valor: number
-        }
-        Returns: Json
-      }
       whatsapp_advance_card_session: {
         Args: {
-          p_user_id: string
-          p_phone: string
-          p_expected_id: string | null
-          p_previous_id: string | null
-          p_external_id: string | null
-          p_text: string
-          p_received_at: string | null
-          p_status: string
+          p_expected_id: string
+          p_external_id: string
           p_parsed: Json
+          p_phone: string
+          p_previous_id: string
+          p_received_at: string
           p_response: string
+          p_status: string
+          p_text: string
+          p_user_id: string
         }
         Returns: string
       }
-      whatsapp_close_card_sessions: {
-        Args: { p_user_id: string; p_phone: string; p_status?: string }
-        Returns: number
+      whatsapp_apply_planning_action: {
+        Args: { p_id: string; p_telefone: string; p_user_id: string }
+        Returns: Json
       }
       whatsapp_attempt_finalize_accepted_atomic: {
         Args: {
@@ -5578,7 +6413,21 @@ export type Database = {
           valor: number
         }[]
       }
+      whatsapp_begin_link_verification: {
+        Args: {
+          p_consent_version: string
+          p_phone: string
+          p_token_hash: string
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       whatsapp_cleanup_csp_reports: { Args: never; Returns: undefined }
+      whatsapp_close_card_sessions: {
+        Args: { p_phone: string; p_status?: string; p_user_id: string }
+        Returns: number
+      }
       whatsapp_commit_outbound_quota_atomic: {
         Args: {
           p_notification_id: string
@@ -5590,6 +6439,10 @@ export type Database = {
           outcome: string
           state: string
         }[]
+      }
+      whatsapp_complete_link_verification: {
+        Args: { p_external_id: string; p_phone: string; p_token_hash: string }
+        Returns: string
       }
       whatsapp_consume_financial_action_quota_atomic: {
         Args: {
@@ -5632,6 +6485,34 @@ export type Database = {
           state: string
           used: number
         }[]
+      }
+      whatsapp_create_recurring_income_once: {
+        Args: {
+          p_data: string
+          p_descricao: string
+          p_dia_mes?: number
+          p_dia_semana?: number
+          p_external_id: string
+          p_frequencia: string
+          p_tipo: string
+          p_user_id: string
+          p_valor: number
+        }
+        Returns: Json
+      }
+      whatsapp_edit_recent_action: {
+        Args: {
+          p_action_id: string
+          p_before: string
+          p_card_id?: string
+          p_competence?: string
+          p_field: string
+          p_phone: string
+          p_scope?: string
+          p_user_id: string
+          p_value: string
+        }
+        Returns: string
       }
       whatsapp_get_usage_snapshot: {
         Args: {
@@ -5720,6 +6601,65 @@ export type Database = {
           state: string
           used: number
         }[]
+      }
+      whatsapp_revoke_links: {
+        Args: { p_link_id?: string; p_user_id: string }
+        Returns: number
+      }
+      whatsapp_shopping_context_get: {
+        Args: { p_phone_hash: string; p_user_id: string }
+        Returns: {
+          collected_at: string
+          expired: boolean
+          offers: Json
+          query: string
+        }[]
+      }
+      whatsapp_shopping_context_save: {
+        Args: {
+          p_collected_at: string
+          p_offers: Json
+          p_phone_hash: string
+          p_query: string
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      whatsapp_shopping_finish: {
+        Args: {
+          p_api_calls: number
+          p_external_id: string
+          p_reply: string
+          p_user_id: string
+        }
+        Returns: {
+          finished: boolean
+          global_remaining: number
+          user_remaining: number
+        }[]
+      }
+      whatsapp_shopping_month_key: { Args: never; Returns: string }
+      whatsapp_shopping_month_key_at: {
+        Args: { p_ts: string }
+        Returns: string
+      }
+      whatsapp_shopping_reserve: {
+        Args: { p_external_id: string; p_user_id: string }
+        Returns: {
+          claim_state: string
+          global_remaining: number
+          previous_reply: string
+          user_remaining: number
+        }[]
+      }
+      whatsapp_undo_recent_action: {
+        Args: {
+          p_action_id: string
+          p_phone: string
+          p_scope?: string
+          p_user_id: string
+        }
+        Returns: string
       }
       whatsapp_user_in_rollout: {
         Args: { _pct: number; _user_id: string }

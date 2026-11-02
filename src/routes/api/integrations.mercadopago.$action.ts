@@ -22,7 +22,7 @@ export const Route = createFileRoute("/api/integrations/mercadopago/$action")({
       GET: async ({ request, params }) => {
         const user = await getUserFromRequest(request);
         if (!user) return unauthorizedResponse();
-        if (!isAdminMasterUser(user)) return forbiddenResponse();
+        if (!(await isAdminMasterUser(user))) return forbiddenResponse();
         if (params.action !== "status") {
           return new Response("not_found", { status: 404 });
         }
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/api/integrations/mercadopago/$action")({
       POST: async ({ request, params }) => {
         const user = await getUserFromRequest(request);
         if (!user) return unauthorizedResponse();
-        if (!isAdminMasterUser(user)) return forbiddenResponse();
+        if (!(await isAdminMasterUser(user))) return forbiddenResponse();
 
         if (params.action === "sync") {
           let body: { period?: string; beginDate?: string; endDate?: string; months?: unknown } =

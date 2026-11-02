@@ -670,7 +670,7 @@ function ContaReceberFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{editing ? t("form.editTitle") : t("form.newTitle")}</DialogTitle>
           <DialogDescription>{t("form.desc")}</DialogDescription>

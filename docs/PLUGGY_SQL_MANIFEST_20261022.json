@@ -1,0 +1,91 @@
+{
+  "date": "2026-10-22",
+  "base": "7debf719894f6432856f63384afac42bc73006e3",
+  "appliedToRealDatabase": false,
+  "files": [
+    {
+      "path": "docs/migrations-candidate/pluggy-open-finance.sql",
+      "sha256": "c77298ca77fbf7e2590aff04a67ba44565c1da62d8f0cf075de9ef148f1d2d77",
+      "sha256LF": "7aaada94111abc89de491ab408660bac83a0f85a4295b12b42b64ab1f78c29c8",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-webhook-claim-max-attempts.sql",
+      "sha256": "2ab0c695848002033e0cc52b5f0fa7c74d584d10f96bdf6c154a62d4eb76f223",
+      "sha256LF": "91b28f33369f7a25d979882dd238f041f660b636ac442ee899d8f728f89245de",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-amount-original.sql",
+      "sha256": "1d8b3d0082ba67e06c10fdbf3a8d244f27bd88ccce84eecf5166c9439107df2f",
+      "sha256LF": "fa541ab04da9e3e7207b4c86c9bec096255e31a50781ce4b64787056c5585e06",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-import-gi.sql",
+      "sha256": "84dfe2e9c0cd34b8f9dccc6ab733da3b5cc04a1b2469e00cabacda222acf8843",
+      "sha256LF": "9a4816ffbb1f741f80d74e47a26fb8015af5682df7b148f32090e652f714a38a",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/gastos-delete-atomic-f4.sql",
+      "sha256": "0aeba787eb912e50d8f776d97fef355671a0e621b7d1d9d7a0518f0b753e6778",
+      "sha256LF": "c74c77fd70bff15b9293fd53b2b5ca2e7f6a7f138f99454bb38d71c7cc9d7886",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-live-readonly.sql",
+      "sha256": "71db9829bbfc87abd6cbbc049d1117e0708f1917348d67b1ed2f560379632a79",
+      "sha256LF": "0b4058a06fe5e7575eebccc2ec530ac766a71a8d7a729c310fd572861af957d7",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-real-first-import.sql",
+      "sha256": "85a0c2b99012511bd24b9272554a250f37b9445724af0e1a06c4944da6e28a7d",
+      "sha256LF": "5266a5e4715035e0f1c3b79c0a0b51112daae8432c7a34440e69fe826a5899e9",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-real-batch-import.sql",
+      "sha256": "8cfc7f20b6803e62ab7563779152386046a915338134031808d849d03d341ea1",
+      "sha256LF": "3038a110b183d1c5d6ca867172c0ab2eb51880a90a6dc18f0e37fe3865bdc2c0",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-real-batch-partial-undo.sql",
+      "sha256": "dc67492045f02cab52063a0a041f47a0a6a3e777d08fd9bad88800e26fa27c3c",
+      "sha256LF": "a4b76f430d28f9641f28f864e0242ba38196eb580fdbc3ed16350291b5e9514e",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-real-automatic-closed-batch.sql",
+      "sha256": "026c50f8ea343d01bde9303912efe10f0e6185a4cd6d2ef8edb15c5ce9311ee4",
+      "sha256LF": "1cfc2afb42b9816ae518872c7f1d474d2f1dbff82f10427026116d92050469e7",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-real-card-links.sql",
+      "sha256": "76fc3bf9730711ba6f82bfc55a8e3ae5b0eacbed9230e5173eec761415447de2",
+      "sha256LF": "e4ccdd6d843538887fdcc0188f530ee33d48470791a5cc94fb9a74d373d1d183",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-real-card-batch.sql",
+      "sha256": "f540b51f445aaf69d630574040e4dcc280eac10e623ddaaaa5c88d26d673344d",
+      "sha256LF": "26952baa5b642fbb5e02598d7183bf9be77262896e4fc402f9e88f36c670bec4",
+      "newInThisDelivery": false
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-continuous-policy.sql",
+      "sha256": "c9ef1b845dee47f1919e33646ee35242ce9551f0f74833554674433ed4b2d2a8",
+      "sha256LF": "fc184287e16b137e6db8e8b1c94ecaa166bcd32649feb6c8740178d9efcb8063",
+      "newInThisDelivery": true
+    },
+    {
+      "path": "docs/migrations-candidate/pluggy-confirmed-settlements.sql",
+      "sha256": "e325418558e08502cf63cb0072816754e76e0c46366e4f9bce6475e2e925dd80",
+      "sha256LF": "e325418558e08502cf63cb0072816754e76e0c46366e4f9bce6475e2e925dd80",
+      "newInThisDelivery": true
+    }
+  ]
+}

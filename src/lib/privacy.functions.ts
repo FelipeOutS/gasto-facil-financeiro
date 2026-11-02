@@ -102,6 +102,7 @@ export const getDeletionPreview = createServerFn({ method: "POST" })
 
       // Add dependency info if applicable
       if (selection.category === "cards") {
+        // soft-delete-exceção: LGPD/exclusão definitiva conta TODAS as linhas, inclusive excluídas.
         const { count: linkedExpenses } = await supabaseAdmin
           .from("gastos")
           .select("*", { count: "exact", head: true })

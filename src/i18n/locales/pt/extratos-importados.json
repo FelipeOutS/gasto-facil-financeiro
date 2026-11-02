@@ -51,7 +51,7 @@
   },
   "toast": {
     "reverted": "Importação revertida. Dashboard, Gastos, Receitas e Guardado foram recalculados.",
-    "revertFail": "Não foi possível reverter essa importação. Tente novamente.",
+    "revertFail": "Não foi possível reverter com segurança agora. Nada foi apagado.",
     "removed": "Registro removido do histórico.",
     "removeFail": "Não foi possível remover esse registro.",
     "revertedPartial": "{{removed}} lançamentos removidos. {{kept}} itens editados por você foram mantidos."

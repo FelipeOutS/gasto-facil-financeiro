@@ -5,9 +5,17 @@ import { MobileShell } from "@/components/MobileShell";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { SettingsPageHeader } from "@/components/SettingsPageHeader";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/app_/ajustes/notificacoes")({
-  head: () => ({ meta: [{ title: "Notificações — Gasto Inteligente" }] }),
+  head: () => ({ meta: [
+    { title: "Notificações — Gasto Inteligente" },
+    { name: "description", content: "Preferências de notificações e canais do Gasto Inteligente, com vínculo do assistente financeiro pelo WhatsApp." },
+    { property: "og:title", content: "Notificações — Gasto Inteligente" },
+    { property: "og:description", content: "Consulte notificações e acesse o vínculo do WhatsApp nos planos pagos elegíveis." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: NotificacoesPage,
 });
 
@@ -85,7 +93,7 @@ function NotificacoesPage() {
               { label: "No app", icon: Smartphone, active: true },
               { label: "E-mail", icon: Mail, active: true },
               { label: "Push", icon: Bell, active: false, badge: "Em breve" },
-              { label: "WhatsApp", icon: MessageSquare, active: false, badge: "Em breve" },
+              { label: t("notifications.channels.whatsappAlerts"), icon: MessageSquare, active: false, badge: t("notifications.channels.notEnabled") },
             ].map((canal) => (
               <div
                 key={canal.label}
@@ -105,6 +113,13 @@ function NotificacoesPage() {
                 <span className="text-sm font-semibold">{canal.label}</span>
               </div>
             ))}
+          </div>
+          <div className="space-y-2 pt-3">
+            <p className="text-sm font-semibold">{t("notifications.channels.assistant")}</p>
+            <p className="text-xs text-muted-foreground">{t("notifications.channels.eligibility")}</p>
+            <Button asChild variant="link" className="h-auto p-0">
+              <Link to="/whatsapp">{t("notifications.channels.link")}</Link>
+            </Button>
           </div>
         </section>
       </div>

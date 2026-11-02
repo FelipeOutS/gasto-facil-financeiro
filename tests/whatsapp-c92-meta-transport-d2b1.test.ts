@@ -5,7 +5,7 @@
  *  - factory fail-closed (env ausente / inválida)
  *  - sendTemplate: accepted / rejected (categorias) / ambiguous (timeout, 5xx, invalid JSON, 2xx s/ pmid, response too large)
  *  - Authorization Bearer; token não vaza em URL nem body nem log
- *  - endpoint via buildWhatsAppGraphUrl com v20.0
+ *  - endpoint via buildWhatsAppGraphUrl com v25.0
  *  - biz_opaque_callback_data = clientReference
  *  - parseJsonSafe, extractProviderMessageId, extractMetaError, categorizeStatus
  *  - isOutboundHttpAllowed: dupla trava com todas combinações
@@ -87,7 +87,7 @@ function makeTransport(
   } = {},
 ) {
   return new MetaWhatsAppNotificationTransport({
-    graphApiVersion: "v20.0",
+    graphApiVersion: "v25.0",
     phoneNumberId: "1234567890",
     accessToken: "SECRET_TOKEN_DO_NOT_LEAK",
     timeoutMs: opts.timeoutMs ?? 5_000,
@@ -164,7 +164,7 @@ describe("createMetaWhatsAppNotificationTransport — factory fail-closed", () =
 // Endpoint / headers / body
 
 describe("MetaWhatsAppNotificationTransport — request shape", () => {
-  it("usa v20.0, phone number ID no path, Authorization Bearer, e client_reference como biz_opaque_callback_data", async () => {
+  it("usa v25.0, phone number ID no path, Authorization Bearer, e client_reference como biz_opaque_callback_data", async () => {
     const { fetchFn, captures } = makeFetch(() =>
       jsonResponse(200, { messages: [{ id: "wamid.HBg=" }] }),
     );
@@ -174,7 +174,7 @@ describe("MetaWhatsAppNotificationTransport — request shape", () => {
     expect(captures).toHaveLength(1);
     const c = captures[0];
     expect(c.method).toBe("POST");
-    expect(c.url).toBe("https://graph.facebook.com/v20.0/1234567890/messages");
+    expect(c.url).toBe("https://graph.facebook.com/v25.0/1234567890/messages");
     expect(c.headers.Authorization).toBe("Bearer SECRET_TOKEN_DO_NOT_LEAK");
     expect(c.headers["Content-Type"]).toBe("application/json");
     // URL nunca contém o token

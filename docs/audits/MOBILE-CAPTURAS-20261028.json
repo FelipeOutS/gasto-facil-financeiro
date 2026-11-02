@@ -1,0 +1,50 @@
+[
+  {
+    "file": "gasto-inteligente-mobile-dashboard.webp",
+    "route": "/app",
+    "platform": "responsive web — actual route component in isolated fixture",
+    "viewport": "390x844 @2x",
+    "date": "2026-10-28",
+    "synthetic": true,
+    "sourceFile": "src/routes/app.tsx",
+    "sourceSha256": "6681ec2c5b8eb7c40721c630e7920bb7ff0fff27ab9ab50ef558b1fe75cc19c1",
+    "scrollY": 0,
+    "sha256": "b1933fceaad4798a9b177f71a7a9d8aebd2e526c1ed5f9e290b8b6cd1a1cee1a"
+  },
+  {
+    "file": "gasto-inteligente-mobile-metas.webp",
+    "route": "/metas",
+    "platform": "responsive web — actual route component in isolated fixture",
+    "viewport": "390x844 @2x",
+    "date": "2026-10-28",
+    "synthetic": true,
+    "sourceFile": "src/routes/metas.index.tsx",
+    "sourceSha256": "81492d5e4bd41fad09ea0ff96c399aafb70217d00f0b7c9450ee76144ff31879",
+    "scrollY": 0,
+    "sha256": "e19e6b99d1daf2424869b29d0d081f728c4e204a0794c52da7623e199959126d"
+  },
+  {
+    "file": "gasto-inteligente-mobile-investimentos.webp",
+    "route": "/investimentos",
+    "platform": "responsive web — actual route component in isolated fixture",
+    "viewport": "390x844 @2x",
+    "date": "2026-10-28",
+    "synthetic": true,
+    "sourceFile": "src/routes/investimentos.index.tsx",
+    "sourceSha256": "238f08901f417cdf752dd94c402dcaeadadf3165364fc5b68670503b33b2f5a1",
+    "scrollY": 0,
+    "sha256": "bd9725401c9f43405b7ea582959b17874216603c01a4e500a7bdb2fd032803ac"
+  },
+  {
+    "file": "gasto-inteligente-mobile-guardado.webp",
+    "route": "/guardado",
+    "platform": "responsive web — actual route component in isolated fixture",
+    "viewport": "390x844 @2x",
+    "date": "2026-10-28",
+    "synthetic": true,
+    "sourceFile": "src/routes/guardado.tsx",
+    "sourceSha256": "cf6ed90b2430509c8157d5db6a07bea3adaec7f6761a865ae52bfb677b5d9ef4",
+    "scrollY": 0,
+    "sha256": "9107d48cb4b0411b9e4bd5c08ee16d2c9fc4f6ea5bef0ad649e22e7ee31af3d8"
+  }
+]

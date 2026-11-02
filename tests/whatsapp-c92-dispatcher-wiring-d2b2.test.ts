@@ -1,3 +1,4 @@
+import { approvedCatalog } from "./_whatsapp-approved-catalog";
 /**
  * WA-C9.2 Fase D.2B.2 — Testes do wiring do dispatcher outbound.
  *
@@ -34,7 +35,7 @@ function baseNotification() {
     id: NID,
     user_id: UID,
     notification_type: "gi_conta_vencendo_hoje",
-    payload: { nome: "Conta X", valor: "R$ 120,00", vencimento: "12/07" } as Record<
+    payload: { due_date: "2026-07-12", nome: "Conta X", valor: "R$ 120,00", vencimento: "12/07" } as Record<
       string,
       unknown
     >,
@@ -67,6 +68,7 @@ const emptyClient: SupabaseLike = { from: () => ({}) };
 
 function baseDeps(overrides: Partial<RunOutboundDeps> = {}): RunOutboundDeps {
   return {
+    catalogLoader: approvedCatalog(),
     supabaseClient: emptyClient,
     gate: () => ({ allowed: true }),
     transportFactory: () => ({ ok: true, transport: stubTransport() }),

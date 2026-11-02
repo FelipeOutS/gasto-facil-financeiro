@@ -96,6 +96,10 @@
 :root {
   --android-safe-top: 0px;
   --android-safe-bottom: 0px;
+  --android-safe-left: 0px;
+  --android-safe-right: 0px;
+  --app-safe-left: max(env(safe-area-inset-left, 0px), var(--android-safe-left));
+  --app-safe-right: max(env(safe-area-inset-right, 0px), var(--android-safe-right));
   --app-safe-top: max(env(safe-area-inset-top, 0px), var(--android-safe-top));
   --app-safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--android-safe-bottom));
   --radius: 1rem;
@@ -856,7 +860,7 @@ body {
 
 /* Mobile navigation: one fixed, stable capsule. No scroll listener/reveal gesture. */
 :root {
-  --mobile-nav-height: 56px;
+  --mobile-nav-height: 64px;
   --mobile-nav-bottom: calc(16px + var(--app-safe-bottom));
   --mobile-notifications-bottom: calc(var(--mobile-nav-height) + var(--mobile-nav-bottom) + 20px);
   --mobile-nav-clearance: calc(var(--mobile-notifications-bottom) + 44px + 20px);
@@ -866,24 +870,27 @@ body {
   z-index: 40;
   bottom: var(--mobile-nav-bottom);
   left: 50%;
-  width: min(88%, 380px);
+  width: min(calc(100% - 32px), 420px);
   height: var(--mobile-nav-height);
   transform: translateX(-50%);
   padding: 5px 6px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  box-shadow:
-    0 6px 20px rgb(0 0 0 / 0.09),
-    inset 0 1px 0 color-mix(in srgb, var(--foreground) 5%, transparent);
+  border-radius: 26px;
   isolation: isolate;
 }
-@supports (backdrop-filter: blur(12px)) {
-  .mobile-bottom-nav {
-    background: color-mix(in srgb, var(--card) 86%, transparent);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
+/* Only the decorative surface is cut out: controls retain their full hit areas.
+   An actual transparent U follows the button, without painting over page content. */
+.mobile-nav-surface {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: visible;
+  pointer-events: none;
+  fill: var(--card);
+  stroke: var(--border);
+  stroke-width: 1px;
+  filter: drop-shadow(0 3px 6px rgb(0 0 0 / 0.07));
 }
 .mobile-bottom-nav[hidden] {
   display: none;
@@ -904,10 +911,9 @@ body {
   .cartoes-carousel-item { transform: none; transition: none; opacity: 0.88; }
   .cartoes-carousel-item[data-primary="true"] { opacity: 1; }
 }
-:root:not(.dark) .mobile-bottom-nav {
-  background: color-mix(in srgb, var(--card) 96%, transparent);
-  border-color: color-mix(in srgb, var(--foreground) 18%, var(--border));
-  box-shadow: 0 5px 18px rgb(0 0 0 / 0.12);
+:root:not(.dark) .mobile-nav-surface {
+  fill: #fff;
+  stroke: #ececef;
 }
 .mobile-nav-track {
   position: relative;
@@ -927,7 +933,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 1px;
   height: 100%;
   min-height: 44px;
   min-width: 44px;
@@ -938,8 +944,42 @@ body {
   transition: color 180ms ease;
 }
 .mobile-nav-link[aria-current="page"] {
-  color: var(--brand-fg-on-soft, var(--foreground));
+  color: var(--foreground);
 }
+.mobile-nav-label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 14px;
+  white-space: nowrap;
+}
+.mobile-nav-create-item {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+.mobile-nav-create {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  margin-top: -13px;
+  border: 0;
+  border-radius: 50%;
+  /* Greens from the official symbol and wordmark in public/logos/brand. */
+  background: linear-gradient(145deg, #20aa6c, #12a064);
+  color: #fff;
+  box-shadow: 0 2px 5px rgb(18 160 100 / 0.24);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms ease-out;
+}
+.mobile-nav-create:active { transform: scale(0.96); }
+.mobile-nav-create:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
 .mobile-nav-link:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 1px;
@@ -967,10 +1007,10 @@ body {
 .mobile-nav-indicator {
   position: absolute;
   top: 50%;
-  margin-top: -19px;
+  margin-top: -24px;
   left: 0;
   width: 20%;
-  height: 38px;
+  height: 48px;
   pointer-events: none;
   transition: opacity 120ms ease;
 }
@@ -981,11 +1021,12 @@ body {
   height: 100%;
   margin: auto;
   border-radius: 999px;
-  background: var(--brand-soft, var(--accent));
+  background: color-mix(in srgb, #20aa6c 16%, transparent);
 }
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav-indicator,
   .mobile-nav-icon,
+  .mobile-nav-create,
   .mobile-nav-link {
     transition: none;
     animation: none !important;
@@ -1011,3 +1052,29 @@ body {
   top: 8px;
   right: 8px;
 }
+
+/* Content avoids native bars/cutouts; decorative backgrounds remain edge-to-edge. */
+.gi-safe-full {
+  padding-top: var(--app-safe-top);
+  padding-bottom: var(--app-safe-bottom);
+  padding-left: var(--app-safe-left);
+  padding-right: var(--app-safe-right);
+}
+[data-safe-sheet="top"], [data-safe-sheet="left"], [data-safe-sheet="right"] {
+  padding-top: calc(var(--app-safe-top) + 1.5rem);
+  padding-bottom: calc(var(--app-safe-bottom) + 1.5rem);
+}
+[data-safe-sheet] {
+  padding-left: max(1.5rem, var(--app-safe-left));
+  padding-right: max(1.5rem, var(--app-safe-right));
+}
+[data-safe-sheet="top"] > button[aria-label="Fechar"],
+[data-safe-sheet="left"] > button[aria-label="Fechar"],
+[data-safe-sheet="right"] > button[aria-label="Fechar"] { top: calc(var(--app-safe-top) + 1rem); }
+@media (orientation: landscape) {
+  .mobile-shell-content, .auth-shell { padding-left: max(1.5rem, var(--app-safe-left)); padding-right: max(1.5rem, var(--app-safe-right)); }
+}[data-safe-dialog] { left: max(1rem, var(--app-safe-left)); right: max(1rem, var(--app-safe-right)); }
+[data-safe-sheet] > button[aria-label="Fechar"] { right: max(1rem, var(--app-safe-right)); }
+.cartoes-form-dialog { padding-left: var(--app-safe-left); padding-right: var(--app-safe-right); }
+@media (min-width: 1024px) { .mobile-shell-content { padding-top: max(1.25rem, var(--app-safe-top)); } }
+[data-safe-drawer] { padding-left: var(--app-safe-left); padding-right: var(--app-safe-right); }

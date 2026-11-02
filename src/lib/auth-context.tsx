@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,7 +81,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setVaultSession(sess);
       setSession(sess);
       if (evt === "TOKEN_REFRESHED" && sess && hasSavedSecureSession()) {
-        void saveSecureSession(sess);
+        void saveSecureSession(sess).then(saved => {
+          if (!saved && mounted) toast.warning("Não foi possível atualizar o acesso seguro. Reative a entrada por biometria nas configurações.", { id: "secure-session-refresh" });
+        });
       }
       const uid = sess?.user.id ?? null;
       setAuthenticatedUserId(uid);

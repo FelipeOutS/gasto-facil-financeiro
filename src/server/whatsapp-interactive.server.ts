@@ -18,6 +18,12 @@ import {
   CARD_POS_FALLBACK,
 } from "./whatsapp-cartao-messages";
 import { nomeMesYm } from "@/lib/fatura-competencia";
+import {
+  expenseTokenToTexto,
+  LEGACY_EXPENSE_RE,
+  signExpenseButton,
+  type ExpenseAction,
+} from "./expense-button-token.server";
 
 export type InteractiveButtons = {
   type: "button";
@@ -212,11 +218,20 @@ export function replyIdToTexto(id: string, title?: string): string {
   // O token opaco do recibo contém a identidade da ação. Converter para o
   // título ("Editar"/"Desfazer") perderia essa referência e seria inseguro.
   if (/^wa12_(?:edit|edit_scope|undo|field|confirm|back|scope):[0-9a-f-]{36}(?::[a-z_]+)?$/i.test(v)) return v;
+  // Edição de lançamentos antigos: token com nonce do passo + ID real; o
+  // título ("Uber") não identifica o lançamento. Validado no fluxo de edição.
+  if (/^wa_ed:[0-9a-f]{12}:(?:sel|pg|f|ok|adj|x|cont|novo|del|bk|rst)(?::[0-9a-z_-]{1,40})?$/i.test(v)) return v;
+  if (/^wa_lm:[0-9a-f]{12}:(?:go|ls|pg|bk|x|tg|tr)(?::\d{1,3})?$/i.test(v)) return v;
+  const exp = expenseTokenToTexto(v);
+  if (exp) return exp; // validado contra a sessão em processarMensagemWhatsApp
   if (REPLY_ID_TEXT[v]) return REPLY_ID_TEXT[v];
   if (v.startsWith(FATURA_COMP_PREFIX)) return v; // tratado por tratarEscolhaFatura
   // GI Agenda: ID estável com o item; tratado por handleAgendaIntent.
-  if (/^agenda_(?:done|cancel|edit|view|view_invoice|view_bill):/.test(v)) return v;
+  if (/^agenda_(?:done|cancel|edit|view|view_invoice|view_bill|cpage|cancel_ok):/.test(v) || v === "agenda_cancel_back") return v;
   if (v.startsWith(CARD_PICK_PREFIX)) return v.slice(CARD_PICK_PREFIX.length).trim();
+  // Assistente de Compras: IDs dedicados (nunca opt_N, que cairia no menu principal).
+  const shop = /^shopping_link_([1-3])$/.exec(v);
+  if (shop) return `link ${shop[1]}`;
   const opt = /^opt_(\d{1,2})$/.exec(v);
   if (opt) return opt[1];
   return (title ?? "").trim() || v;
@@ -226,7 +241,38 @@ export function replyIdToTexto(id: string, title?: string): string {
  * Decide se a resposta textual ganha botões/lista. Só reconhece perguntas
  * existentes — nunca muda o texto nem o fluxo.
  */
-export function buildInteractiveFromReply(resposta: string): InteractiveReply | null {
+export type ExpenseButtonBinding = { userId: string; telefone: string; rowId: string; rev: string };
+
+/**
+ * Igual a buildInteractiveFromReplyRaw, mas troca os IDs genéricos de gasto
+ * (expense_confirm/adjust/cancel) por IDs assinados presos à sessão exata.
+ * Sem vínculo (ou sem segredo) → null: o webhook envia só o texto 1/2/3.
+ */
+export function buildInteractiveFromReply(
+  resposta: string,
+  bind?: ExpenseButtonBinding | null,
+): InteractiveReply | null {
+  const ir = buildInteractiveFromReplyRaw(resposta);
+  if (!ir) return null;
+  const items = ir.type === "button" ? ir.buttons : ir.rows;
+  if (!items.some((b) => LEGACY_EXPENSE_RE.test(b.id))) return ir;
+  if (!bind) return null;
+  for (const b of items) {
+    if (!LEGACY_EXPENSE_RE.test(b.id)) continue;
+    const t = signExpenseButton(
+      b.id.slice("expense_".length) as ExpenseAction,
+      bind.userId,
+      bind.telefone,
+      bind.rowId,
+      bind.rev,
+    );
+    if (!t) return null;
+    b.id = t;
+  }
+  return ir;
+}
+
+function buildInteractiveFromReplyRaw(resposta: string): InteractiveReply | null {
   const body = (resposta ?? "").trim();
   if (!body || body.length > MAX_BODY) return null;
   const n = body
@@ -407,6 +453,14 @@ export function buildInteractiveFromReply(resposta: string): InteractiveReply | 
         { id: "confirm_no", title: "Não" },
       ],
     };
+  }
+
+  // Assistente de Compras: botões dedicados; se o formato não bater, só texto.
+  if (body.trimStart().startsWith("🛍️") || /para abrir, responda \*?link 1/.test(n)) {
+    const nums = [...body.matchAll(/^\*([1-3])\. R\$ [\d.,]+\*/gm)].map((m) => Number(m[1]));
+    const ok = /🔗 Para abrir, responda/.test(body) && nums.length >= 1 && nums.length <= 3 && nums.every((x, i) => x === i + 1);
+    if (!ok) return null;
+    return { type: "button", body, buttons: nums.map((x) => ({ id: `shopping_link_${x}`, title: `🔗 Oferta ${x}` })) };
   }
 
   // Listas numeradas (menu, escolha de cartão, seleção de contas).

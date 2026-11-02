@@ -583,7 +583,7 @@ export function ImportFaturaDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={cn(
-          "flex max-h-[92vh] w-[calc(100vw-1.5rem)] flex-col gap-0 overflow-hidden p-0",
+          "flex max-h-[calc(var(--app-viewport-height,100dvh)*0.92)] w-[calc(100vw-1.5rem)] flex-col gap-0 overflow-hidden p-0",
           "sm:max-w-[640px] md:max-w-[820px] lg:max-w-[980px]",
         )}
       >
@@ -1685,7 +1685,7 @@ function ImportHistorySection({ cartoes }: { cartoes: Cartao[] }) {
 
       {/* Ver lançamentos do lote */}
       <Dialog open={!!verLote} onOpenChange={(o) => !o && setVerLote(null)}>
-        <DialogContent className="max-h-[80vh] w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-[560px]">
+        <DialogContent className="max-h-[calc(var(--app-viewport-height,100dvh)*0.8)] w-[calc(100vw-2rem)] overflow-y-auto sm:max-w-[560px]">
           <DialogHeader>
             <DialogTitle>{t("history.lancamentosTitle")}</DialogTitle>
             <DialogDescription>

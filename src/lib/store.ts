@@ -5,6 +5,10 @@ import {
   competenciaDoGasto,
   competenciaPorData,
   isYm,
+  periodoCiclo as _periodoCiclo,
+  fechamentoNoMes as _fechamentoNoMes,
+  vencimentoDoFechamento as _vencimentoDoFechamento,
+  proximoFechamento as _proximoFechamento,
 } from "./fatura-competencia";
 import { filtrarContasAtivas, isStatusContaCancelado } from "./contas-status";
 import { parcelasEmCentavos } from "./parcelamento";
@@ -903,7 +907,7 @@ type ExtratoImportadoRow = {
 };
 function rowToExtratoImportado(r: ExtratoImportadoRow): ExtratoImportado {
   const tipo: TipoOrigemExtrato =
-    r.tipo_origem === "csv" || r.tipo_origem === "imagem" ? r.tipo_origem : "pdf";
+    r.tipo_origem === "csv" || r.tipo_origem === "imagem" || r.tipo_origem === "pluggy" ? r.tipo_origem : "pdf";
   const status: StatusExtratoImportado =
     r.status === "parcial" || r.status === "revertido" || r.status === "erro"
       ? r.status
@@ -1072,7 +1076,7 @@ export async function hydrateUser(userId: string): Promise<void> {
         extratosRes,
         faturasRes,
       ] = await Promise.all([
-        supabase.from("gastos").select("*").eq("user_id", userId),
+        supabase.from("gastos").select("*").eq("user_id", userId).is("deleted_at", null),
         supabase.from("receitas").select("*").eq("user_id", userId).is("deleted_at", null),
         supabase.from("limites").select("*").eq("user_id", userId),
         supabase.from("aprendizado_categoria").select("*").eq("user_id", userId),
@@ -1689,12 +1693,10 @@ export function resumoFaturaCartao(cartaoId: string, hoje: Date = new Date()) {
     const m = hoje.getMonth();
     if (hojeDia > diaFech) {
       // Já fechou este mês → ciclo aberto vai até o fechamento do próximo mês.
-      inicio = new Date(y, m, diaFech + 1);
-      fim = new Date(y, m + 1, diaFech, 23, 59, 59, 999);
+      ({ inicio, fim } = _periodoCiclo(diaFech, m + 1, y));
     } else {
       // Ainda não fechou este mês → ciclo aberto começou no mês passado.
-      inicio = new Date(y, m - 1, diaFech + 1);
-      fim = new Date(y, m, diaFech, 23, 59, 59, 999);
+      ({ inicio, fim } = _periodoCiclo(diaFech, m, y));
     }
   } else {
     // Fallback: mês civil corrente.
@@ -1815,7 +1817,7 @@ function applyCategoriaInferida(g: Gasto): Gasto {
 export async function reclassificarCategoriasExistentes(): Promise<number> {
   if (!activeUserId) return 0;
   const userId = activeUserId;
-  const { data, error } = await supabase.from("gastos").select("*").eq("user_id", userId);
+  const { data, error } = await supabase.from("gastos").select("*").eq("user_id", userId).is("deleted_at", null);
   if (error || !data) {
     if (error) console.error("[store] reclassificarCategoriasExistentes load failed", error);
     return 0;
@@ -1891,7 +1893,7 @@ function refreshFinancialEntity(
     try {
       const query = table === "receitas"
         ? supabase.from("receitas").select("*").eq("user_id", userId).is("deleted_at", null)
-        : supabase.from("gastos").select("*").eq("user_id", userId);
+        : supabase.from("gastos").select("*").eq("user_id", userId).is("deleted_at", null);
       // Uma leitura suspensa não impede a próxima recuperação ao voltar ao app.
       const result = await Promise.race([
         query,
@@ -2405,6 +2407,7 @@ export async function addGastoAwait(
     return { error: error?.message, code: error?.code };
   };
   const result = offlineClientId ? await persistOfflineRows(rows, async () => {
+    // soft-delete-exceção: dedupe offline precisa ver linhas excluídas (mesmo offline_client_id não pode reinserir).
     const { data, error } = await supabase.from("gastos").select("*").eq("user_id", userId)
       .in("offline_client_id", rows.map((row) => row.offline_client_id!)).abortSignal(signal);
     return { rows: (data ?? []) as unknown as Record<string, unknown>[], error: error?.message };
@@ -4838,84 +4841,55 @@ export type ResultadoRevertSeguro = {
  * - se sobrar algum item, o lote fica com status `parcial`;
  * - idempotente: relançar em lote já revertido não faz nada.
  */
+/**
+ * F2/F3: lote com gasto soft-excluído NUNCA é revertido (o DELETE físico
+ * impediria restaurar). Erro de leitura → bloqueia (fail-closed).
+ * Atomicidade total entre tabelas: RPC candidata `reverter_extrato_atomic`
+ * (docs/migrations-candidate/gastos-delete-atomic-f4.sql).
+ */
+export async function loteTemGastoExcluido(batchId: string, userId: string): Promise<boolean> {
+  // soft-delete-exceção: precisa ver excluídos para bloquear a reversão.
+  const { data, error } = await sbAny
+    .from("gastos")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("import_batch_id", batchId)
+    .not("deleted_at", "is", null)
+    .limit(1);
+  if (error || !Array.isArray(data)) return true;
+  return data.length > 0;
+}
+
 export async function revertExtratoImportadoSeguro(
   batchId: string,
 ): Promise<ResultadoRevertSeguro> {
-  const falha: ResultadoRevertSeguro = {
-    ok: false,
-    removidos: 0,
-    mantidos: 0,
-    status: "importado",
-  };
+  // P1 (13/10/2026): reversão SOMENTE via RPC transacional `reverter_extrato_atomic`
+  // (docs/migrations-candidate/gastos-delete-atomic-f4.sql), com a mesma regra de
+  // editados/parcial do fluxo antigo. SEM fallback para DELETE sequencial: se a RPC
+  // não existir ou falhar, nada é apagado e memória/cache ficam intactos.
+  const falha: ResultadoRevertSeguro = { ok: false, removidos: 0, mantidos: 0, status: "importado" };
   if (!activeUserId) return falha;
   const extrato = memExtratos.find((e) => e.id === batchId);
   if (!extrato) return falha;
+  // Pluggy must use its own origin-scoped, soft-delete-only reversal RPC.
+  if (extrato.tipoOrigem === "pluggy") return falha;
   if (extrato.status === "revertido") {
     return { ok: true, removidos: 0, mantidos: 0, status: "revertido" };
   }
-
-  const itens = getItensDoBatch(batchId);
-  const TOLERANCIA_MS = 5000;
-  const foiEditado = (criadoEm?: string, atualizadoEm?: string) => {
-    if (!criadoEm || !atualizadoEm) return false;
-    return new Date(atualizadoEm).getTime() - new Date(criadoEm).getTime() > TOLERANCIA_MS;
-  };
-
-  const alvos: Array<{ tabela: string; ids: string[] }> = [
-    {
-      tabela: "gastos",
-      ids: itens.gastos.filter((x) => !foiEditado(x.criadoEm, x.atualizadoEm)).map((x) => x.id),
-    },
-    {
-      tabela: "receitas",
-      ids: itens.receitas.filter((x) => !foiEditado(x.criadoEm, x.atualizadoEm)).map((x) => x.id),
-    },
-    {
-      tabela: "transferencias_internas",
-      ids: itens.transferencias
-        .filter((x) => !foiEditado(x.criadoEm, x.atualizadoEm))
-        .map((x) => x.id),
-    },
-    { tabela: "dinheiro_guardado", ids: itens.guardado.map((x) => x.id) },
-    { tabela: "movimentacoes_meta", ids: itens.movimentacoesMeta.map((x) => x.id) },
-  ];
-
-  const totalItens =
-    itens.gastos.length +
-    itens.receitas.length +
-    itens.transferencias.length +
-    itens.guardado.length +
-    itens.movimentacoesMeta.length;
-  const removiveis = alvos.reduce((s, a) => s + a.ids.length, 0);
-  const mantidos = totalItens - removiveis;
-
-  const apagados = new Set<string>();
-  for (const alvo of alvos) {
-    if (alvo.ids.length === 0) continue;
-    const { error } = await sbAny
-      .from(alvo.tabela)
-      .delete()
-      .eq("user_id", activeUserId)
-      .eq("import_batch_id", batchId)
-      .in("id", alvo.ids);
-    if (error) {
-      console.error(`[store] revertExtratoImportadoSeguro: falha em ${alvo.tabela}`, error);
-      return { ...falha, mantidos };
-    }
-    for (const id of alvo.ids) apagados.add(id);
+  const { data, error } = await sbAny.rpc("reverter_extrato_atomic", { p_batch_id: batchId });
+  const r = data as
+    | { ok?: boolean; removidos?: number; mantidos?: number; status?: string; ids?: unknown }
+    | null;
+  const statusOk = r?.status === "parcial" || r?.status === "revertido";
+  if (error || !r || r.ok !== true || !statusOk || !Array.isArray(r.ids)) {
+    console.error("[store] revertExtratoImportadoSeguro: reversão segura indisponível", {
+      code: (error as { code?: string } | null)?.code ?? null,
+    });
+    return { ...falha, status: extrato.status };
   }
-
-  const novoStatus: StatusExtratoImportado = mantidos > 0 ? "parcial" : "revertido";
+  const novoStatus = r.status as StatusExtratoImportado;
+  const apagados = new Set((r.ids as unknown[]).map(String));
   const now = new Date().toISOString();
-  const { error: upErr } = await sbAny
-    .from("extratos_importados")
-    .update({ status: novoStatus, reverted_at: now, updated_at: now })
-    .eq("id", batchId)
-    .eq("user_id", activeUserId);
-  if (upErr) {
-    console.error("[store] revertExtratoImportadoSeguro: falha ao atualizar status", upErr);
-  }
-
   const keep = <T extends { id: string }>(arr: T[]) => arr.filter((x) => !apagados.has(x.id));
   memGastos = keep(memGastos);
   memReceitas = keep(memReceitas);
@@ -4926,61 +4900,17 @@ export async function revertExtratoImportadoSeguro(
     e.id === batchId ? { ...e, status: novoStatus, revertedAt: now, atualizadoEm: now } : e,
   );
   emit();
-  return { ok: true, removidos: apagados.size, mantidos, status: novoStatus };
+  return {
+    ok: true,
+    removidos: Number(r.removidos) || 0,
+    mantidos: Number(r.mantidos) || 0,
+    status: novoStatus,
+  };
 }
 
+/** Legado: delega ao fluxo seguro (preserva editados). Não há mais DELETE sequencial. */
 export async function revertExtratoImportado(batchId: string): Promise<boolean> {
-
-  if (!activeUserId) return false;
-  const extrato = memExtratos.find((e) => e.id === batchId);
-  if (!extrato) return false;
-  if (extrato.status === "revertido") return true;
-
-  // Hard delete em todas as tabelas com import_batch_id = batchId
-  const tables = [
-    "gastos",
-    "receitas",
-    "transferencias_internas",
-    "dinheiro_guardado",
-    "movimentacoes_meta",
-  ];
-  for (const tbl of tables) {
-    const { error } = await sbAny
-      .from(tbl)
-      .delete()
-      .eq("user_id", activeUserId)
-      .eq("import_batch_id", batchId);
-    if (error) {
-      console.error(`[store] revertExtratoImportado: falha ao apagar de ${tbl}`, error);
-      return false;
-    }
-  }
-
-  // Marca o lote como revertido
-  const now = new Date().toISOString();
-  const { error: upErr } = await sbAny
-    .from("extratos_importados")
-    .update({ status: "revertido", reverted_at: now, updated_at: now })
-    .eq("id", batchId)
-    .eq("user_id", activeUserId);
-  if (upErr) {
-    console.error("[store] revertExtratoImportado: falha ao atualizar status", upErr);
-    return false;
-  }
-
-  // Atualiza memória local
-  memGastos = memGastos.filter((g) => g.importBatchId !== batchId);
-  memReceitas = memReceitas.filter((r) => r.importBatchId !== batchId);
-  memTransferencias = memTransferencias.filter((t) => t.importBatchId !== batchId);
-  memGuardado = memGuardado.filter((g) => g.importBatchId !== batchId);
-  memMov = memMov.filter((m) => m.importBatchId !== batchId);
-  memExtratos = memExtratos.map((e) =>
-    e.id === batchId
-      ? { ...e, status: "revertido" as StatusExtratoImportado, revertedAt: now, atualizadoEm: now }
-      : e,
-  );
-  emit();
-  return true;
+  return (await revertExtratoImportadoSeguro(batchId)).ok;
 }
 
 export async function deleteExtratoImportado(batchId: string): Promise<boolean> {
@@ -5305,10 +5235,9 @@ export function cicloFatura(cartao: Cartao, mes: number, ano: number): { inicio:
   const diaFech = cartao.diaFechamento && cartao.diaFechamento > 0 ? cartao.diaFechamento : 1;
   // inicio = dia seguinte ao fechamento do mês anterior (= dia seguinte ao
   // fechamento que ocorre no início do próprio mês de referência).
-  const inicio = new Date(ano, mes - 1, diaFech + 1, 0, 0, 0, 0);
-  // fim = fechamento do mês seguinte ao mês de referência.
-  const fim = new Date(ano, mes, diaFech, 23, 59, 59, 999);
-  return { inicio, fim };
+  // fim = fechamento do mês seguinte. Dia 29-31 limitado ao último dia do
+  // mês (mesma convenção de cicloLegadoPorData, que compara números de dia).
+  return _periodoCiclo(diaFech, mes, ano);
 }
 
 /**
@@ -5593,12 +5522,10 @@ export function statusEfetivoFatura(
   const diaFech = cartao.diaFechamento ?? 1;
   const diaVenc = cartao.diaVencimento ?? 10;
   // Fechamento da fatura "mes" ocorre em (ano, mes, diaFech) — mês seguinte.
-  const dataFechamento = new Date(ano, mes, diaFech, 23, 59, 59, 999);
-  // Vencimento: primeira ocorrência de diaVenc em ou após o fechamento.
-  let dataVencimento = new Date(ano, mes, diaVenc, 23, 59, 59, 999);
-  if (dataVencimento.getTime() < dataFechamento.getTime()) {
-    dataVencimento = new Date(ano, mes + 1, diaVenc, 23, 59, 59, 999);
-  }
+  const dataFechamento = _fechamentoNoMes(ano, mes, diaFech);
+  // Vencimento: regra de offsetVencimento (dia venc > dia fech → mesmo mês).
+  const dataVencimento = _vencimentoDoFechamento(ano, mes, diaFech, diaVenc);
+  dataVencimento.setHours(23, 59, 59, 999);
   if (hoje > dataVencimento) return "vencida";
   if (hoje > dataFechamento) return "fechada";
   return "aberta";
@@ -5642,11 +5569,7 @@ export function faturaCorrente(
 /** Próximo fechamento (futuro mais próximo) considerando hoje. */
 export function proximoFechamentoData(cartao: Cartao, hoje: Date = new Date()): Date | null {
   if (!cartao.diaFechamento) return null;
-  const ref = new Date(hoje.getFullYear(), hoje.getMonth(), cartao.diaFechamento, 23, 59, 59, 999);
-  if (ref.getTime() < new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate()).getTime()) {
-    return new Date(hoje.getFullYear(), hoje.getMonth() + 1, cartao.diaFechamento, 23, 59, 59, 999);
-  }
-  return ref;
+  return _proximoFechamento(cartao.diaFechamento, hoje);
 }
 
 /** Vencimento da fatura aberta (vence depois do próximo fechamento). */
@@ -5657,11 +5580,12 @@ export function proximoVencimentoFaturaAberta(
   if (!cartao.diaVencimento) return null;
   const fech = proximoFechamentoData(cartao, hoje);
   if (!fech) return null;
-  let venc = new Date(fech.getFullYear(), fech.getMonth(), cartao.diaVencimento);
-  if (venc.getTime() <= fech.getTime()) {
-    venc = new Date(fech.getFullYear(), fech.getMonth() + 1, cartao.diaVencimento);
-  }
-  return venc;
+  return _vencimentoDoFechamento(
+    fech.getFullYear(),
+    fech.getMonth(),
+    cartao.diaFechamento,
+    cartao.diaVencimento,
+  );
 }
 
 /**

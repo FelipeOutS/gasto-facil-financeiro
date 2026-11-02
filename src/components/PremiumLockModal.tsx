@@ -112,7 +112,7 @@ export function PremiumLockModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[92vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md max-h-[calc(var(--app-viewport-height,100dvh)*0.92)] overflow-y-auto">
         <DialogHeader>
           <div className="relative mx-auto mb-3 grid h-16 w-16 place-items-center rounded-2xl bg-gradient-to-br from-amber-400/25 via-primary/15 to-primary/25 ring-1 ring-primary/30 shadow-elevated">
             <Lock className="h-7 w-7 text-primary" />

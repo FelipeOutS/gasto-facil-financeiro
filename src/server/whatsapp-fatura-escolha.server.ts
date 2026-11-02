@@ -118,6 +118,7 @@ async function buscarGastoPendente(userId: string, telefone: string): Promise<Pe
       .select("id, data, created_at")
       .eq("id", last.gasto_id)
       .eq("user_id", userId)
+      .is("deleted_at", null)
       .eq("origem", "whatsapp")
       .eq("forma_pagamento", "credito")
       .is("cartao_id", null)

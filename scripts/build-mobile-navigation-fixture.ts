@@ -25,10 +25,18 @@ const compiled = await compile(await readFile("src/styles.css", "utf8"), {
   base: resolve("src"),
   onDependency: () => {},
 });
-const css = compiled.build(["lg:hidden", "sr-only", "bg-destructive", "bg-warning"]);
+const classSources = await Promise.all([
+  "src/components/BottomNav.tsx",
+  "src/components/MobileQuickActionsSheet.tsx",
+  "src/components/ui/sheet.tsx",
+].map(path => readFile(path, "utf8")));
+const candidates = classSources.flatMap(source =>
+  [...source.matchAll(/"([^"\n]+)"/g)].flatMap(match => match[1].split(/\s+/)),
+);
+const css = compiled.build([...candidates, "lg:hidden", "sr-only", "bg-destructive", "bg-warning"]);
 await mkdir(output, { recursive: true });
 await writeFile(
   resolve(output, "navigation.html"),
-  `<!doctype html><html class="dark"><head><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><style>${css}</style></head><body><div id="root"></div><script>${(await result.outputs[0].text()).replaceAll("</script>", "<\\/script>")}</script></body></html>`,
+  `<!doctype html><html class="dark"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><style>${css}</style></head><body style="font-family:var(--font-sans)"><div id="root"></div><script>${(await result.outputs[0].text()).replaceAll("</script>", "<\\/script>")}</script></body></html>`,
 );
 console.log("Built isolated navigation fixture:", resolve(output, "navigation.html"));

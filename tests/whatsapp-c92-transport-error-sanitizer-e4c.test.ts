@@ -62,7 +62,7 @@ describe("sanitizeTransportError", () => {
 
   it("mensagem com URL não vaza para nenhum campo", () => {
     const err = new Error(
-      "failed https://graph.facebook.com/v20.0/1234/messages?access_token=EAAG",
+      "failed https://graph.facebook.com/v25.0/1234/messages?access_token=EAAG",
     );
     const r = base({ error: err });
     // Nenhum campo carrega mensagem livre.

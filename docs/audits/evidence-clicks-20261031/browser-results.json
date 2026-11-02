@@ -1,0 +1,42 @@
+[
+  {
+    "touch": false,
+    "test": "Select opens, scrolls and selects",
+    "pass": true
+  },
+  {
+    "touch": false,
+    "test": "Popover opens and dismisses",
+    "pass": true
+  },
+  {
+    "touch": false,
+    "test": "Dropdown opens and selects",
+    "pass": true
+  },
+  {
+    "touch": false,
+    "test": "Nested select, modal scroll sizing, dismiss and subsequent click",
+    "pass": true
+  },
+  {
+    "touch": true,
+    "test": "Select opens, scrolls and selects",
+    "pass": true
+  },
+  {
+    "touch": true,
+    "test": "Popover opens and dismisses",
+    "pass": true
+  },
+  {
+    "touch": true,
+    "test": "Dropdown opens and selects",
+    "pass": true
+  },
+  {
+    "touch": true,
+    "test": "Nested select, modal scroll sizing, dismiss and subsequent click",
+    "pass": true
+  }
+]

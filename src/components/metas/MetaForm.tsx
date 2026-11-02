@@ -565,7 +565,7 @@ export function MetaFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-h-[calc(var(--app-viewport-height,100dvh)*0.9)] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isCreate && t("dialog.createTitle")}

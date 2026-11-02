@@ -169,7 +169,7 @@ if (missing.length > 0) {
 }
 const extras = [...onDisk].filter(
   (f) =>
-    (f.startsWith("whatsapp-") || f.startsWith("admin-master-") || f.startsWith("free-ads-")) &&
+    (f.startsWith("whatsapp-") || f.startsWith("agenda-") || f.startsWith("admin-master-") || f.startsWith("free-ads-")) &&
     !INCLUDE.includes(f),
 );
 // Arquivos novos do WhatsApp entram automaticamente (ordem alfabética, após

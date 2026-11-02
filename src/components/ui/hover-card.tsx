@@ -18,7 +18,7 @@ const HoverCardContent = React.forwardRef<
       sideOffset={sideOffset}
       collisionPadding={12}
       className={cn(
-        "z-[10000] w-64 max-h-[calc(100vh-1.5rem)] overflow-y-auto rounded-md border bg-popover p-4 text-popover-foreground shadow-md shadow-black/40 outline-none",
+        "z-[10000] w-64 max-h-[calc(var(--app-viewport-height,100dvh)-1.5rem)] overflow-y-auto rounded-md border bg-popover p-4 text-popover-foreground shadow-md shadow-black/40 outline-none",
         className,
       )}
       {...props}

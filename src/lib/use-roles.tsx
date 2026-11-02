@@ -3,160 +3,47 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 
 export type AppRole = "owner" | "admin" | "user";
-
-type RolesState = {
-  roles: AppRole[];
-  loading: boolean;
-  isOwner: boolean;
-  isAdmin: boolean;
-  /** Owner ou admin: tem acesso total a recursos administrativos / premium. */
-  hasFullAccess: boolean;
-};
-
-/**
- * Carrega as roles do usuário autenticado e tenta auto-promover o primeiro
- * usuário a "owner" (Felipe), de forma SEGURA: o servidor só atribui owner se
- * ainda não existir nenhum dono. A partir desse momento a função no banco
- * retorna `false` e fica selada.
- *
- * Permissões NÃO são derivadas de CPF, e-mail visível ou texto de UI — são
- * lidas da tabela `user_roles` no servidor, com RLS restringindo escrita.
- */
-const ROLES_CACHE_PREFIX = "gf-roles-cache:";
-const ROLES_RUNTIME_CACHE_TTL_MS = 5 * 60_000;
-
-let rolesRuntimeCache: { userId: string; roles: AppRole[]; loadedAt: number } | null = null;
-let rolesRuntimeInFlight: { userId: string; promise: Promise<AppRole[] | null> } | null = null;
-
-function getRuntimeRoles(userId: string): AppRole[] | null {
-  if (
-    rolesRuntimeCache?.userId === userId &&
-    Date.now() - rolesRuntimeCache.loadedAt < ROLES_RUNTIME_CACHE_TTL_MS
-  ) {
-    return rolesRuntimeCache.roles;
-  }
-  return null;
+// Share concurrent reads only. Never trust persisted browser roles or promote on navigation.
+const inFlight = new Map<string, Promise<AppRole[]>>();
+function loadRoles(userId: string): Promise<AppRole[]> {
+  const existing = inFlight.get(userId);
+  if (existing) return existing;
+  const promise = (async () => {
+    const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId).abortSignal(AbortSignal.timeout(15000));
+    if (error || !data) throw new Error("Não foi possível verificar permissões.");
+    return data.map(row => row.role).filter((role): role is AppRole => role === "owner" || role === "admin" || role === "user");
+  })();
+  inFlight.set(userId, promise);
+  void promise.then(() => { if (inFlight.get(userId) === promise) inFlight.delete(userId); }, () => { if (inFlight.get(userId) === promise) inFlight.delete(userId); });
+  return promise;
 }
-
-function rememberRuntimeRoles(userId: string, roles: AppRole[]) {
-  rolesRuntimeCache = { userId, roles, loadedAt: Date.now() };
-  writeRolesCache(userId, roles);
-}
-
-function readRolesCache(userId: string): AppRole[] | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(ROLES_CACHE_PREFIX + userId);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as AppRole[]) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeRolesCache(userId: string, roles: AppRole[]) {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(ROLES_CACHE_PREFIX + userId, JSON.stringify(roles));
-  } catch {
-    /* ignore */
-  }
-}
-
-export function useRoles(): RolesState {
+export function useRoles() {
   const { user, loading: authLoading } = useAuth();
-  const initialRoles = user ? (getRuntimeRoles(user.id) ?? readRolesCache(user.id)) : null;
-  const [roles, setRoles] = useState<AppRole[]>(initialRoles ?? []);
-  const [loading, setLoading] = useState(!initialRoles);
-  const [hydratedUserId, setHydratedUserId] = useState<string | null>(
-    initialRoles && user ? user.id : null,
-  );
-
-  // Hidratação síncrona do cache (evita perder permissões durante a navegação).
+  const userId = user?.id ?? null;
+  const [state, setState] = useState<{ userId: string | null; roles: AppRole[]; loading: boolean; error: string | null }>({ userId: null, roles: [], loading: true, error: null });
   useEffect(() => {
     if (authLoading) return;
-    if (!user) {
-      setHydratedUserId(null);
-      return;
-    }
-    if (hydratedUserId === user.id) return;
-    const cached = getRuntimeRoles(user.id) ?? readRolesCache(user.id);
-    if (cached) {
-      setRoles(cached);
-      setLoading(false);
-    }
-    setHydratedUserId(user.id);
-  }, [user, authLoading, hydratedUserId]);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      if (authLoading) return;
-      if (!user) {
-        setRoles([]);
-        setLoading(false);
-        return;
+    let alive = true;
+    let generation = 0;
+    const refresh = async () => {
+      const request = ++generation;
+      if (!userId) { setState({ userId, roles: [], loading: false, error: null }); return; }
+      setState(previous => previous.userId === userId && !previous.loading ? previous : { userId, roles: [], loading: true, error: null });
+      try {
+        const roles = await loadRoles(userId);
+        if (alive && request === generation) setState({ userId, roles, loading: false, error: null });
+      } catch {
+        if (alive && request === generation) setState({ userId, roles: [], loading: false, error: "Não foi possível verificar permissões." });
       }
-      const runtimeCached = getRuntimeRoles(user.id);
-      if (runtimeCached) {
-        setRoles(runtimeCached);
-        setLoading(false);
-        return;
-      }
-
-      const hasCache = !!readRolesCache(user.id);
-      if (!hasCache) setLoading(true);
-
-      const next = await (rolesRuntimeInFlight?.userId === user.id
-        ? rolesRuntimeInFlight.promise
-        : (() => {
-            const promise = (async () => {
-              try {
-                await supabase.rpc("claim_owner_if_first");
-              } catch {
-                // silencioso
-              }
-
-              const { data, error } = await supabase
-                .from("user_roles")
-                .select("role")
-                .eq("user_id", user.id);
-
-              if (error || !data) return null;
-              return data.map((r) => r.role as AppRole);
-            })();
-            rolesRuntimeInFlight = { userId: user.id, promise };
-            promise.finally(() => {
-              if (rolesRuntimeInFlight?.promise === promise) {
-                rolesRuntimeInFlight = null;
-              }
-            });
-            return promise;
-          })());
-
-      if (cancelled) return;
-      if (!next) {
-        if (!hasCache) setRoles([]);
-      } else {
-        setRoles(next);
-        rememberRuntimeRoles(user.id, next);
-      }
-      setLoading(false);
-    }
-    void load();
-    return () => {
-      cancelled = true;
     };
-  }, [user, authLoading]);
-
-  const isOwner = roles.includes("owner");
-  const isAdmin = roles.includes("admin");
-  return {
-    roles,
-    loading,
-    isOwner,
-    isAdmin,
-    hasFullAccess: isOwner || isAdmin,
-  };
+    void refresh();
+    const resume = () => { if (document.visibilityState === "visible") void refresh(); };
+    window.addEventListener("focus", resume);
+    document.addEventListener("visibilitychange", resume);
+    const timer = window.setInterval(resume, 60000);
+    return () => { alive = false; generation++; clearInterval(timer); window.removeEventListener("focus", resume); document.removeEventListener("visibilitychange", resume); };
+  }, [userId, authLoading]);
+  const current = !authLoading && state.userId === userId;
+  const roles = current ? state.roles : [];
+  return { roles, loading: authLoading || !current || state.loading, error: current ? state.error : null, isOwner: roles.includes("owner"), isAdmin: roles.includes("admin"), hasFullAccess: roles.includes("owner") || roles.includes("admin") };
 }

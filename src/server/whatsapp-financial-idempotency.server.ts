@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 export function financialIdForWhatsAppMessage(
   userId: string,
   externalId: string,
-  kind: "expense" | "income_single",
+  kind: "expense" | "income_single" | "expense_receipt",
 ): string {
   if (!userId || !externalId) throw new Error("Missing financial idempotency input");
   const bytes = createHash("sha256")

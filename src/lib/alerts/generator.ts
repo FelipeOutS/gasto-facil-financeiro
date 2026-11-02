@@ -1,3 +1,4 @@
+import { vencimentoDoFechamento } from "@/lib/fatura-competencia";
 // Gera "drafts" de alertas a partir dos dados do usuário.
 // Não escreve no banco — apenas calcula. O sync com a tabela é feito em service.ts.
 
@@ -104,11 +105,7 @@ export function generateAlertDrafts(src: GeneratorSources): DraftAlert[] {
           // Vencimento da fatura "ref" (mês de referência). Vencimento real
           // ocorre no mês seguinte (ou no mês de fechamento se diaVenc>=diaFech).
           const diaFechRef = cartao.diaFechamento ?? 1;
-          let venc = new Date(ref.ano, ref.mes, cartao.diaVencimento);
-          const fech = new Date(ref.ano, ref.mes, diaFechRef);
-          if (venc.getTime() < fech.getTime()) {
-            venc = new Date(ref.ano, ref.mes + 1, cartao.diaVencimento);
-          }
+          const venc = vencimentoDoFechamento(ref.ano, ref.mes, diaFechRef, cartao.diaVencimento);
           const isoVenc = `${venc.getFullYear()}-${String(venc.getMonth() + 1).padStart(2, "0")}-${String(venc.getDate()).padStart(2, "0")}`;
           const dias = diffDaysLocal(isoVenc);
           const refLabel = mesReferenciaFaturaLabel(cartao, ref.mes, ref.ano);

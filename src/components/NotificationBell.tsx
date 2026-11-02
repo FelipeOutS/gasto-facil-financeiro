@@ -158,7 +158,7 @@ export function NotificationsPanel({ onClose }: { onClose: () => void }) {
           </p>
         </div>
       ) : (
-        <ul className="max-h-[60vh] overflow-y-auto">
+        <ul className="max-h-[calc(var(--app-viewport-height,100dvh)*0.6)] overflow-y-auto">
           {top.map((a) => (
             <ItemRow key={a.id} alert={a} onClose={onClose} />
           ))}

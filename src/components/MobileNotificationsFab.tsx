@@ -78,7 +78,7 @@ export function MobileNotificationsFab() {
       </SheetTrigger>
       <SheetContent
         side="bottom"
-        className="p-0 rounded-t-2xl max-h-[85vh] overflow-hidden border-border/70"
+        className="p-0 rounded-t-2xl max-h-[calc(var(--app-viewport-height,100dvh)*0.85)] overflow-hidden border-border/70"
       >
         <NotificationsPanel onClose={() => setOpen(false)} />
       </SheetContent>
