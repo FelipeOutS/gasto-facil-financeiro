@@ -1460,10 +1460,11 @@ function rebuildResumoOuPreencher(s: ComprovanteSession, cats: CategoriaRow[]): 
  */
 export async function podeUsarOcrComprovante(userId: string): Promise<boolean> {
   try {
-    const { isAdminMasterEmail } = await import("@/server/admin-master.server");
-    const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const { hasAdminMasterRole } = await import("@/server/admin-master.server");
+    const { data: u, error: identityError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (identityError || !u?.user || u.user.id !== userId) return false;
     const email: string = (u?.user?.email ?? "").trim().toLowerCase();
-    if (isAdminMasterEmail(email)) return true;
+    if (await hasAdminMasterRole(userId)) return true;
 
     const { getSubscriptionForUserIdentity } = await import("@/server/subscription.server");
     const { planAllowsFeature } = await import("@/lib/plans");

@@ -64,7 +64,7 @@ export async function hasAdminMasterRole(userId: string | null | undefined): Pro
       console.error("[hasAdminMasterRole] erro ao verificar role:", error);
       return false;
     }
-    return !!data;
+    return data?.role === "owner";
   } catch (err) {
     console.error("[hasAdminMasterRole] exceção ao verificar role:", err);
     return false;
@@ -89,4 +89,24 @@ export async function assertAdminMaster(
 
 export function __resetAdminMasterCacheForTests() {
   _cachedEmails = null;
+}
+
+/**
+ * Adaptador para endpoints que precisam do e-mail do ator para auditoria.
+ * userId deve vir do middleware autenticado, nunca do input do cliente.
+ * Sem cache de identidade/papel: cada requisição verifica Auth e owner.
+ */
+export async function requireAdminMasterIdentity(
+  userId: string | null | undefined,
+): Promise<string> {
+  if (!userId) throw new Error("FORBIDDEN");
+  try {
+    const { data, error } = await supabaseAdmin.auth.admin.getUserById(userId);
+    if (error || !data?.user || data.user.id !== userId) throw new Error("FORBIDDEN");
+    await assertAdminMaster({ id: data.user.id });
+    return (data.user.email ?? "").trim().toLowerCase();
+  } catch {
+    // Não expor erros de Auth, consulta de papéis ou existência da identidade.
+    throw new Error("FORBIDDEN");
+  }
 }

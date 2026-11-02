@@ -147,17 +147,15 @@ describe("WA-B1 + WA-B4 — fonte única, sem fallback compilado em src/server",
   });
 
   test("nenhum arquivo em src/server tem fallback compilado de admin (incluindo o módulo central)", async () => {
-    const { execSync } = await import("child_process");
-    let hits = "";
-    try {
-      hits = execSync(
-        `grep -rln "felipe.out.silva@outlook.com\\|michael@medeiroscenografia.com.br" src/server 2>/dev/null || true`,
-        { encoding: "utf8" },
-      ).trim();
-    } catch {
-      hits = "";
-    }
-    const offenders = hits.split("\n").filter((p) => p.length > 0);
+    const { readdirSync, readFileSync } = await import("node:fs");
+    const { join } = await import("node:path");
+    const offenders = (readdirSync("src/server", { recursive: true }) as string[])
+      .filter((file) => file.endsWith(".ts"))
+      .filter((file) =>
+        /felipe\\.out\\.silva@outlook\\.com|michael@medeiroscenografia\\.com\\.br/.test(
+          readFileSync(join("src/server", file), "utf8"),
+        ),
+      );
     expect(offenders).toEqual([]);
   });
 

@@ -10,25 +10,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { logAuditEvent } from "@/server/logs.server";
 
-const ADMIN_EMAILS = ["felipe.out.silva@outlook.com", "michael@medeiroscenografia.com.br"];
-
 async function ensureAdmin(userId: string): Promise<string> {
-  try {
-    const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
-    const email = (u?.user?.email ?? "").toLowerCase();
-    if (ADMIN_EMAILS.includes(email)) return email;
-    const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    const isOwner = (roles ?? []).some((r) => r.role === "owner");
-    if (isOwner) return email;
-    throw new Error("FORBIDDEN");
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "FORBIDDEN";
-    if (msg === "FORBIDDEN") throw new Error("FORBIDDEN");
-    throw new Error("FORBIDDEN");
-  }
+  const { requireAdminMasterIdentity } = await import("@/server/admin-master.server");
+  return requireAdminMasterIdentity(userId);
 }
 
 function maskIp(ip: string | null | undefined): string | null {
