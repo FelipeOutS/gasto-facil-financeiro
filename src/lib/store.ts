@@ -5632,84 +5632,109 @@ export function mesReferenciaFaturaLabel(cartao: Cartao, mes: number, ano: numbe
   return `${nomes[mes - 1]} de ${ano}`;
 }
 
+// Bloqueio local; faturas_cartao_unique protege INSERTs entre abas/dispositivos.
+const faturasEmMutacao = new Set<string>();
+
+async function persistirStatusFatura(
+  cartaoId: string,
+  mes: number,
+  ano: number,
+  paga: boolean,
+  opts?: { dataPagamento?: string; valorPago?: number; observacao?: string },
+): Promise<void> {
+  const userId = activeUserId;
+  const generation = userSessionGeneration;
+  if (!userId) throw new Error("Usuário não autenticado.");
+  if (!ensureCanWrite(paga ? "marcarFaturaPaga" : "desmarcarFaturaPaga")) {
+    throw new Error("Não foi possível alterar a fatura: escrita não autorizada.");
+  }
+  const key = JSON.stringify([userId, cartaoId, mes, ano]);
+  if (faturasEmMutacao.has(key)) {
+    throw new Error("Uma alteração desta fatura já está em andamento.");
+  }
+  const assertSession = () => {
+    if (activeUserId !== userId || userSessionGeneration !== generation) {
+      throw new Error("A sessão mudou. Recarregue a fatura antes de tentar novamente.");
+    }
+  };
+  const matches = (f: FaturaCartao) =>
+    f.cartaoId === cartaoId && f.mes === mes && f.ano === ano;
+  faturasEmMutacao.add(key);
+  try {
+    // Reconsulta permite retry após resposta perdida sem duplicar pagamento.
+    const { data: existente, error: readError } = await sbAny
+      .from("faturas_cartao")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("cartao_id", cartaoId)
+      .eq("mes", mes)
+      .eq("ano", ano)
+      .maybeSingle();
+    if (readError) throw readError;
+    assertSession();
+
+    let persisted: FaturaRow | null = existente;
+    if (paga && existente?.status !== "paga") {
+      const fields = {
+        status: "paga",
+        data_pagamento: opts?.dataPagamento ?? toLocalISODate(new Date()),
+        valor_pago: opts?.valorPago ?? resumoFaturaPorMes(cartaoId, mes, ano).total,
+        observacao: opts?.observacao ?? existente?.observacao ?? null,
+      };
+      const query = existente
+        ? sbAny.from("faturas_cartao").update(fields).eq("user_id", userId).eq("id", existente.id)
+        : sbAny.from("faturas_cartao").insert({
+            ...fields, user_id: userId, cartao_id: cartaoId, mes, ano,
+          });
+      const { data, error } = await query.select("*").single();
+      if (error) throw error;
+      // UPDATE sem linha afetada (inclusive RLS) não equivale a sucesso.
+      if (!data || data.status !== "paga") {
+        throw new Error("Não foi possível confirmar o pagamento da fatura.");
+      }
+      persisted = data as FaturaRow;
+    } else if (!paga && existente) {
+      const { data, error } = await sbAny
+        .from("faturas_cartao")
+        .delete()
+        .eq("user_id", userId)
+        .eq("id", existente.id)
+        .select("id")
+        .single();
+      if (error) throw error;
+      if (!data || data.id !== existente.id) {
+        throw new Error("Não foi possível confirmar a reabertura da fatura.");
+      }
+      persisted = null;
+    }
+    assertSession();
+    // Nenhuma alteração otimista: erro mantém o estado anterior e os alertas.
+    memFaturas = memFaturas.filter((f) => !matches(f));
+    if (persisted) memFaturas = [...memFaturas, rowToFatura(persisted)];
+    emit();
+
+    if (paga) {
+      const ymKey = String(ano) + "-" + String(mes).padStart(2, "0");
+      // Falha secundária de alerta não transforma pagamento persistido em erro.
+      void resolveAlertasPorDedupeKey("fatura_vencida:" + cartaoId + ":" + ymKey).catch(
+        (error) => console.error("[store] alerta de fatura não resolvido", error),
+      );
+      void resolveAlertasPorDedupeKey("fatura_vencendo:" + cartaoId + ":" + ymKey).catch(
+        (error) => console.error("[store] alerta de fatura não resolvido", error),
+      );
+    }
+  } finally {
+    faturasEmMutacao.delete(key);
+  }
+}
+
 export async function marcarFaturaPaga(
   cartaoId: string,
   mes: number,
   ano: number,
   opts?: { dataPagamento?: string; valorPago?: number; observacao?: string },
 ): Promise<void> {
-  if (!activeUserId) return;
-  if (!ensureCanWrite("marcarFaturaPaga")) return;
-  const existente = getFatura(cartaoId, mes, ano);
-  const valorPago = opts?.valorPago ?? resumoFaturaPorMes(cartaoId, mes, ano).total;
-  const dataPagamento = opts?.dataPagamento ?? toLocalISODate(new Date());
-  const observacao = opts?.observacao;
-
-  if (existente) {
-    const updated: FaturaCartao = {
-      ...existente,
-      status: "paga",
-      dataPagamento,
-      valorPago,
-      observacao: observacao ?? existente.observacao,
-    };
-    memFaturas = memFaturas.map((f) => (f.id === existente.id ? updated : f));
-    emit();
-    const { error } = await sbAny
-      .from("faturas_cartao")
-      .update({
-        status: "paga",
-        data_pagamento: dataPagamento,
-        valor_pago: valorPago,
-        observacao: observacao ?? existente.observacao ?? null,
-      })
-      .eq("id", existente.id);
-    if (error) {
-      console.error("[store] marcarFaturaPaga update failed", error);
-    }
-  } else {
-    const tempId = `temp-${Math.random().toString(36).slice(2)}`;
-    const novo: FaturaCartao = {
-      id: tempId,
-      cartaoId,
-      mes,
-      ano,
-      status: "paga",
-      dataPagamento,
-      valorPago,
-      observacao,
-    };
-    memFaturas = [...memFaturas, novo];
-    emit();
-    const { data, error } = await sbAny
-      .from("faturas_cartao")
-      .insert({
-        user_id: activeUserId,
-        cartao_id: cartaoId,
-        mes,
-        ano,
-        status: "paga",
-        data_pagamento: dataPagamento,
-        valor_pago: valorPago,
-        observacao: observacao ?? null,
-      })
-      .select()
-      .single();
-    if (error) {
-      console.error("[store] marcarFaturaPaga insert failed", error);
-      memFaturas = memFaturas.filter((f) => f.id !== tempId);
-      emit();
-    } else if (data) {
-      const persisted = rowToFatura(data as FaturaRow);
-      memFaturas = memFaturas.map((f) => (f.id === tempId ? persisted : f));
-      emit();
-    }
-  }
-  // Resolve alertas de fatura vencida/vencendo deste cartão+mês — a pendência
-  // foi paga, o sininho não deve mais sinalizar.
-  const ymKey = `${ano}-${String(mes).padStart(2, "0")}`;
-  void resolveAlertasPorDedupeKey(`fatura_vencida:${cartaoId}:${ymKey}`);
-  void resolveAlertasPorDedupeKey(`fatura_vencendo:${cartaoId}:${ymKey}`);
+  await persistirStatusFatura(cartaoId, mes, ano, true, opts);
 }
 
 export async function desmarcarFaturaPaga(
@@ -5717,14 +5742,5 @@ export async function desmarcarFaturaPaga(
   mes: number,
   ano: number,
 ): Promise<void> {
-  if (!activeUserId) return;
-  if (!ensureCanWrite("desmarcarFaturaPaga")) return;
-  const existente = getFatura(cartaoId, mes, ano);
-  if (!existente) return;
-  memFaturas = memFaturas.filter((f) => f.id !== existente.id);
-  emit();
-  const { error } = await sbAny.from("faturas_cartao").delete().eq("id", existente.id);
-  if (error) {
-    console.error("[store] desmarcarFaturaPaga failed", error);
-  }
+  await persistirStatusFatura(cartaoId, mes, ano, false);
 }
