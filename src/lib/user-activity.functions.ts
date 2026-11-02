@@ -2,8 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const ADMIN_EMAILS = ["felipe.out.silva@outlook.com", "michael@medeiroscenografia.com.br"];
-
 export type UserActivityRow = {
   userId: string;
   email: string;
@@ -70,18 +68,8 @@ export const getUserActivityReport = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    // Autorização: e-mail de admin master ou papel owner.
-    const { data: me } = await supabaseAdmin.auth.admin.getUserById(context.userId);
-    const myEmail = (me?.user?.email ?? "").toLowerCase();
-    let allowed = ADMIN_EMAILS.includes(myEmail);
-    if (!allowed) {
-      const { data: roles } = await supabaseAdmin
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", context.userId);
-      allowed = (roles ?? []).some((r: { role: string }) => r.role === "owner");
-    }
-    if (!allowed) throw new Error("FORBIDDEN");
+    const { requireAdminMasterIdentity } = await import("@/server/admin-master.server");
+    await requireAdminMasterIdentity(context.userId);
 
     const days = data.days ?? 30;
     const now = new Date();

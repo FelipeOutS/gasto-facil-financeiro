@@ -3,8 +3,10 @@ let writes: any[] = [];
 mock.module("@/integrations/supabase/client", () => ({
   supabase: {
     from: (table: string) => {
+      let inserted: any = null;
       const q: any = {
         insert: (rows: any) => {
+          inserted = rows;
           writes.push(...(Array.isArray(rows) ? rows : [rows]));
           return q;
         },
@@ -14,7 +16,11 @@ mock.module("@/integrations/supabase/client", () => ({
         in: () => q,
         select: () => q,
         single: () => q,
-        then: (ok: any) => Promise.resolve({ error: null }).then(ok),
+        maybeSingle: () => q,
+        then: (ok: any) => Promise.resolve({
+          error: null,
+          data: table === "faturas_cartao" && inserted ? { id: "persisted-invoice", ...inserted } : null,
+        }).then(ok),
       };
       return q;
     },

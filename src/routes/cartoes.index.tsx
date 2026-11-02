@@ -987,10 +987,10 @@ const CartaoCard = memo(function CartaoCard({
 
   // Fatura corrente (mês de referência das compras em aberto)
   const fatRef = useMemo(() => faturaCorrente(cartao), [cartao.id, cartao.diaFechamento]);
-  const faturaStatus = useMemo(
-    () => statusEfetivoFatura(cartao, fatRef.mes, fatRef.ano),
-    [cartao, fatRef.mes, fatRef.ano],
-  );
+  useStore(() => getFatura(cartao.id, fatRef.mes, fatRef.ano));
+  const faturaStatus = statusEfetivoFatura(cartao, fatRef.mes, fatRef.ano);
+  const pagamentoEmCurso = useRef(false);
+  const [salvandoPagamento, setSalvandoPagamento] = useState(false);
   const faturaResumo = useMemo(
     () => resumoFaturaPorMes(cartao.id, fatRef.mes, fatRef.ano),
     [cartao.id, fatRef.mes, fatRef.ano, r.usadoMes],
@@ -1007,6 +1007,9 @@ const CartaoCard = memo(function CartaoCard({
 
   async function handleMarcarPaga(e: React.MouseEvent) {
     e.stopPropagation();
+    if (pagamentoEmCurso.current) return;
+    pagamentoEmCurso.current = true;
+    setSalvandoPagamento(true);
     try {
       await marcarFaturaPaga(cartao.id, fatRef.mes, fatRef.ano, {
         valorPago: faturaResumo.total,
@@ -1015,6 +1018,9 @@ const CartaoCard = memo(function CartaoCard({
     } catch (err) {
       console.error(err);
       toastFromError(err, t("toast.updateError"));
+    } finally {
+      pagamentoEmCurso.current = false;
+      setSalvandoPagamento(false);
     }
   }
 
@@ -1189,6 +1195,8 @@ const CartaoCard = memo(function CartaoCard({
               <button
                 type="button"
                 onClick={handleMarcarPaga}
+                disabled={salvandoPagamento}
+                aria-busy={salvandoPagamento}
                 className={cn("inline-flex h-11 items-center gap-1 rounded-xl border px-3 text-xs font-semibold transition-colors", theme.logoTone === "dark" ? "border-black/30 bg-black/10 hover:bg-black/20" : "border-white/40 bg-white/10 hover:bg-white/20")}
               >
                 <CheckCircle2 className="h-3 w-3" />
@@ -1633,8 +1641,10 @@ export function FaturaSheet({
   const [openAdd, setOpenAdd] = useState(false);
   const [confirmLote, setConfirmLote] = useState<string | null>(null);
 
-  // Subscribe to store updates so list refreshes after add/edit/delete/pay
-  useStore(() => 0);
+  // Snapshot precisa mudar para notificar o useSyncExternalStore.
+  useStore(() => cartao ? getFatura(cartao.id, ref.mes, ref.ano) : undefined);
+  const pagamentoEmCurso = useRef(false);
+  const [salvandoPagamento, setSalvandoPagamento] = useState(false);
 
   // Reset state ao trocar de cartão / abrir
   useEffect(() => {
@@ -1737,6 +1747,9 @@ export function FaturaSheet({
   }
 
   async function togglePaga() {
+    if (pagamentoEmCurso.current) return;
+    pagamentoEmCurso.current = true;
+    setSalvandoPagamento(true);
     try {
       if (status === "paga") {
         await desmarcarFaturaPaga(cartao!.id, ref.mes, ref.ano);
@@ -1748,6 +1761,9 @@ export function FaturaSheet({
     } catch (e) {
       console.error(e);
       toastFromError(e, t("toast.updateError"));
+    } finally {
+      pagamentoEmCurso.current = false;
+      setSalvandoPagamento(false);
     }
   }
 
@@ -1942,7 +1958,8 @@ export function FaturaSheet({
               variant={status === "paga" ? "secondary" : "default"}
               className="card-press"
               onClick={togglePaga}
-              disabled={resumo.qtd === 0 && status !== "paga"}
+              disabled={salvandoPagamento || (resumo.qtd === 0 && status !== "paga")}
+              aria-busy={salvandoPagamento}
             >
               {status === "paga" ? (
                 <>

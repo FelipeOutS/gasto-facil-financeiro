@@ -10,8 +10,6 @@ import {
   reconcileMercadoPagoPaymentById,
 } from "@/server/mercadopago-diagnostics.server";
 
-const ADMIN_EMAILS = ["felipe.out.silva@outlook.com", "michael@medeiroscenografia.com.br"];
-
 /** Legacy multi-request deletion cannot guarantee rollback across Auth and tables. */
 export const deleteUserById = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ targetUserId: z.string().uuid() }).parse(input))
@@ -21,22 +19,9 @@ export const deleteUserById = createServerFn({ method: "POST" })
     throw new Error("Exclusão de conta indisponível: o procedimento seguro de remoção ainda precisa ser homologado. Nenhum dado foi alterado.");
   });
 
-async function ensureAdmin(_supabase: any, userId: string): Promise<string> {
-  try {
-    const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
-    const email = (u?.user?.email ?? "").toLowerCase();
-    if (ADMIN_EMAILS.includes(email)) return email;
-    const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    const isOwner = (roles ?? []).some((r: any) => r.role === "owner");
-    if (isOwner) return email;
-    throw new Error("FORBIDDEN");
-  } catch (e: any) {
-    if (e?.message === "FORBIDDEN") throw e;
-    throw new Error("FORBIDDEN");
-  }
+async function ensureAdmin(_supabase: unknown, userId: string): Promise<string> {
+  const { requireAdminMasterIdentity } = await import("@/server/admin-master.server");
+  return requireAdminMasterIdentity(userId);
 }
 
 export type AdminUserRow = {
@@ -330,8 +315,8 @@ const PERIOD_MONTHS: Record<(typeof PERIODS)[number], number> = {
 
 /**
  * Concede manualmente um plano ativo a um usuário. Disponível APENAS para
- * o Admin Master felipe.out.silva@outlook.com (mesmo se outro admin estiver
- * cadastrado no allowlist).
+ * o ator autorizado abaixo, mesmo que outros administradores possuam owner.
+ * Exige owner persistido além da restrição específica do ator.
  */
 export const grantPlanManually = createServerFn({ method: "POST" })
   .inputValidator((input) =>
@@ -350,8 +335,7 @@ export const grantPlanManually = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }) => {
     const { userId } = context;
-    const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
-    const callerEmail = (u?.user?.email ?? "").toLowerCase();
+    const callerEmail = await ensureAdmin(context.supabase, userId);
     if (callerEmail !== "felipe.out.silva@outlook.com") {
       throw new Error("Apenas o Admin Master Felipe pode conceder planos manualmente.");
     }
