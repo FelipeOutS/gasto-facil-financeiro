@@ -11,7 +11,8 @@ export function parseOpeningBalance(text: string, date: string): OpeningBalanceR
   const amount = monetary ? parseValor(monetary[0]) : null;
   if (amount === null || amount < 0 || !Number.isSafeInteger(Math.round(amount * 100))) return null;
   const clause = text.split(/\be ajuste\b/iu).at(-1) ?? text;
-  const account = /(?:conta\s+(?:(?:do|da|no|na)\s+)?|(?:no|na|do|da)\s+)([\p{L}\d][\p{L}\d .-]*?)(?=\s+(?:para|como|coloque|saldo|e\s|é(?:\s|$))|[,.!?]|$)/iu.exec(clause);
+  const accountPattern = /(?:conta\s+(?:(?:do|da|no|na)\s+)?|saldo\s+(?:do|da)\s+|(?:no|na)\s+)([\p{L}\d][\p{L}\d .-]*?)(?=\s+(?:para|como|coloque|saldo|e\s|é(?:\s|$))|[,.!?]|$)/iu;
+  const account = accountPattern.exec(clause);
   const current = /(?:atualmente\s+tenho|saldo\s+atual|ajust\w*\s+(?:meu\s+)?saldo)/iu.test(text);
   return { accountName: account?.[1]?.trim().replace(/^(?:do|da|no|na)\s+/iu, "") ?? null, amountCents: Math.round(amount * 100), effectiveDate: date, ...(current ? { kind: "current_adjustment" as const } : {}) };
 }

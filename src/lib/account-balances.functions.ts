@@ -12,9 +12,8 @@ export const readAccountBaselines = createServerFn({ method: "GET" })
     // Candidate schema has deliberately not been applied; do not modify generated types.
     const db = supabase as unknown as { from(name: string): { select(columns: string): { eq(column: string,value: string): { is(column: string,value: null): PromiseLike<{ data: unknown; error: unknown }> } } } };
     const result = await db.from("account_opening_balances").select("id,banco_id,amount_cents,effective_date").eq("user_id",userId).is("revoked_at",null);
-    if (result.error || !Array.isArray(result.data)) return { status: "unavailable", balances: [] };
     const balances: AccountBaselineDisplay[] = [];
-    for (const row of result.data) {
+    for (const row of Array.isArray(result.data)?result.data:[]) {
       const bank = banks?.find(b => b.id === row.banco_id);
       const amount = Number(row.amount_cents);
       if (!bank || !Number.isSafeInteger(amount) || amount<0 || typeof row.id !== "string" || typeof row.effective_date !== "string") continue;
@@ -34,5 +33,5 @@ export const readAccountBaselines = createServerFn({ method: "GET" })
         balances.push({id:bank.id,bancoId:bank.id,bankName:bank.nome,amountCents:amount,effectiveDate:(dates.at(-1)??"").slice(0,10)});
       }
     }
-    return { status:"ready", balances };
+    return { status:result.error && facts.error ? "unavailable":"ready", balances };
   });
