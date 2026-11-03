@@ -23,6 +23,7 @@ P=(psql -X -q -v ON_ERROR_STOP=1 -h "$D" -p 55459 -U gi_test -d postgres)
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/50-current-adjustment.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-card-visibility.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/60-paid-visibility.sql"
+PGHOST="$D" PGPORT=55459 PGUSER=gi_test PGDATABASE=postgres bun "$ROOT/scripts/test-reorganization-conversation.ts"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/90-compound-voice.sql"
 
 U=aaaaaaaa-0000-0000-0000-000000000001
