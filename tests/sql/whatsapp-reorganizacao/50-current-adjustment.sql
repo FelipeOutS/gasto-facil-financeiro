@@ -1,0 +1,13 @@
+INSERT INTO financial_cash_facts(user_id,banco_id,kind,amount_cents,request_id) VALUES('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000005','opening',300000,'fixture-opening');
+SELECT public.wa_reorganization_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','current-5000','{"tables":[],"start":null,"end":null}',null,'515151','{"accountName":"Nubank","amountCents":500000,"effectiveDate":"2026-11-03","kind":"current_adjustment"}');
+SELECT public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','515151',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='current-5000'));
+SELECT public.assert_true((SELECT sum(amount_cents)=500000 FROM financial_cash_facts WHERE banco_id='bbbbbbbb-0000-0000-0000-000000000005'),'current balance exactly 5000');
+SELECT public.assert_true((SELECT amount_cents=200000 FROM financial_cash_facts WHERE request_id=(SELECT id::text FROM whatsapp_reorganization_operations WHERE request_id='current-5000')),'adjustment is only 2000 delta not new 5000 income');
+SELECT public.assert_true(NOT EXISTS(SELECT 1 FROM receitas WHERE valor=5000),'current adjustment never income');
+SELECT public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','515151',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='current-5000'));
+SELECT public.assert_true((SELECT count(*)=2 FROM financial_cash_facts WHERE banco_id='bbbbbbbb-0000-0000-0000-000000000005'),'replay does not duplicate balance');
+SELECT public.wa_reorganization_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='current-5000'),'525252');
+SELECT public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='current-5000')||':525252');
+SELECT public.assert_true((SELECT sum(amount_cents)=300000 FROM financial_cash_facts WHERE banco_id='bbbbbbbb-0000-0000-0000-000000000005'),'restore compensates adjustment without deleting history');
+SELECT public.assert_true((SELECT count(*)=3 FROM financial_cash_facts WHERE banco_id='bbbbbbbb-0000-0000-0000-000000000005'),'all cash facts remain traceable');
+DO $$ BEGIN UPDATE financial_cash_facts SET amount_cents=0; RAISE EXCEPTION 'expected_failure'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'financial_fact_immutable_append_compensation' THEN RAISE; END IF; END $$;

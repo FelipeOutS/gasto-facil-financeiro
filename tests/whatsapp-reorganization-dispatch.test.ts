@@ -1,0 +1,3 @@
+import {test,expect} from 'bun:test';
+import {dispatchReorganization} from '../src/server/whatsapp-reorganization-dispatch.server';
+test('production entry cannot load writer while release is false',async()=>{let calls=0;const reply=await dispatchReorganization({userId:'A',phone:'5511999999999',externalId:'audio',text:'GI, exclua todas as minhas despesas e receitas de todos os meses anteriores, mantenha os dados do mês atual e ajuste meu saldo do Nubank para R$ 5.000.',localDate:'2026-11-03',pendingSession:false},async()=>{calls++;throw Error('writer must not load');});expect(calls).toBe(0);expect(reply).not.toBeNull();});

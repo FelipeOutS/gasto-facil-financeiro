@@ -22,7 +22,7 @@ const nextMonth = (year: number, month: number) => isoMonth(month === 12 ? year 
 /** Local date is supplied by the user's existing timezone resolver, not machine UTC. */
 export function interpretReorganization(text: string, localDate: string): ReorganizationIntent {
   const t = normalizeReorganization(text);
-  const hasBalance = /\bsaldo (?:inicial|atual)\b/.test(t);
+  const hasBalance = /\bsaldo(?: (?:inicial|atual))?\b|\batualmente tenho\b/.test(t);
   const balance = hasBalance ? parseOpeningBalance(text, localDate) : null;
   const verb = /\b(apag\w*|exclu\w*|limp\w*|zer\w*|reinici\w*|comec\w*)\b/.test(t);
   const bulk = /\b(todos?|todas?|tudo|inteir\w*|historico|financas|despesas|gastos|receitas|meses|em massa)\b/.test(t);
@@ -31,7 +31,7 @@ export function interpretReorganization(text: string, localDate: string): Reorga
   if (/\b(pagamentos|faturas|cartoes|recorrencias|metas|investimentos|bens|integracoes|assinatura)\b/.test(t)) {
     return { kind: "clarify", question: "Preciso esclarecer os vínculos e o alcance. Você quer limpar gastos, receitas ou ambos? Cartões, faturas e demais módulos não serão alterados automaticamente." };
   }
-  const parts = t.split(/\b(?:e depois|depois|e adicione|e adiciona|e cadastre|e cadastra|e coloque)\b/);
+  const parts = t.split(/\b(?:e depois|depois|e adicione|e adiciona|e cadastre|e cadastra|e coloque|e ajuste)\b/);
   const deletion = parts[0];
   if (/\b(nao|exceto|menos|salvo)\b/.test(deletion)) return { kind: "clarify", question: "Confirme o que deve ser preservado e o período exato. Nenhuma exceção será ignorada." };
   const tables: FinancialScope["tables"] = [];
@@ -66,7 +66,7 @@ export function interpretReorganization(text: string, localDate: string): Reorga
   let income: NewIncome | null = null;
   if (parts.length === 2) {
     const addition = parts[1];
-    if (balance && /\bsaldo (inicial|atual)\b/.test(addition)) {
+    if (balance && /\bsaldo\b/.test(addition)) {
       if (/\b(receita|salario|renda)\b/.test(addition)) return { kind: "clarify", question: "Confirme se o valor é saldo da conta ou receita. Nenhum valor foi cadastrado." };
       return { kind: "request", scope: { tables, start, end }, income: null, openingBalance: balance };
     }

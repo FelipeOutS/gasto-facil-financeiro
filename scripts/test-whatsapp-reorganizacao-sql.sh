@@ -13,11 +13,18 @@ P=(psql -X -q -v ON_ERROR_STOP=1 -h "$D" -p 55459 -U gi_test -d postgres)
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-offline-generation.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/05-account-card-stub.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/account-opening-balances.sql"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-fact-ledger.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/reorganization-card-accounting.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/whatsapp-reorganizacao.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/10-tests.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/20-balance.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/30-compound-card.sql"
+
+"${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/50-current-adjustment.sql"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-card-visibility.sql"
+"${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/60-paid-visibility.sql"
+PGHOST="$D" PGPORT=55459 PGUSER=gi_test PGDATABASE=postgres bun "$ROOT/scripts/test-reorganization-conversation.ts"
+"${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/90-compound-voice.sql"
 
 U=aaaaaaaa-0000-0000-0000-000000000001
 "${P[@]}" -c "SELECT public.wa_reorganization_prepare('$U','5511999999999','race','{\"tables\":[\"receitas\"],\"start\":null,\"end\":\"2026-11-01\"}',NULL,'888888');"
@@ -29,3 +36,8 @@ wait "$PID"
 if grep -q '"applied"' "$D/r1" "$D/r2" && grep -q '"replay"' "$D/r1" "$D/r2"; then echo 'PASS: two connections one apply one replay'; else cat "$D/r1" "$D/r2"; exit 1; fi
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-universal-fence.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/40-universal-fence.sql"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-linked-writer-fence.sql"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-fact-boundaries.sql"
+"${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/70-boundaries.sql"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-cash-attribution.sql"
+"${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/80-cash-attribution.sql"

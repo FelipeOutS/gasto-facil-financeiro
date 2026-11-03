@@ -88,3 +88,31 @@ Contratos de prévia/confirmação/restauração; rejeição offline pelo trigge
 6. Candidatos não aplicados e não autorizados para produção. Sem migração, publicação, mensagens Meta, mudanças de flags/segredos ou dados reais. Consumo de créditos não confirmado.
 
 **Parecer: apto para revisão/homologação isolada do núcleo restrito; não apto para ativação nem para prometer o fluxo financeiro completo por áudio.**
+
+## Pedido estrutural 03/11 23:11 — implementação e evidências atuais
+### Causas corrigidas no código/candidato
+- **Reabertura destruía histórico:** `persistirStatusFatura` apagava a linha; agora atualiza somente status aberta e conserva valor/data de pagamento. 21 regressões de persistência confirmaram sucesso, erro, retry, concorrência e preservação. Não interpreta reabertura como devolução bancária.
+- **Exclusão confundida com dívida:** novo `financial-fact-ledger.sql` conserva cobranças e snapshots de pagamentos em fatos imutáveis. `financial-card-visibility.sql` permite exclusão/restauração lógica de compra paga no candidato sem remover cobrança, pagamento ou fatura. Histórico legado é marcado como snapshot, não como evento bancário inventado. Hidratação/resumo do site leem fatos e preservam a dívida escondida; o preview legado não foi liberado.
+- **Saldo atual confundido com inicial:** parser reconhece “atualmente tenho” e “ajuste meu saldo”; conciliação grava somente diferença para chegar ao valor observado. Snapshot do saldo antes da confirmação evita aplicar uma prévia defasada. Restauração adiciona compensação, nunca apaga fatos. Exemplo SQL: 3000 → ajuste +2000 → 5000 → compensação −2000 → 3000.
+- **Sem atribuição bancária:** `financial-cash-attribution.sql` adiciona conta e momento recebido/pago explícitos a receitas/gastos; trigger atômico registra fatos, impede crédito virar pagamento bancário e não repete dinheiro na exclusão/restauração. Nenhum histórico antigo recebe banco presumido. Formulários e importadores ainda precisam fornecer os campos: cobertura automática completa NÃO entregue.
+- **Pipeline sem ponto de execução:** dispatch passou a usar o mesmo texto/transcrição do handler existente, timezone do titular e adaptador RPC. Carrega escritor somente com flag de código autorizada; política SQL é gate independente. Flag segue false. O resultado ainda usa envio/reconciliação existentes; nenhum Meta send executado.
+- **Writers sem inventário/barreira:** gerador registrou 93 pontos estáticos em `docs/FINANCIAL_WRITERS_INVENTORY.json`, além da revisão de RPCs. Trigger candidato ampliado cobre módulos vinculados com user_id, recusando legados depois do reset. Isto é proteção por quarentena, NÃO migração completa dos 93 writers para operações compatíveis; importações/recorrências/contas conectadas permanecem impeditivos reais.
+### Evidências executadas
+- 194 testes JS em 17 arquivos, separados, sem falhas finais; SQL descartável com 92 mensagens PASS, incluindo conversa real do código → prévia → RPC SQL → confirmação → replay → restauração.
+- Comando exato interpretado no Chromium; SQL de operação composta preservou mês atual, excluiu compra paga reversivelmente, ajustou Nubank para 5000 e restaurou compra/saldo sem mexer no pagamento.
+- Conversa end-to-end usou fixture de período isolado (1900) porque o histórico amplo de fixtures continha vínculos intencionalmente bloqueados. A recusa revelou e confirmou que o cenário completo com todos os módulos NÃO está resolvido. Não removemos a proteção para fazer teste passar.
+- Não houve UI autenticada financeira real, áudio Meta/IA real nem Android real. Screenshot é só página pública/parser carregado, não evidência de operação visual financeira.
+- Compilação automática sem erros finais; testes intermediários revelaram parser de banco/contrato SQL e foram corrigidos.
+### Arquivos alterados nesta solicitação
+`src/lib/financial-accounting.ts`, `account-opening-balance.ts`, `whatsapp-reorganizacao.ts`, `account-balances.functions.ts`, `store.ts`; `src/components/AccountBaselines.tsx`; `src/server/whatsapp.server.ts`, `whatsapp-reorganization-dispatch.server.ts`, `whatsapp-reorganizacao.server.ts`.
+
+`scripts/inventory-financial-writers.ts`, `test-reorganization-conversation.ts`, `check-reorganization-web.py`, `test-whatsapp-reorganizacao-sql.sh`; `tests/financial-accounting.test.ts`, `whatsapp-reorganization-dispatch.test.ts`, `reorganization-compound-balance.test.ts`, `fatura-persistencia-fin01.test.ts`; fixtures SQL `50-current-adjustment.sql`, `60-paid-visibility.sql`, `70-boundaries.sql`, `80-cash-attribution.sql`, `90-compound-voice.sql`.
+
+`AGENTS.md`, `roadmap.md`, este relatório, `docs/FINANCIAL_WRITERS_INVENTORY.json`, `docs/WHATSAPP_REORGANIZACAO_HOMOLOGACAO.md`; candidatos abaixo.
+### Candidatos necessários — nenhum aplicado em produção
+Pré-requisitos: F2/F4 revisados, `financial-offline-generation.sql`, `account-opening-balances.sql`, `reorganization-card-accounting.sql`.
+Novos: `financial-fact-ledger.sql`, `financial-card-visibility.sql`, `financial-fact-boundaries.sql`, `financial-cash-attribution.sql`, `financial-linked-writer-fence.sql`; revisado `whatsapp-reorganizacao.sql`; `financial-universal-fence.sql` permanece pré-requisito. Ordem e compatibilidade devem ser revisadas como conjunto; o harness é prova no fixture, não aplicação no schema real.
+### Parecer e ações que dependem do usuário
+Existe versão candidata **restrita** executável para homologação local, não a versão completa apta à ativação. Pendem: contrato/migração de writers não offline e módulos parcelados/recorrentes/importados, vinculação bancária nas telas/importadores, reconciliação de estornos efetivos com prova bancária e testes de carga. Não chamar esses bloqueios de apenas “falta publicar”.
+
+Do usuário: fornecer ambiente/conta/número Meta de homologação isolados e wrapper/APK/aparelho Android; autorizar separadamente eventual migração após revisão e ativação/publicação depois da homologação. Procedimentos executáveis estão em `WHATSAPP_REORGANIZACAO_HOMOLOGACAO.md`. Nenhuma alteração de dados reais, migração de produção, flags, segredos, publicação ou envio Meta. Créditos não confirmados. Nenhuma skill financeira ativa foi disponibilizada; orientações disponíveis e auditorias paralelas foram utilizadas, sem inventar aplicação de skills.
