@@ -7,6 +7,7 @@
 - `bun scripts/inventory-financial-writers.ts`: inventário estático; revisar SQL/RPCs e tabelas dinâmicas além dos resultados.
 
 ## Áudio e Android reais — não executados
+Recursos verificados em 03/11: credenciais Meta e integração oficial já existem; não pedir revalidação do número. PostgreSQL/Bun/Playwright e scripts disponíveis. SDK/adb/Java/Gradle/emulador/APK/fontes Android ausentes. Procedimentos específicos dos recursos faltantes e tabela das integrações: `WHATSAPP_REORGANIZACAO_INTEGRACOES_2026-11-03.md`. Não usar Preview compartilhado com produção para escrita de homologação.
 Pré-requisito: backend descartável e APK de homologação apontando exclusivamente para ele; conta fictícia elegível/vinculada, consentimento e número Meta de teste. Não redirecionar callbacks do número de produção.
 1. Criar fixtures de mês anterior/atual, compras pagas/parciais e conta Nubank com saldo contábil de R$ 3.000; registrar hashes e contagens.
 2. Gravar áudio: “GI, exclua todas as minhas despesas e receitas de todos os meses anteriores, mantenha os dados do mês atual e ajuste meu saldo do Nubank para R$ 5.000.”

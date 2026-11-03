@@ -1,6 +1,7 @@
 # Reorganização reversível — preparação local, não liberada
 
 ## Estado
+**Atualização 03/11 23:40:** integrações específicas avançadas; confirmação CSV/PDF/imagem aguardável, candidato de grupos e proteção de saldo. Tabela, 163 testes JS/114 SQL, recursos disponíveis e impedimentos estão em `WHATSAPP_REORGANIZACAO_INTEGRACOES_2026-11-03.md`. Fluxo integral continua não pronto.
 **Parecer mais recente (03/11, continuação final): núcleo candidato ampliado e aprovado em testes isolados; fluxo completo ainda NÃO pronto.** As seções históricas abaixo descrevem estados anteriores; o fechamento ao final substitui suas pendências quando explicitamente indicado.
 Não é uma funcionalidade concluída nem pronta para ativação. O WhatsApp existente continua com seus serviços de áudio e autorização; pedidos novos de limpeza composta são interceptados sem gravar valores. Nenhuma migração, mudança de configuração, publicação, envio Meta ou exclusão financeira real foi realizada.
 

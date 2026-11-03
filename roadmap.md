@@ -42,7 +42,9 @@
 - [ ] Investigar recorrência "Cabelo" inexistente (gastos 27/09 e 27/10 preservados) — futura
 
 ## Reorganização financeira por áudio/texto
-- [ ] Pedido 03/11 23:40 — integrar writers/vínculos/importadores e atribuição bancária no candidato, testar rollback/replay/isolamento e verificar recursos Meta/Android; sem migrações, dados reais, flags ou publicação.
+- [x] Pedido 03/11 23:40 — confirmação CSV/PDF/imagem aguardável, candidato atômico de grupos, modelos/validação bancária, leitura de saldo fail-closed, 163 JS/114 SQL e navegador; recursos Meta/Android conferidos, tabela entregue. Sem migração/dados reais/ativação/publicação.
+- [ ] Pedido 03/11 23:40 — integração integral permanece incompleta: writers compartilhados/metadados/pagamentos, grafos de parcelas/recorrências/extratos, atribuição em todos os formulários/importadores e ledger de baseline; depende dessas adaptações e schema integral isolado, não de publicação.
+- [ ] Pedido 03/11 23:40 — homologação Meta/Android real aguarda backend/callback/número isolados e fonte/APK/aparelho/SDK; recursos oficiais existentes não precisam revalidação.
 - [x] Pedido 03/11 23:11 — candidato restrito: fatos imutáveis, compra paga ocultada/restaurada sem estorno, conciliação atual/compensação, atribuição bancária SQL, dispatch gated e conversa SQL end-to-end; relatório/homologação executável entregues.
 - [ ] Pedido 03/11 23:11 — conclusão integral bloqueada: migrar writers não offline/compartilhados e módulos parcelados/recorrentes/importados para contrato transacional; implementar atribuição bancária em formulários/importadores; homologar schema real isolado e Android/Meta. Quarentena candidata não equivale a compatibilidade.
 - [x] Pedido 03/11 22:54 — núcleo isolado: compras simples não pagas, baseline atômico sem receita, leitura separada nas telas e geração própria na hidratação/reconexão; 193 JS/65 SQL aprovados, sem mutações reais/publicação.
