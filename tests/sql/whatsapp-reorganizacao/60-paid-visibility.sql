@@ -1,0 +1,11 @@
+UPDATE faturas_cartao SET status='paga',valor_pago=35 WHERE id='99999999-0000-0000-0000-000000000006';
+SELECT public.wa_reorganization_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','paid-visibility','{"tables":["gastos"],"start":"2027-01-01","end":"2027-02-01"}',null,'616161');
+SELECT public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','616161',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='paid-visibility'));
+SELECT public.assert_true((SELECT deleted_at IS NOT NULL FROM gastos WHERE descricao='Compra isolada'),'paid purchase hidden reversibly with liability ledger');
+SELECT public.assert_true((SELECT valor_pago=35 AND status='paga' FROM faturas_cartao WHERE id='99999999-0000-0000-0000-000000000006'),'logical deletion never reverses real payment');
+SELECT public.assert_true((SELECT count(*)=1 FROM financial_card_facts WHERE kind='charge' AND source_id='99999999-0000-0000-0000-000000000007'),'charge retained exactly once despite logical deletion');
+SELECT public.assert_true((SELECT amount_cents=3500 FROM financial_card_facts WHERE request_id='legacy-invoice:99999999-0000-0000-0000-000000000006'),'legacy payment snapshot preserves actual 35');
+SELECT public.wa_reorganization_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='paid-visibility'),'626262');
+SELECT public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='paid-visibility')||':626262');
+SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE descricao='Compra isolada'),'paid purchase restored without replacement row');
+SELECT public.assert_true((SELECT count(*)=1 FROM financial_card_facts WHERE request_id='legacy-invoice:99999999-0000-0000-0000-000000000006'),'restore never duplicates payment');
