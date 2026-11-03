@@ -12,6 +12,8 @@ Nesta etapa, preparar código e testes isolados. Não aplicar migrações no ban
 - **Bloqueio importante:** o SQL candidato mensal documenta incompatibilidade com a proteção F2. Resolver e testar conjuntamente antes de qualquer liberação; arquivos candidatos não comprovam o estado instalado.
 - **Testes de base:** 63 testes locais aprovados, zero falhas, com dados fictícios. Cobrem áudio, exclusão individual/mensal e filtros de excluídos; não comprovam o novo fluxo nem execução em produção.
 - **Android:** o projeto nativo não está neste repositório; a camada web pode ser verificada, mas a confirmação final no aplicativo exige teste no dispositivo.
+- **Saldos:** `bancos` contém metadados, não saldo inicial; “Guardado” representa reservas. Dashboard e Relatórios calculam saldo do período como receitas menos despesas, não saldo bancário. O saldo inicial de conta exige um contrato próprio antes de execução.
+- **Atualização existente:** o store filtra `deleted_at` em gastos e receitas; a sincronização financeira observa INSERT/UPDATE e refaz leituras ao reconectar ou voltar ao primeiro plano. Isso não prova entrega em produção nem atualiza todos os módulos relacionados. Filas offline podem inserir lançamentos antigos depois da limpeza e exigem tratamento específico.
 
 ## Entregas
 ### 1. Interpretar e esclarecer sem executar
@@ -35,6 +37,8 @@ Deduplicar mensagens, confirmações e execução por operação persistente, n�
 
 Conferir todos os leitores e totais de Dashboard, Relatórios, Receitas, Gastos, cartões e contas. Implementar atualização/invalidação e recuperação de cache offline conforme os mecanismos existentes; provar a atualização com o site aberto e a camada web móvel. Não anunciar atualização instantânea do Android sem teste real.
 
+Reaproveitar `financial-realtime-sync` e os refetches do store para gastos/receitas, ampliando somente os módulos afetados. Definir uma barreira persistente por operação/geração para escritas anteriores à limpeza: revalidar gravações em trânsito e colocar filas offline antigas em revisão, sem apagá-las silenciosamente nem permitir que repovoem o histórico automaticamente. A nova receita da operação composta deve pertencer à geração posterior à limpeza.
+
 ## Detalhes técnicos
 - Manter os serviços de WhatsApp atuais e o modelo de IA existente; IA interpreta intenção, nunca fornece SQL nem escolhe IDs como autoridade.
 - Integrar sem competir com sessões pendentes, cadastro, consultas ou edição individual. Proteger conta do titular; acesso a contas conectadas não autoriza limpeza em massa de outro usuário.
@@ -44,6 +48,8 @@ Conferir todos os leitores e totais de Dashboard, Relatórios, Receitas, Gastos,
 
 ## Testes e critérios de aceite
 Usar banco descartável e fixtures, nunca finanças reais. Cobrir histórico completo, intervalos, mês preservado, gastos pagos, receitas, ambiguidades, cancelamento, áudio com código correto/incorreto, expiração, múltiplas instruções, replay, duas confirmações concorrentes, mudança após prévia, falha entre exclusão e receita, vínculo revogado e acesso cruzado. Cobrir restauração por stamp, alteração posterior, parcelas/faturas/recorrências/importações, saldo sem inflar receita e atualização dos totais/cache.
+
+Incluir dispositivos offline antes da limpeza, retorno ao primeiro plano, gravação concorrente e envio atrasado de receitas/gastos enfileirados; nenhum item anterior deve reaparecer automaticamente sem revisão. Para saldo inicial, apresentar separadamente a proposta contábil (conta, data de referência e efeito em disponibilidade sem inflar receitas) antes de liberar gravação.
 
 Apresentar relatório de módulos reaproveitados, resultados de testes, limitações e SQL candidato revisável. Só depois solicitar autorização específica para schema, ativação controlada e eventual publicação. Não considerar concluído enquanto dependências, recuperação, totais e fluxo ponta a ponta estiverem sem prova.
 
