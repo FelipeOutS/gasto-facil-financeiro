@@ -9,7 +9,8 @@ export type ReorganizationIntent =
   | { kind: "ignore" }
   | { kind: "clarify"; question: string }
   | { kind: "unsupported_balance"; balance?: OpeningBalanceRequest | null }
-  | { kind: "request"; scope: FinancialScope; income: NewIncome | null };
+  | { kind: "balance"; balance: OpeningBalanceRequest }
+  | { kind: "request"; scope: FinancialScope; income: NewIncome | null; openingBalance?: OpeningBalanceRequest };
 
 export function normalizeReorganization(text: string): string {
   return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
@@ -21,14 +22,16 @@ const nextMonth = (year: number, month: number) => isoMonth(month === 12 ? year 
 /** Local date is supplied by the user's existing timezone resolver, not machine UTC. */
 export function interpretReorganization(text: string, localDate: string): ReorganizationIntent {
   const t = normalizeReorganization(text);
-  if (/\bsaldo inicial\b/.test(t)) return { kind: "unsupported_balance", balance: parseOpeningBalance(text, localDate) };
+  const hasBalance = /\bsaldo (?:inicial|atual)\b/.test(t);
+  const balance = hasBalance ? parseOpeningBalance(text, localDate) : null;
   const verb = /\b(apag\w*|exclu\w*|limp\w*|zer\w*|reinici\w*|comec\w*)\b/.test(t);
   const bulk = /\b(todos?|todas?|tudo|inteir\w*|historico|financas|despesas|gastos|receitas|meses|em massa)\b/.test(t);
-  if (!verb || !bulk) return { kind: "ignore" };
+  if (hasBalance && (!balance || !balance.accountName)) return { kind: "unsupported_balance", balance };
+  if (!verb || !bulk) return balance ? { kind: "balance", balance } : { kind: "ignore" };
   if (/\b(pagamentos|faturas|cartoes|recorrencias|metas|investimentos|bens|integracoes|assinatura)\b/.test(t)) {
     return { kind: "clarify", question: "Preciso esclarecer os vínculos e o alcance. Você quer limpar gastos, receitas ou ambos? Cartões, faturas e demais módulos não serão alterados automaticamente." };
   }
-  const parts = t.split(/\b(?:e depois|depois|e adicione|e adiciona|e cadastre|e cadastra)\b/);
+  const parts = t.split(/\b(?:e depois|depois|e adicione|e adiciona|e cadastre|e cadastra|e coloque)\b/);
   const deletion = parts[0];
   if (/\b(nao|exceto|menos|salvo)\b/.test(deletion)) return { kind: "clarify", question: "Confirme o que deve ser preservado e o período exato. Nenhuma exceção será ignorada." };
   const tables: FinancialScope["tables"] = [];
@@ -63,6 +66,10 @@ export function interpretReorganization(text: string, localDate: string): Reorga
   let income: NewIncome | null = null;
   if (parts.length === 2) {
     const addition = parts[1];
+    if (balance && /\bsaldo (inicial|atual)\b/.test(addition)) {
+      if (/\b(receita|salario|renda)\b/.test(addition)) return { kind: "clarify", question: "Confirme se o valor é saldo da conta ou receita. Nenhum valor foi cadastrado." };
+      return { kind: "request", scope: { tables, start, end }, income: null, openingBalance: balance };
+    }
     if (!/\b(receita|salario|renda)\b/.test(addition)) return { kind: "clarify", question: "O valor adicional é uma receita ou um saldo inicial? Saldo inicial não será registrado como receita." };
     // Extract only the monetary clause: a year or confirmation code is never an amount.
     const monetary = addition.match(/(?:r\$\s*\d[\d.,]*|\d[\d.,]*\s*reais)/i);

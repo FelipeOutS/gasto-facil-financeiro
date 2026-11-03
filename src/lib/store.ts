@@ -1,4 +1,5 @@
 import { calcMetaProgresso } from "./metas-progresso";
+import { refreshFinancialGeneration } from "./offline/financial-generation-reader";
 import {
   addMonthsYm,
   cicloParaCompetencia,
@@ -1031,6 +1032,8 @@ export async function hydrateUser(userId: string): Promise<void> {
       if (!isCurrent()) return;
       if (catRes.error) throw catRes.error;
       if (bancoRes.error) throw bancoRes.error;
+      await refreshFinancialGeneration(userId).catch(()=>null);
+      if (!isCurrent()) return;
 
       categoriaKeyToUuid.clear();
       bancoKeyToUuid.clear();

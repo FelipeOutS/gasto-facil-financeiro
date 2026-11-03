@@ -24,7 +24,7 @@ describe("reorganização: interpretação conservadora", () => {
   test("sem ano pede esclarecimento", () => expect(interpretReorganization("exclua receitas de outubro", date).kind).toBe("clarify"));
   test("limpa tudo é ambíguo", () => expect(interpretReorganization("GI limpa tudo", date).kind).toBe("clarify"));
   test("pagamentos são ambíguos", () => expect(interpretReorganization("apaga todos os pagamentos", date).kind).toBe("clarify"));
-  test("saldo inicial não vira receita", () => expect(interpretReorganization("tenho R$ 3.200 na Nubank como saldo inicial", date).kind).toBe("unsupported_balance"));
+  test("saldo inicial não vira receita", () => expect(interpretReorganization("tenho R$ 3.200 na Nubank como saldo inicial", date)).toEqual({kind:"balance",balance:{accountName:"Nubank",amountCents:320000,effectiveDate:date}}));
   test("limpar e adicionar 4500 não extrai data como dinheiro", () => {
     expect(interpretReorganization("apague gastos e receitas anteriores e depois adicione R$ 4.500 como receita deste mês", date)).toMatchObject({ income: { valor: 4500, data: date } });
   });

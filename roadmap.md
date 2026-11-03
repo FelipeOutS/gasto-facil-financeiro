@@ -42,8 +42,11 @@
 - [ ] Investigar recorrência "Cabelo" inexistente (gastos 27/09 e 27/10 preservados) — futura
 
 ## Reorganização financeira por áudio/texto
+- [x] Pedido 03/11 22:54 — núcleo isolado: compras simples não pagas, baseline atômico sem receita, leitura separada nas telas e geração própria na hidratação/reconexão; 193 JS/65 SQL aprovados, sem mutações reais/publicação.
+- [ ] Conclusão integral — bloqueada por contrato contábil de pagamentos/parcelas/recorrências e atribuição dos movimentos às contas; candidato restrito não equivale a reinício financeiro completo.
+- [ ] Pedido 03/11 22:54 Android: executar verificações web disponíveis e especificar instrumentação nativa; bloqueado por ausência do wrapper/aparelho.
 - [x] Continuação 03/11 local: restauração confirmada por lote/código, candidatos de geração offline e baseline, recusa ampliada de vínculos, 164 testes JS/49 SQL e IndexedDB no Chromium; sem dados reais/migração/publicação.
-- [ ] Continuação completa: executor contábil de vínculos, baseline atômico integrado às telas, geração em todos os escritores e hidratações, sessões reais; depende de contratos contábeis e homologação isolada, schemas ainda não autorizados.
+- [ ] Continuação completa: escritores não offline/compartilhados, sessão conversacional e fluxo autenticado com schemas isolados; falta contrato completo e homologação, migração/ativação reais não autorizadas.
 - [ ] Android real: depende de fonte do wrapper e aparelho de homologação; Chromium não equivale a WebView nativa.
 - [x] Auditar serviços existentes e preparar plano seguro para limpeza financeira reversível, confirmação por código e operações compostas; 63 testes locais aprovados, sem mudanças reais.
 - [x] Preparação local: interpretação conservadora, bloqueio de comandos compostos, contrato por código, adaptador RPC e SQL candidato compatível com F2; testes fictícios e PostgreSQL descartável, nenhuma alteração real.

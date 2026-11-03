@@ -4,7 +4,7 @@ CREATE TABLE public.account_opening_balances (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL,
  banco_id uuid NOT NULL REFERENCES public.bancos(id) ON DELETE RESTRICT,
  amount_cents bigint NOT NULL CHECK(amount_cents>=0), effective_date date NOT NULL,
- request_id text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
+ request_id text NOT NULL, revoked_at timestamptz, created_at timestamptz NOT NULL DEFAULT now(),
  UNIQUE(user_id,banco_id), UNIQUE(user_id,request_id)
 );
 GRANT SELECT ON public.account_opening_balances TO authenticated;

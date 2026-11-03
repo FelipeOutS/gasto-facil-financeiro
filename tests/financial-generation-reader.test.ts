@@ -1,0 +1,7 @@
+import {test,expect,mock} from 'bun:test';
+let actor='A',version:unknown=3,error:unknown=null,reads=0;
+mock.module('@/integrations/supabase/client',()=>({supabase:{auth:{getUser:async()=>({data:{user:{id:actor}}})},from:()=>{reads++;return {select:()=>({eq:()=>({maybeSingle:async()=>({data:{generation:version},error})})})};}}}));
+const {refreshFinancialGeneration}=await import('../src/lib/offline/financial-generation-reader');
+test('server generation read is restricted to actual owner',async()=>{reads=0;expect(await refreshFinancialGeneration('B')).toBeNull();expect(reads).toBe(0);});
+test('missing schema cannot invent generation zero',async()=>{error={message:'missing'};expect(await refreshFinancialGeneration('A')).toBeNull();error=null;});
+test('fresh generation remembered without changing queued item generation',async()=>{const map=new Map<string,string>();Object.defineProperty(globalThis,'localStorage',{configurable:true,value:{getItem:(k:string)=>map.get(k)??null,setItem:(k:string,v:string)=>map.set(k,v),removeItem:(k:string)=>map.delete(k)}});try {const queued={financial_generation:1};expect(await refreshFinancialGeneration('A')).toBe(3);expect(queued.financial_generation).toBe(1);expect(map.get('gi:financial:generation:A')).toBe('3');}finally{Reflect.deleteProperty(globalThis,'localStorage');}});

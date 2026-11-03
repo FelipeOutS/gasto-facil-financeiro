@@ -1,0 +1,20 @@
+import { test,expect } from "bun:test";
+import { interpretReorganization } from "../src/lib/whatsapp-reorganizacao";
+import { resolveBalanceAccount } from "../src/lib/account-opening-balance";
+import { parseOpeningBalance } from "../src/lib/account-opening-balance";
+import { runReorganization } from "../src/server/whatsapp-reorganizacao.server";
+import { createReorganizationStore } from "../src/server/whatsapp-reorganizacao-store.server";
+const text='GI, exclua todas as minhas despesas e receitas anteriores e coloque R$ 5.000 como saldo inicial da minha conta Nubank.';
+test('exact audio scenario preserves two operations and no new income',()=>expect(interpretReorganization(text,'2026-11-03')).toEqual({kind:'request',scope:{tables:['gastos','receitas'],start:null,end:'2026-11-01'},income:null,openingBalance:{accountName:'Nubank',amountCents:500000,effectiveDate:'2026-11-03'}}));
+test('current Nubank balance understood without income',()=>expect(interpretReorganization('GI, meu saldo atual no Nubank é de R$ 5.000.','2026-11-03')).toEqual({kind:'balance',balance:{accountName:'Nubank',amountCents:500000,effectiveDate:'2026-11-03'}}));
+test('ambiguous and foreign bank identities never chosen',()=>{const a={id:'1',userId:'A',name:'Nubank'};expect(resolveBalanceAccount([a,{...a,id:'2'}],'A','Nubank')).toBeNull();expect(resolveBalanceAccount([a],'B','Nubank')).toBeNull();expect(resolveBalanceAccount([a],'A','Nubank')?.id).toBe('1');});
+test('two amounts cannot silently choose the first baseline',()=>expect(parseOpeningBalance('saldo inicial R$ 5.000 no Nubank e R$ 200 no Itaú','2026-11-03')).toBeNull());
+test('negative balance cannot silently become positive',()=>expect(parseOpeningBalance('saldo atual no Nubank R$ -5.000','2026-11-03')).toBeNull());
+test('negated balance does not authorize a baseline',()=>expect(parseOpeningBalance('não coloque R$ 5.000 como saldo inicial na Nubank','2026-11-03')).toBeNull());
+test('injected conversation sends compound baseline to safe candidate RPC only',async()=>{
+ const calls:Array<{name:string,args:Record<string,unknown>}>=[];
+ const store=createReorganizationStore({rpc:async(name,args)=>{calls.push({name,args});return {error:null,data:name==='wa_reorganization_authorized'?true:{status:'preview',operationId:'1990d398-1983-4e91-8856-e11dd2323f85',code:'123456',expiresAt:'2026-11-03T23:10:00Z',expenses:1,incomes:1,openingBalance:args.p_balance}};}});
+ await runReorganization({text,userId:'A',phone:'5511999999999',externalId:'audio',localDate:'2026-11-03',pendingSession:false},store);
+ expect(calls.at(-1)?.args.p_balance).toEqual({accountName:'Nubank',amountCents:500000,effectiveDate:'2026-11-03'});
+ expect(calls.at(-1)?.args.p_income).toBeNull();expect(calls.filter(c=>c.name.includes('confirm'))).toHaveLength(0);
+});
