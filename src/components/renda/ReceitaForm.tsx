@@ -1,4 +1,6 @@
 import { useActiveAccount } from "@/lib/active-account";
+import { FinancialCashField } from "@/components/FinancialCashField";
+import type { FinancialCashInput } from "@/lib/financial-cash-input";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation, Trans } from "react-i18next";
 import { toast } from "sonner";
@@ -111,8 +113,9 @@ export function ReceitaForm(props: Props) {
 
   const [clienteId, setClienteId] = useState<string | null>(initial.clienteId);
   const [scope, setScope] = useState<UpdateReceitaScope>("single");
+  const [cash,setCash]=useState<FinancialCashInput>({});
 
-  type NovaPayload = {
+  type NovaPayload = FinancialCashInput & {
     ownerId: string;
     actorId: string;
     descricao: string;
@@ -145,6 +148,7 @@ export function ReceitaForm(props: Props) {
       return;
     }
     if (!payload.recorrente && !isOnline()) {
+      if(payload.financialBankId || payload.cashEffectiveAt) {toast.error("Confirme o recebimento com conexão à internet.");return;}
       try {
         await enqueueIncome(
           payload.ownerId,
@@ -216,6 +220,7 @@ export function ReceitaForm(props: Props) {
     });
 
     const payload: NovaPayload = {
+      ...cash,
       ownerId,
       actorId: user.id,
       descricao: desc,
@@ -314,6 +319,7 @@ export function ReceitaForm(props: Props) {
         </select>
       </div>
       <ClienteSelect value={clienteId} onChange={setClienteId} clientesAtivos={clientesAtivos} />
+      {!isEdit && <FinancialCashField value={cash} onChange={setCash} kind="income" disabled={recorrente}/>}
 
       {!isEdit && (
         <>

@@ -1,9 +1,14 @@
 /** Financial facts are independent of presentation visibility. All arithmetic is integer cents. */
-export type CashFact = { id: string; userId: string; bankId: string; at: string; cents: number; kind: "opening" | "income_received" | "expense_paid" | "adjustment" | "refund"; reversalOf?: string | null };
+export type CashFact = { id: string; userId: string; bankId: string; at: string; cents: number; kind: "opening" | "income_received" | "expense_paid" | "adjustment" | "refund" | "accounting_reversal"; reversalOf?: string | null };
 export function cashBalance(userId: string, bankId: string, facts: CashFact[], at: string): number {
+  const cutoff = Date.parse(at);
+  if (!Number.isFinite(cutoff)) throw new Error("invalid_cash_cutoff");
   const seen = new Set<string>(); let total = 0;
   for (const f of facts) {
-    if (f.userId !== userId || f.bankId !== bankId || f.at > at) continue;
+    if (f.userId !== userId || f.bankId !== bankId) continue;
+    const instant = Date.parse(f.at);
+    if (!Number.isFinite(instant)) throw new Error("invalid_cash_date");
+    if (instant > cutoff) continue;
     if (seen.has(f.id) || !Number.isSafeInteger(f.cents)) throw new Error("invalid_cash_fact");
     seen.add(f.id); total += f.cents;
     if (!Number.isSafeInteger(total)) throw new Error("cash_overflow");
@@ -13,7 +18,9 @@ export function cashBalance(userId: string, bankId: string, facts: CashFact[], a
 export function reconcileBalance(userId: string, bankId: string, facts: CashFact[], observedCents: number, at: string) {
   if (!Number.isSafeInteger(observedCents)) throw new Error("invalid_observed_balance");
   const beforeCents = cashBalance(userId, bankId, facts, at);
-  return { beforeCents, observedCents, adjustmentCents: observedCents - beforeCents };
+  const adjustmentCents = observedCents - beforeCents;
+  if (!Number.isSafeInteger(adjustmentCents)) throw new Error("cash_overflow");
+  return { beforeCents, observedCents, adjustmentCents };
 }
 export type CardFact = { id: string; userId: string; cardId: string; cycle: string; cents: number; kind: "charge" | "payment_snapshot" | "payment" | "accounting_reversal" | "bank_refund" | "charge_refund" };
 /** Hidden expense rows do not erase issuer debt or fabricate a refund. */

@@ -65,6 +65,8 @@ export type Gasto = {
   idOperacaoBanco?: string;
   /** ID do fornecedor vinculado (opcional). */
   fornecedorId?: string | null;
+  financialBankId?: string;
+  cashEffectiveAt?: string;
   criadoEm: string;
   atualizadoEm: string;
 };
@@ -138,6 +140,8 @@ export type Receita = {
   idOperacaoBanco?: string;
   /** Cliente vinculado (opcional). */
   clienteId?: string | null;
+  financialBankId?: string;
+  cashEffectiveAt?: string;
   criadoEm: string;
   atualizadoEm: string;
 };
