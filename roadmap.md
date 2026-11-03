@@ -43,4 +43,5 @@
 
 ## Reorganização financeira por áudio/texto
 - [x] Auditar serviços existentes e preparar plano seguro para limpeza financeira reversível, confirmação por código e operações compostas; 63 testes locais aprovados, sem mudanças reais.
-- [ ] Implementação reversível e testes isolados — aguardam aprovação do plano; migrações, ativação e publicação exigem autorização separada.
+- [x] Preparação local: interpretação conservadora, bloqueio de comandos compostos, contrato por código, adaptador RPC e SQL candidato compatível com F2; testes fictícios e PostgreSQL descartável, nenhuma alteração real.
+- [ ] Fluxo completo e ativação — BLOQUEADOS: confirmação própria da restauração, barreira offline persistente em todos os escritores, regras de vínculos/saldo inicial, validação Android e aprovações separadas de schema/liberação/publicação.
