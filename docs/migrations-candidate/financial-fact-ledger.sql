@@ -32,8 +32,8 @@ BEGIN
  FROM public.gastos g WHERE g.user_id=p_user AND g.cartao_id IN(SELECT (e->'row'->>'cartao_id')::uuid FROM jsonb_array_elements(p_entries) e)
  AND g.deleted_at IS NULL AND g.fatura_competencia IS NOT NULL ON CONFLICT(user_id,request_id) DO NOTHING;
  INSERT INTO public.financial_card_facts(user_id,cartao_id,cycle,source_id,kind,amount_cents,request_id)
- SELECT f.user_id,f.cartao_id,to_char(make_date(f.ano,f.mes,1),'YYYY-MM'),f.id,'payment_snapshot',round(coalesce(f.valor_pago,0)*100)::bigint,'legacy-invoice:'||f.id
- FROM public.faturas_cartao f WHERE f.user_id=p_user AND f.cartao_id IN(SELECT (e->'row'->>'cartao_id')::uuid FROM jsonb_array_elements(p_entries) e)
+ SELECT f.user_id,f.cartao_id,to_char(make_date(f.ano,f.mes,1)+make_interval(months=>CASE WHEN c.dia_vencimento<=c.dia_fechamento THEN 2 ELSE 1 END),'YYYY-MM'),f.id,'payment_snapshot',round(coalesce(f.valor_pago,0)*100)::bigint,'legacy-invoice:'||f.id
+ FROM public.faturas_cartao f JOIN public.cartoes c ON c.id=f.cartao_id AND c.user_id=f.user_id WHERE f.user_id=p_user AND f.cartao_id IN(SELECT (e->'row'->>'cartao_id')::uuid FROM jsonb_array_elements(p_entries) e)
  AND coalesce(f.valor_pago,0)>0 ON CONFLICT(user_id,request_id) DO NOTHING;
 END $$;
 REVOKE ALL ON FUNCTION public.financial_capture_card_history(uuid,jsonb) FROM PUBLIC,anon,authenticated,service_role;
@@ -50,7 +50,7 @@ BEGIN
  PERFORM pg_advisory_xact_lock(hashtextextended('gi_gastos_soft_delete:'||p_user::text,0));
  IF NOT EXISTS(SELECT 1 FROM public.bancos WHERE user_id=p_user AND id=p_bank FOR SHARE) THEN RAISE EXCEPTION 'bank_owner_mismatch'; END IF;
  SELECT * INTO fact FROM public.financial_cash_facts WHERE user_id=p_user AND request_id=p_request;
- IF FOUND THEN RETURN fact.id; END IF;
+ IF FOUND THEN IF fact.banco_id<>p_bank THEN RAISE EXCEPTION 'reconciliation_request_conflict'; END IF; RETURN fact.id; END IF;
  INSERT INTO public.financial_cash_facts(user_id,banco_id,kind,amount_cents,request_id)
  VALUES(p_user,p_bank,'adjustment',p_observed-public.financial_cash_balance(p_user,p_bank),p_request) RETURNING * INTO fact;
  RETURN fact.id;
