@@ -1,0 +1,18 @@
+import {test,expect} from "bun:test";
+import {financialCashColumns} from "../src/lib/financial-cash-input";
+import {accountBalanceDisplay} from "../src/lib/account-balance-display";
+import {cashBalance,reconcileBalance} from "../src/lib/financial-accounting";
+import {writeFinancialGroup} from "../src/lib/financial-group-writer";
+const bank="aaaaaaaa-0000-0000-0000-000000000005";
+test("explicit bank + paid instant preserved independently of competence",()=>expect(financialCashColumns({financialBankId:bank,cashEffectiveAt:"2026-11-03T12:00:00-03:00"})).toEqual({financial_bank_id:bank,cash_effective_at:"2026-11-03T15:00:00.000Z"}));
+test("bank alone cannot fabricate receipt",()=>expect(()=>financialCashColumns({financialBankId:bank})).toThrow());
+test("credit expense never debits account",()=>expect(()=>financialCashColumns({financialBankId:bank,cashEffectiveAt:"2026-11-03T12:00:00Z"},{credit:true})).toThrow());
+test("recurring expansion never multiplies a received amount",()=>expect(()=>financialCashColumns({financialBankId:bank,cashEffectiveAt:"2026-11-03T12:00:00Z"},{generated:true})).toThrow());
+const raw=[{id:"a",user_id:"A",banco_id:bank,amount_cents:300000,effective_at:"2026-11-01T12:00:00Z",kind:"opening"},{id:"b",user_id:"A",banco_id:bank,amount_cents:200000,effective_at:"2026-11-03T12:00:00Z",kind:"adjustment"},{id:"future",user_id:"A",banco_id:bank,amount_cents:500000,effective_at:"2027-01-01T00:00:00Z",kind:"income_received"}];
+test("balance 3000 + adjustment 2000 = 5000 without future income",()=>expect(accountBalanceDisplay("A",[{id:bank,nome:"Nubank"}],raw,"2026-11-03T20:00:00Z")[0].amountCents).toBe(500000));
+test("other owner facts rejected rather than leaked or summed",()=>expect(()=>accountBalanceDisplay("B",[{id:bank,nome:"Nubank"}],raw,"2026-11-03T20:00:00Z")).toThrow());
+test("individual invalid cent amount fails closed",()=>expect(()=>accountBalanceDisplay("A",[{id:bank,nome:"Nubank"}],[{...raw[0],amount_cents:"wrong"}],"2026-11-03T20:00:00Z")).toThrow());
+test("timezone offsets compare instants not lexical dates",()=>expect(cashBalance("A",bank,[{id:"x",userId:"A",bankId:bank,cents:100,kind:"income_received",at:"2026-11-03T12:00:00-03:00"}],"2026-11-03T14:00:00Z")).toBe(0));
+test("reconciliation delta overflow rejected",()=>expect(()=>reconcileBalance("A",bank,[{id:"x",userId:"A",bankId:bank,cents:-Number.MAX_SAFE_INTEGER,kind:"adjustment",at:"2026-11-03"}],Number.MAX_SAFE_INTEGER,"2026-11-03")).toThrow());
+test("RPC fails closed on missing migration and no direct write fallback",async()=>{let calls=0;await expect(writeFinancialGroup({rpc:async()=>{calls++;return{data:null,error:{message:"missing RPC"}}}},{ownerId:"A",operationId:"op",generation:0,kind:"csv",rows:[{table:"gastos",row:{}}]})).rejects.toThrow("missing RPC");expect(calls).toBe(1);});
+test("replay acknowledges without resurrecting rows",async()=>expect(await writeFinancialGroup({rpc:async()=>({data:{status:"replay",operationId:"op",rows:[]},error:null})},{ownerId:"A",operationId:"op",generation:0,kind:"pdf",rows:[{table:"gastos",row:{}}]})).toEqual({status:"replay",rows:[]}));
