@@ -2405,7 +2405,7 @@ export async function addGastoAwait(
     return row;
   });
   const insert = async () => {
-    const { error } = await supabase.from("gastos").insert(rows).abortSignal(signal);
+    const { error } = await supabase.from("gastos").insert(rows as GastoInsert[]).abortSignal(signal);
     return { error: error?.message, code: error?.code };
   };
   const result = offlineClientId ? await persistOfflineRows(rows, async () => {
@@ -3034,7 +3034,7 @@ export async function addReceitaAwait(
   if (offlineClientId && financialGeneration !== undefined && financialGeneration !== null) row.offline_generation = financialGeneration;
 
   const insert = async () => {
-    const { error } = await supabase.from("receitas").insert(row).abortSignal(signal);
+    const { error } = await supabase.from("receitas").insert(row as ReceitaInsert).abortSignal(signal);
     return { error: error?.message, code: error?.code };
   };
   let confirmedRows: (ReceitaRow & { deleted_at?: string | null })[] = [];
