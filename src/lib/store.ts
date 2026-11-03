@@ -231,6 +231,7 @@ let memContasCanceladas: ContaAPagar[] = EMPTY_CONTAS;
 let memTransferencias: TransferenciaInterna[] = EMPTY_TRANSFERENCIAS;
 let memExtratos: ExtratoImportado[] = EMPTY_EXTRATOS;
 let memFaturas: FaturaCartao[] = [];
+let memCardFacts: import("./financial-accounting").CardFact[] = [];
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
@@ -275,6 +276,7 @@ export function setActiveUserId(uid: string | null) {
   memTransferencias = EMPTY_TRANSFERENCIAS;
   memExtratos = EMPTY_EXTRATOS;
   memFaturas = [];
+  memCardFacts = [];
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
@@ -1148,6 +1150,9 @@ export async function hydrateUser(userId: string): Promise<void> {
       } else {
         memFaturas = (faturasRes.data ?? []).map(rowToFatura);
       }
+      const cardFacts = await sbAny.from("financial_card_facts").select("*").eq("user_id",userId).then((r:any)=>r).catch(()=>({error:true,data:[]}));
+      if(!isCurrent())return;
+      memCardFacts = cardFacts.error ? [] : (cardFacts.data ?? []).map((r:any)=>({id:r.id,userId:r.user_id,cardId:r.cartao_id,cycle:r.cycle,cents:Number(r.amount_cents),kind:r.kind}));
 
       hydratedUserId = userId;
       setHydrationStatus("ready");
@@ -5504,11 +5509,21 @@ export function resumoFaturaPorMes(cartaoId: string, mes: number, ano: number) {
   const limite = cartao?.limiteTotal ?? 0;
   const gastos = gastosDaFatura(cartaoId, mes, ano);
   const total = gastos.reduce((s, g) => s + g.valor, 0);
+  const competence = cicloParaCompetencia(`${ano}-${String(mes).padStart(2,"0")}`,cartao?.diaFechamento,cartao?.diaVencimento);
+  const facts = memCardFacts.filter(f=>f.cardId===cartaoId && f.cycle===competence);
+  const charged = facts.filter(f=>f.kind==="charge").reduce((s,f)=>s+f.cents,0)/100;
+  const paid = facts.reduce((s,f)=>s+(["payment","payment_snapshot"].includes(f.kind)?f.cents:["accounting_reversal","bank_refund"].includes(f.kind)?-f.cents:0),0)/100;
+  // Ledger charge snapshots preserve hidden liabilities. Never release limit just by hiding expenses.
+  const accountingTotal = facts.length ? Math.max(total,charged) : total;
+  const pending = facts.length ? Math.max(0,accountingTotal-paid) : total;
   return {
-    total,
+    total:accountingTotal,
+    visibleTotal:total,
+    valorPagoContabil:paid,
+    pendenteContabil:pending,
     limite,
-    disponivel: Math.max(0, limite - total),
-    pct: limite > 0 ? Math.min(100, (total / limite) * 100) : 0,
+    disponivel: Math.max(0, limite - pending),
+    pct: limite > 0 ? Math.min(100, (pending / limite) * 100) : 0,
     qtd: gastos.length,
   };
 }
