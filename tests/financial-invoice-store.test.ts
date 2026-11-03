@@ -3,7 +3,7 @@ type Row=Record<string,any>;
 let rows:Row[]=[];let writes=0;let failure=false;let lost=false;let actor="owner";
 mock.module("@/integrations/supabase/client",()=>({supabase:{
  auth:{getUser:async()=>({data:{user:{id:actor}},error:null})},
- rpc:async(name:string,args:Row)=>({data:name==="can_create_in_account"&&args._owner===actor,error:null}),
+ rpc:(name:string,args:Row)=>{const result=Promise.resolve({data:name==="can_create_in_account"&&args._owner===actor,error:null});return Object.assign(result,{abortSignal:()=>result});},
  from(table:string){
   let op="read";let payload:Row[]=[];const filters:Row={};let ids:string[]|null=null;
   const q:any={select:()=>q,eq:(k:string,v:unknown)=>{filters[k]=v;return q;},in:(_k:string,v:string[])=>{ids=v;return q;},is:(k:string,v:unknown)=>{filters[k]=v;return q;},abortSignal:()=>q,insert:(r:Row[])=>{op="insert";payload=r;return q;},
