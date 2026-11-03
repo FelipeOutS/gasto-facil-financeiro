@@ -52,3 +52,16 @@ UPDATE gastos SET descricao='Editada depois' WHERE id='11111111-0000-0000-0000-0
 SELECT set_config('gi.gastos_soft_delete','off',false);
 SELECT public.assert_true((public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore')->>'kept')::int=1,'partial restore preserves changed snapshot');
 SELECT public.assert_true((SELECT deleted_at IS NULL AND valor=30 FROM gastos WHERE id='11111111-0000-0000-0000-000000000003'),'other owner still untouched');
+
+-- Linked rows cause all-or-nothing refusal, never silent partial cleanup.
+INSERT INTO gastos(id,user_id,descricao,valor,data,cartao_id) VALUES('33333333-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','Cartão',40,'2026-12-01','99999999-0000-0000-0000-000000000001');
+DO $$ BEGIN
+ PERFORM public.wa_reorganization_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','linked','{"tables":["gastos"],"start":"2026-12-01","end":"2027-01-01"}',null,'666666');
+ RAISE EXCEPTION 'expected failure';
+ EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'linked_scope_blocked' THEN RAISE; END IF;
+END $$;
+SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE id='33333333-0000-0000-0000-000000000001'),'linked card preserved');
+SELECT public.wa_reorganization_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','attempts','{"tables":["receitas"],"start":null,"end":"2026-11-01"}',null,'777777');
+SELECT public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','000000') FROM generate_series(1,5);
+SELECT public.assert_true(public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','777777')->>'status'='blocked','five wrong attempts block correct code');
+SELECT public.assert_true((SELECT sum(valor)=50 FROM receitas WHERE deleted_at IS NULL),'failed attempts do not mutate income');

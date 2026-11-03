@@ -12,3 +12,12 @@ P=(psql -X -q -v ON_ERROR_STOP=1 -h "$D" -p 55459 -U gi_test -d postgres)
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/gastos-soft-delete-f2.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/whatsapp-reorganizacao.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/10-tests.sql"
+
+U=aaaaaaaa-0000-0000-0000-000000000001
+"${P[@]}" -c "SELECT public.wa_reorganization_prepare('$U','5511999999999','race','{\"tables\":[\"receitas\"],\"start\":null,\"end\":\"2026-11-01\"}',NULL,'888888');"
+CALL="SET ROLE service_role; SELECT public.wa_reorganization_confirm('$U','5511999999999','888888');"
+( "${P[@]}" -tAc "BEGIN; $CALL SELECT pg_sleep(1); COMMIT;" > "$D/r1" 2>&1 ) &
+PID=$!
+"${P[@]}" -tAc "$CALL" > "$D/r2" 2>&1
+wait "$PID"
+if grep -q '"applied"' "$D/r1" "$D/r2" && grep -q '"replay"' "$D/r1" "$D/r2"; then echo 'PASS: two connections one apply one replay'; else cat "$D/r1" "$D/r2"; exit 1; fi
