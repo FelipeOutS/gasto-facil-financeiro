@@ -93,3 +93,11 @@ DO $$ BEGIN
  INSERT INTO gastos(user_id,descricao,valor,data,offline_client_id,offline_generation) VALUES('aaaaaaaa-0000-0000-0000-000000000001','Spoof',10,'2026-10-01','spoof',0);
  RAISE EXCEPTION 'expected stale'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'financial_generation_stale_review_required' THEN RAISE; END IF; END $$;
 SELECT public.assert_true(NOT EXISTS(SELECT 1 FROM gastos WHERE descricao='Spoof'),'shared owner hidden generation and marker cannot bypass fence');
+
+CREATE TABLE public.bens_pagamentos(id uuid PRIMARY KEY,gasto_id uuid);
+INSERT INTO bens_pagamentos VALUES('77777777-0000-0000-0000-000000000001','11111111-0000-0000-0000-000000000002');
+SELECT public.assert_true(public.wa_reorganization_has_dependency('11111111-0000-0000-0000-000000000002','gastos'),'asset reverse relationship detected');
+DO $$ BEGIN
+ PERFORM public.wa_reorganization_snapshot('aaaaaaaa-0000-0000-0000-000000000001','{"tables":["gastos"],"start":"2026-11-01","end":"2026-12-01"}');
+ RAISE EXCEPTION 'expected linked refusal'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'linked_scope_blocked' THEN RAISE; END IF; END $$;
+SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE id='11111111-0000-0000-0000-000000000002'),'asset-linked expense unchanged');

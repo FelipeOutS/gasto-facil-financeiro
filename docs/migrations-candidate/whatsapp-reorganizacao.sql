@@ -44,6 +44,21 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,
  AND regexp_replace(l.telefone,'\D','','g')=regexp_replace(p_phone,'\D','','g'))
 $$;
 
+-- Known financial reverse edges: never unlink/reconstruct these during generic cleanup.
+CREATE FUNCTION public.wa_reorganization_has_dependency(p_entry uuid,p_table text)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE relation_name text; linked boolean; column_name text;
+BEGIN
+ column_name:=CASE WHEN p_table='gastos' THEN 'gasto_id' ELSE 'receita_id' END;
+ FOREACH relation_name IN ARRAY ARRAY['bens_pagamentos','bens_custos_aquisicao','bens_amortizacoes','contas_a_pagar','contas_a_receber'] LOOP
+ IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name=relation_name AND information_schema.columns.column_name=column_name) THEN
+ EXECUTE format('SELECT EXISTS(SELECT 1 FROM public.%I WHERE %I=$1)',relation_name,column_name) INTO linked USING p_entry;
+ IF linked THEN RETURN true; END IF; END IF;
+ END LOOP;
+ RETURN EXISTS(SELECT 1 FROM public.pluggy_import_entries e WHERE e.entry_id=p_entry);
+END $$;
+REVOKE ALL ON FUNCTION public.wa_reorganization_has_dependency(uuid,text) FROM PUBLIC,anon,authenticated;
+
 -- Full-row snapshot: caller never supplies IDs. Unknown/linked entries block the whole scope.
 CREATE FUNCTION public.wa_reorganization_snapshot(p_user uuid,p_scope jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
@@ -75,7 +90,7 @@ BEGIN
  OR item->'row'->>'forma_pagamento'='credito'
  OR coalesce(item->'row'->>'origem','') IN('pluggy','open_finance','extrato','mercadopago','mercado_pago')
  OR EXISTS(SELECT 1 FROM public.contas_a_pagar c WHERE c.gasto_id=(item->'row'->>'id')::uuid)
- OR EXISTS(SELECT 1 FROM public.pluggy_import_entries e WHERE e.entry_id=(item->'row'->>'id')::uuid)
+ OR public.wa_reorganization_has_dependency((item->'row'->>'id')::uuid,item->>'table')
  ) THEN RAISE EXCEPTION 'linked_scope_blocked'; END IF;
  RETURN rows;
 END $$;
@@ -225,7 +240,7 @@ BEGIN
  FOR x IN SELECT value FROM jsonb_array_elements(op.after_snapshot) LOOP
  r:=NULL;
  IF EXISTS(SELECT 1 FROM public.contas_a_pagar c WHERE c.gasto_id=(x->'row'->>'id')::uuid)
- OR EXISTS(SELECT 1 FROM public.pluggy_import_entries e WHERE e.entry_id=(x->'row'->>'id')::uuid) THEN kept:=kept+1; CONTINUE; END IF;
+ OR public.wa_reorganization_has_dependency((x->'row'->>'id')::uuid,x->>'table') THEN kept:=kept+1; CONTINUE; END IF;
  IF x->>'table'='gastos' THEN
  SELECT to_jsonb(g) INTO r FROM public.gastos g WHERE g.user_id=p_user AND g.id=(x->'row'->>'id')::uuid FOR UPDATE;
  IF r IS DISTINCT FROM x->'row' OR (r->>'deleted_at')::timestamptz IS DISTINCT FROM op.deleted_stamp THEN kept:=kept+1; CONTINUE; END IF;
@@ -241,7 +256,7 @@ BEGIN
  IF op.income_id IS NOT NULL THEN
  SELECT to_jsonb(t) INTO r FROM public.receitas t WHERE t.id=op.income_id AND t.user_id=p_user FOR UPDATE;
  IF r->>'deleted_reason'='reorganizacao_desfeita:'||op.id THEN NULL;
- ELSIF r=op.income_after AND NOT EXISTS(SELECT 1 FROM public.pluggy_import_entries e WHERE e.entry_id=op.income_id) AND r->>'recorrencia_id' IS NULL AND r->>'import_batch_id' IS NULL THEN UPDATE public.receitas SET deleted_at=clock_timestamp(),deleted_source='whatsapp',deleted_reason='reorganizacao_desfeita:'||op.id,updated_at=clock_timestamp() WHERE id=op.income_id AND user_id=p_user;
+ ELSIF r=op.income_after AND NOT public.wa_reorganization_has_dependency(op.income_id,'receitas') AND r->>'recorrencia_id' IS NULL AND r->>'import_batch_id' IS NULL THEN UPDATE public.receitas SET deleted_at=clock_timestamp(),deleted_source='whatsapp',deleted_reason='reorganizacao_desfeita:'||op.id,updated_at=clock_timestamp() WHERE id=op.income_id AND user_id=p_user;
  ELSE kept:=kept+1; END IF;
  END IF;
  PERFORM set_config('gi.reorganization_mutation','off',true);
