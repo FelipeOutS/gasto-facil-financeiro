@@ -253,10 +253,10 @@ BEGIN
  IF public.wa_reorganization_card_snapshot(p_user,op.snapshot) IS DISTINCT FROM op.card_snapshot THEN RETURN jsonb_build_object('status','changed'); END IF;
  IF op.balance_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.account_opening_balances b WHERE b.user_id=p_user AND b.id=op.balance_id AND to_jsonb(b)=op.balance_after) THEN RETURN jsonb_build_object('status','changed'); END IF;
  -- Compound baseline restore must never revoke the baseline while leaving conflicted deletion rows.
- IF op.balance_id IS NOT NULL AND EXISTS(SELECT 1 FROM jsonb_array_elements(op.after_snapshot) x WHERE
- public.wa_reorganization_has_dependency((x->'row'->>'id')::uuid,x->>'table') OR
- (x->>'table'='gastos' AND NOT EXISTS(SELECT 1 FROM public.gastos g WHERE g.user_id=p_user AND g.id=(x->'row'->>'id')::uuid AND to_jsonb(g)=x->'row')) OR
- (x->>'table'='receitas' AND NOT EXISTS(SELECT 1 FROM public.receitas r WHERE r.user_id=p_user AND r.id=(x->'row'->>'id')::uuid AND to_jsonb(r)=x->'row')))
+ IF op.balance_id IS NOT NULL AND EXISTS(SELECT 1 FROM jsonb_array_elements(op.after_snapshot) entry_snapshot WHERE
+ public.wa_reorganization_has_dependency((entry_snapshot->'row'->>'id')::uuid,entry_snapshot->>'table') OR
+ (entry_snapshot->>'table'='gastos' AND NOT EXISTS(SELECT 1 FROM public.gastos g WHERE g.user_id=p_user AND g.id=(entry_snapshot->'row'->>'id')::uuid AND to_jsonb(g)=entry_snapshot->'row')) OR
+ (entry_snapshot->>'table'='receitas' AND NOT EXISTS(SELECT 1 FROM public.receitas r WHERE r.user_id=p_user AND r.id=(entry_snapshot->'row'->>'id')::uuid AND to_jsonb(r)=entry_snapshot->'row')))
  THEN RETURN jsonb_build_object('status','changed'); END IF;
  PERFORM set_config('gi.reorganization_mutation','on',true);
  IF op.balance_id IS NOT NULL THEN UPDATE public.account_opening_balances SET revoked_at=clock_timestamp() WHERE id=op.balance_id AND user_id=p_user; END IF;
