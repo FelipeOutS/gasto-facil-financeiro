@@ -29,17 +29,21 @@ export function interpretReorganization(text: string, localDate: string): Reorga
   }
   const parts = t.split(/\b(?:e depois|depois|e adicione|e adiciona|e cadastre|e cadastra)\b/);
   const deletion = parts[0];
+  if (/\b(nao|exceto|menos|salvo)\b/.test(deletion)) return { kind: "clarify", question: "Confirme o que deve ser preservado e o período exato. Nenhuma exceção será ignorada." };
   const tables: FinancialScope["tables"] = [];
   if (/\b(gastos|despesas)\b/.test(deletion)) tables.push("gastos");
   if (/\b(receitas|rendas)\b/.test(deletion)) tables.push("receitas");
   if (!tables.length) return { kind: "clarify", question: "Quais dados deseja excluir reversivelmente: gastos, receitas ou ambos? Nada foi alterado." };
   let start: string | null = null; let end: string | null = null;
+  const explicitPeriod = months.some((m) => new RegExp(`\\b${m}\\b`).test(deletion)) || /\b\d{1,2}\/20\d{2}\b/.test(deletion);
+  if (/\b(meses anteriores|anteriores|antigas|antigos)\b/.test(deletion) && explicitPeriod) return { kind: "clarify", question: "Você citou meses anteriores e um período específico. Confirme as datas exatas da limpeza." };
   if (/\b(meses anteriores|anteriores|antigas|antigos)\b/.test(deletion)) {
     end = `${localDate.slice(0, 7)}-01`;
-  } else if (!/\b(todos os meses|todo o historico|historico inteiro|todos os meus gastos|todas as minhas despesas|todas as minhas receitas)\b/.test(deletion)) {
+  } else if (explicitPeriod || !/\b(todos os meses|todo o historico|historico inteiro|todos os meus gastos|todas as minhas despesas|todas as minhas receitas)\b/.test(deletion)) {
     const yearMatch = deletion.match(/\b(20\d{2})\b/);
     const named = [...deletion.matchAll(new RegExp(`\\b(${months.join("|")})\\b`, "g"))];
     const numeric = deletion.match(/\b(0?[1-9]|1[0-2])\/(20\d{2})\b/);
+    if (new Set(deletion.match(/\b20\d{2}\b/g) ?? []).size > 1 || (deletion.match(/\b\d{1,2}\/20\d{2}\b/g) ?? []).length > 1) return { kind: "clarify", question: "Confirme um intervalo fechado com datas inicial e final completas." };
     if (numeric) { start = isoMonth(Number(numeric[2]), Number(numeric[1])); end = nextMonth(Number(numeric[2]), Number(numeric[1])); }
     else if (yearMatch && named.length >= 1 && named.length <= 2) {
       const y = Number(yearMatch[1]); const m1 = months.indexOf(named[0][1]) + 1;
@@ -49,7 +53,10 @@ export function interpretReorganization(text: string, localDate: string): Reorga
     } else return { kind: "clarify", question: "Confirme o período e o ano, ou diga explicitamente todo o histórico. Nada foi alterado." };
   }
   if (/\b(mantenha|manter|preserve)\b/.test(deletion) && !/\b(mes atual|deste mes|desse mes)\b/.test(deletion)) return { kind: "clarify", question: "Quais informações devem ser preservadas? Confirme o alcance antes de continuar." };
-  if (/\b(mes atual|deste mes|desse mes)\b/.test(deletion)) end = `${localDate.slice(0, 7)}-01`;
+  if (/\b(mes atual|deste mes|desse mes)\b/.test(deletion)) {
+    if (explicitPeriod) return { kind: "clarify", question: "Confirme como o período solicitado se combina com a preservação do mês atual." };
+    end = `${localDate.slice(0, 7)}-01`;
+  }
   if (parts.length > 2) return { kind: "clarify", question: "Vamos confirmar uma limpeza e no máximo uma nova receita por solicitação." };
   let income: NewIncome | null = null;
   if (parts.length === 2) {

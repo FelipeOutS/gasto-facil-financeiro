@@ -39,7 +39,7 @@ export async function runReorganization(input: ReorganizationInput, store: Reorg
     if (code) return response(await store.confirm(input, code));
     if (/^(cancelar|cancela)( a)? limpeza[.!]?$/i.test(input.text.trim())) return response(await store.cancel(input));
     if (/^consultar limpeza[.!]?$/i.test(input.text.trim())) return response(await store.status(input));
-    if (/^restaurar( a)? limpeza[.!]?$/i.test(input.text.trim())) return response(await store.restore(input));
+    if (/^restaurar( a)? limpeza[.!]?$/i.test(input.text.trim())) return "A restauração precisa de prévia própria e confirmação exclusiva, pois também pode desfazer a nova receita. Esse passo ainda está bloqueado; nenhum registro foi restaurado.";
     const intent = interpretReorganization(input.text, input.localDate);
     if (intent.kind === "ignore") return null;
     if (intent.kind === "clarify") return intent.question;

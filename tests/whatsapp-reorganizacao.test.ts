@@ -30,6 +30,11 @@ describe("reorganização: interpretação conservadora", () => {
   });
   test("salário com mês sem data completa pede confirmação", () => expect(interpretReorganization("exclui receitas antigas e adiciona R$ 2.800 como salário de novembro", date).kind).toBe("clarify"));
   test("consulta não é exclusão", () => expect(interpretReorganization("quanto dinheiro tenho disponível", date).kind).toBe("ignore"));
+  test("todos os gastos de outubro não significa todos os meses", () => expect(interpretReorganization("exclua todos os meus gastos de outubro de 2026", date)).toMatchObject({ scope: { start: "2026-10-01", end: "2026-11-01" } }));
+  test("negação nunca autoriza", () => expect(interpretReorganization("não apague todos os meus gastos", date).kind).toBe("clarify"));
+  test("exceção nunca ignorada", () => expect(interpretReorganization("apague gastos exceto alimentação", date).kind).toBe("clarify"));
+  test("anos distintos pedem esclarecimento", () => expect(interpretReorganization("apague gastos janeiro de 2025 até setembro de 2026", date).kind).toBe("clarify"));
+  test("período específico e antigos não se sobrepõem implicitamente", () => expect(interpretReorganization("apague gastos antigos de outubro de 2026", date).kind).toBe("clarify"));
 });
 describe("confirmação e execução isolada", () => {
   test("sim nunca é código", () => expect(confirmationCode("sim")).toBeNull());
