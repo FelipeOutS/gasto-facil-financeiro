@@ -4,7 +4,7 @@ import type { OpeningBalanceRequest } from "@/lib/account-opening-balance";
 /** Preparation only. This gate cannot be enabled through caller input. */
 export const WHATSAPP_REORGANIZACAO_RELEASE_AUTHORIZED = false;
 export type ReorganizationInput = { userId: string; phone: string; externalId: string; text: string; localDate: string; pendingSession: boolean };
-export type ReorganizationResult = { status: string; expenses?: number; incomes?: number; kept?: number; incomeId?: string | null; operationId?: string; code?: string; expiresAt?: string; totalExpenses?: number; totalIncomes?: number; scope?: FinancialScope; income?: NewIncome | null; openingBalance?: OpeningBalanceRequest | null; balanceId?: string | null };
+export type ReorganizationResult = { status: string; expenses?: number; incomes?: number; kept?: number; incomeId?: string | null; operationId?: string; code?: string; expiresAt?: string; totalExpenses?: number; totalIncomes?: number; scope?: FinancialScope; income?: NewIncome | null; openingBalance?: OpeningBalanceRequest | null; balanceId?: string | null; cashBeforeCents?: number|null; cashAdjustmentCents?: number|null };
 export interface ReorganizationStore {
   authorize(userId: string, phone: string): Promise<boolean>;
   prepare(input: ReorganizationInput, scope: FinancialScope, income: NewIncome | null, code: string, balance?: OpeningBalanceRequest): Promise<ReorganizationResult>;

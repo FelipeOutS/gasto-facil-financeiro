@@ -22,7 +22,7 @@ BEGIN
  old_paid:=CASE WHEN TG_OP='UPDATE' THEN round(coalesce(OLD.valor_pago,0)*100)::bigint ELSE 0 END;
  delta:=round(NEW.valor_pago*100)::bigint-old_paid;
  SELECT to_char(make_date(NEW.ano,NEW.mes,1)+make_interval(months=>CASE WHEN c.dia_vencimento<=c.dia_fechamento THEN 2 ELSE 1 END),'YYYY-MM') INTO invoice_cycle FROM public.cartoes c WHERE c.id=NEW.cartao_id AND c.user_id=NEW.user_id;
- IF TG_OP='UPDATE' AND old_paid>0 THEN
+ IF TG_OP='UPDATE' AND old_paid>0 AND NOT EXISTS(SELECT 1 FROM public.financial_card_facts f WHERE f.user_id=OLD.user_id AND f.source_id=OLD.id AND f.kind IN('payment_snapshot','payment')) THEN
  INSERT INTO public.financial_card_facts(user_id,cartao_id,cycle,source_id,kind,amount_cents,request_id)
  VALUES(OLD.user_id,OLD.cartao_id,invoice_cycle,OLD.id,'payment_snapshot',old_paid,'legacy-invoice:'||OLD.id) ON CONFLICT(user_id,request_id) DO NOTHING;
  END IF;

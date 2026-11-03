@@ -20,7 +20,7 @@ ALTER TABLE public.whatsapp_reorganization_policy ENABLE ROW LEVEL SECURITY;
 CREATE TABLE public.whatsapp_reorganization_operations (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL,
  phone_hash text NOT NULL, request_id text NOT NULL,
- scope jsonb NOT NULL, income jsonb, opening_balance jsonb, bank_snapshot jsonb, balance_id uuid, balance_after jsonb, card_snapshot jsonb, cash_fact_id uuid, cash_fact_after jsonb, code_hash text NOT NULL UNIQUE,
+ scope jsonb NOT NULL, income jsonb, opening_balance jsonb, bank_snapshot jsonb, balance_id uuid, balance_after jsonb, card_snapshot jsonb, cash_before bigint, cash_fact_id uuid, cash_fact_after jsonb, code_hash text NOT NULL UNIQUE,
  failed_attempts int NOT NULL DEFAULT 0 CHECK(failed_attempts BETWEEN 0 AND 5),
  expires_at timestamptz NOT NULL, snapshot jsonb NOT NULL,
  status text NOT NULL DEFAULT 'preview' CHECK(status IN('preview','applied','cancelled','changed','expired','restored','partial')),
@@ -123,10 +123,10 @@ BEGIN
  snap:=CASE WHEN p_balance IS NOT NULL AND p_scope->'tables'='[]'::jsonb THEN '[]'::jsonb ELSE public.wa_reorganization_snapshot(p_user,p_scope) END;
  IF jsonb_array_length(snap)=0 AND p_balance IS NULL THEN RETURN jsonb_build_object('status','blocked'); END IF;
  UPDATE public.whatsapp_reorganization_operations SET status='cancelled' WHERE user_id=p_user AND phone_hash=ph AND status='preview';
- INSERT INTO public.whatsapp_reorganization_operations(user_id,phone_hash,request_id,scope,income,opening_balance,bank_snapshot,card_snapshot,code_hash,expires_at,snapshot)
- VALUES(p_user,ph,p_request,p_scope,p_income,p_balance,bank,public.wa_reorganization_card_snapshot(p_user,snap),encode(sha256(convert_to(p_user::text||ph||p_code,'UTF8')),'hex'),clock_timestamp()+interval '5 minutes',snap) RETURNING * INTO op;
+ INSERT INTO public.whatsapp_reorganization_operations(user_id,phone_hash,request_id,scope,income,opening_balance,bank_snapshot,card_snapshot,cash_before,code_hash,expires_at,snapshot)
+ VALUES(p_user,ph,p_request,p_scope,p_income,p_balance,bank,public.wa_reorganization_card_snapshot(p_user,snap),CASE WHEN p_balance->>'kind'='current_adjustment' THEN public.financial_cash_balance(p_user,(bank->>'id')::uuid) ELSE NULL END,encode(sha256(convert_to(p_user::text||ph||p_code,'UTF8')),'hex'),clock_timestamp()+interval '5 minutes',snap) RETURNING * INTO op;
  SELECT jsonb_build_object('status','preview','operationId',op.id,'code',p_code,'expiresAt',op.expires_at,
- 'scope',p_scope,'income',p_income,'openingBalance',p_balance,
+ 'scope',p_scope,'income',p_income,'openingBalance',p_balance,'cashBeforeCents',op.cash_before,'cashAdjustmentCents',CASE WHEN op.cash_before IS NOT NULL THEN (p_balance->>'amountCents')::bigint-op.cash_before ELSE NULL END,
  'expenses',count(*) FILTER(WHERE x->>'table'='gastos'),'incomes',count(*) FILTER(WHERE x->>'table'='receitas'),
  'totalExpenses',coalesce(sum((x->'row'->>'valor')::numeric) FILTER(WHERE x->>'table'='gastos'),0),
  'totalIncomes',coalesce(sum((x->'row'->>'valor')::numeric) FILTER(WHERE x->>'table'='receitas'),0)) INTO result FROM jsonb_array_elements(snap) x;
@@ -168,6 +168,7 @@ BEGIN
  IF NOT public.wa_reorganization_authorized(p_user,p_phone) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  IF op.opening_balance IS NOT NULL THEN
  IF NOT EXISTS(SELECT 1 FROM public.bancos b WHERE b.user_id=p_user AND to_jsonb(b)=op.bank_snapshot) THEN RETURN jsonb_build_object('status','changed'); END IF;
+ IF op.cash_before IS NOT NULL AND op.cash_before<>public.financial_cash_balance(p_user,(op.bank_snapshot->>'id')::uuid) THEN RETURN jsonb_build_object('status','changed'); END IF;
  IF coalesce(op.opening_balance->>'kind','opening')<>'current_adjustment' AND EXISTS(SELECT 1 FROM public.account_opening_balances b WHERE b.user_id=p_user AND b.banco_id=(op.bank_snapshot->>'id')::uuid) THEN RETURN jsonb_build_object('status','changed'); END IF;
  END IF;
  stamp:=clock_timestamp();
