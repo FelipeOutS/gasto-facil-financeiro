@@ -22,7 +22,7 @@ BEGIN
  IF NOT coalesce((SELECT enabled FROM public.financial_group_policy WHERE id),false) THEN RAISE EXCEPTION 'financial_group_release_blocked'; END IF;
  -- Paid-only candidate; never expands basic/free quotas through a SECURITY DEFINER path.
  IF NOT coalesce(public.has_active_plan_access(p_owner),false) THEN RAISE EXCEPTION 'financial_group_feature_blocked'; END IF;
- IF p_kind NOT IN('manual','installments','recurrence','csv','pdf','image') OR p_operation IS NULL OR p_generation IS NULL OR p_generation<0
+ IF p_kind IS NULL OR p_kind NOT IN('manual','installments','recurrence','csv','pdf','image') OR p_operation IS NULL OR p_generation IS NULL OR p_generation<0
  OR jsonb_typeof(p_rows) IS DISTINCT FROM 'array' OR jsonb_array_length(p_rows) NOT BETWEEN 1 AND 500 THEN RAISE EXCEPTION 'invalid_financial_group'; END IF;
  -- Match reset lock ordering; no transaction-local reorganization bypass for ordinary creation.
  LOCK TABLE public.gastos,public.receitas IN SHARE ROW EXCLUSIVE MODE;
@@ -35,7 +35,7 @@ BEGIN
  END IF;
  FOR item IN SELECT value FROM jsonb_array_elements(p_rows) LOOP
  relation_name:=item->>'table'; row_json:=item->'row'; ordinal:=ordinal+1;
- IF relation_name NOT IN('gastos','receitas') OR jsonb_typeof(row_json) IS DISTINCT FROM 'object' OR row_json->>'user_id' IS DISTINCT FROM p_owner::text
+ IF relation_name IS NULL OR relation_name NOT IN('gastos','receitas') OR jsonb_typeof(row_json) IS DISTINCT FROM 'object' OR row_json->>'user_id' IS DISTINCT FROM p_owner::text
  OR row_json->>'id' IS NULL OR row_json->>'descricao' IS NULL OR row_json->>'data' IS NULL OR row_json->>'valor' IS NULL
  OR (row_json->>'valor')::numeric<=0 OR (row_json->>'valor')::numeric>=1e12 OR round((row_json->>'valor')::numeric,2)<>(row_json->>'valor')::numeric
  OR row_json ?| ARRAY['deleted_at','deleted_by','deleted_source','deleted_reason','deletion_batch_id','deletion_source','offline_client_id','offline_generation'] THEN RAISE EXCEPTION 'invalid_financial_group_row'; END IF;

@@ -2521,7 +2521,11 @@ export async function addGastosBulkAwait(inputs: NovoGastoInput[], operationId: 
     const version = manifest.request?.generation ?? await refreshFinancialGeneration(ownerId);
     if (version === null) throw new Error("Versão financeira indisponível; importação preservada para revisão.");
     const kind = inputs[0]?.origem?.includes("csv") ? "csv" : inputs[0]?.origem?.includes("pdf") ? "pdf" : "image";
-    const request = manifest.request ?? {ownerId,operationId,generation:version,kind,rows:built.map(b=>({table:"gastos" as const,row:b.row as Record<string,unknown>}))};
+    const request = manifest.request ?? {ownerId,operationId,generation:version,kind,rows:built.map(b=>{
+      const {confirmado, ...row}=b.row;
+      void confirmado;
+      return {table:"gastos" as const,row:row as Record<string,unknown>};
+    })};
     manifest.request=request;
     if (request.ownerId !== ownerId || request.operationId !== operationId) throw new Error("A sessão da importação mudou.");
     const outcome = await writeFinancialGroup(sbAny,request);
