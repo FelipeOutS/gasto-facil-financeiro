@@ -1,0 +1,563 @@
+{
+  "note": "Static inventory: review dynamic table names and SQL RPC bodies separately; no completeness claim.",
+  "writers": [
+    {
+      "file": "src/lib/contas-estorno.ts",
+      "line": 134,
+      "table": "gastos",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/contas-estorno.ts",
+      "line": 151,
+      "table": "contas_a_pagar",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/contas-receber.ts",
+      "line": 121,
+      "table": "contas_a_receber",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/contas-receber.ts",
+      "line": 165,
+      "table": "contas_a_receber",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/contas-receber.ts",
+      "line": 175,
+      "table": "contas_a_receber",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/contas-receber.ts",
+      "line": 216,
+      "table": "contas_a_receber",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/contas-receber.ts",
+      "line": 234,
+      "table": "contas_a_receber",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/contas-receber.ts",
+      "line": 250,
+      "table": "contas_a_receber",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/contas.functions.ts",
+      "line": 145,
+      "table": "faturas_cartao",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/contas.functions.ts",
+      "line": 187,
+      "table": "gastos",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/contas.functions.ts",
+      "line": 195,
+      "table": "gastos",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/contas.functions.ts",
+      "line": 204,
+      "table": "gastos",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/contas.functions.ts",
+      "line": 213,
+      "table": "contas_a_pagar",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/contas.functions.ts",
+      "line": 230,
+      "table": "gastos",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/pluggy/continuous.functions.ts",
+      "line": 145,
+      "table": "RPC",
+      "operation": "pluggy_import_revert_real_batch"
+    },
+    {
+      "file": "src/lib/pluggy/real-import.functions.ts",
+      "line": 75,
+      "table": "RPC",
+      "operation": "pluggy_import_revert_real_batch_items"
+    },
+    {
+      "file": "src/lib/pluggy/real-import.functions.ts",
+      "line": 76,
+      "table": "RPC",
+      "operation": "pluggy_import_revert_real_batch"
+    },
+    {
+      "file": "src/lib/pluggy/real-import.functions.ts",
+      "line": 88,
+      "table": "RPC",
+      "operation": "pluggy_import_revert_real_once"
+    },
+    {
+      "file": "src/lib/pluggy/real-import.functions.ts",
+      "line": 122,
+      "table": "RPC",
+      "operation": "pluggy_import_apply_real_batch"
+    },
+    {
+      "file": "src/lib/pluggy/real-import.functions.ts",
+      "line": 133,
+      "table": "RPC",
+      "operation": "pluggy_import_apply_real_once"
+    },
+    {
+      "file": "src/lib/pluggy/settlements.functions.ts",
+      "line": 94,
+      "table": "RPC",
+      "operation": "pluggy_settlement_undo"
+    },
+    {
+      "file": "src/lib/recorrencias.ts",
+      "line": 629,
+      "table": "recorrencias",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/recorrencias.ts",
+      "line": 661,
+      "table": "recorrencias",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/recorrencias.ts",
+      "line": 690,
+      "table": "recorrencias",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 560,
+      "table": "gastos",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 1300,
+      "table": "gastos",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 1317,
+      "table": "receitas",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 1421,
+      "table": "dinheiro_guardado",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 1466,
+      "table": "movimentacoes_meta",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 1602,
+      "table": "cartoes",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 1642,
+      "table": "cartoes",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 1663,
+      "table": "cartoes",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 1849,
+      "table": "gastos",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 2369,
+      "table": "gastos",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 2416,
+      "table": "gastos",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 2465,
+      "table": "gastos",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 2529,
+      "table": "gastos",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 2562,
+      "table": "contas_a_pagar",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 2582,
+      "table": "gastos",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 2980,
+      "table": "receitas",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3045,
+      "table": "receitas",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3111,
+      "table": "receitas",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3186,
+      "table": "receitas",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3289,
+      "table": "transferencias_internas",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3303,
+      "table": "transferencias_internas",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3350,
+      "table": "receitas",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3448,
+      "table": "receitas",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3461,
+      "table": "receitas",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3592,
+      "table": "dinheiro_guardado",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3625,
+      "table": "dinheiro_guardado",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3643,
+      "table": "dinheiro_guardado",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3808,
+      "table": "dinheiro_guardado",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3851,
+      "table": "movimentacoes_meta",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 3876,
+      "table": "movimentacoes_meta",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 4090,
+      "table": "contas_a_pagar",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 4206,
+      "table": "contas_a_pagar",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 4252,
+      "table": "contas_a_pagar",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 4275,
+      "table": "contas_a_pagar",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 4369,
+      "table": "gastos",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 4465,
+      "table": "gastos",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 4500,
+      "table": "gastos",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 5339,
+      "table": "gastos",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 5425,
+      "table": "contas_a_pagar",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 5438,
+      "table": "gastos",
+      "operation": "delete"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 5467,
+      "table": "gastos",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 5707,
+      "table": "faturas_cartao",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 5708,
+      "table": "faturas_cartao",
+      "operation": "insert"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 5720,
+      "table": "faturas_cartao",
+      "operation": "update"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 4672,
+      "table": "RPC",
+      "operation": "import_extrato_atomic"
+    },
+    {
+      "file": "src/lib/store.ts",
+      "line": 4891,
+      "table": "RPC",
+      "operation": "reverter_extrato_atomic"
+    },
+    {
+      "file": "src/lib/whatsapp-gasto-delete.ts",
+      "line": 33,
+      "table": "gastos",
+      "operation": "delete"
+    },
+    {
+      "file": "src/server/cartao-cadastro.server.ts",
+      "line": 137,
+      "table": "cartoes",
+      "operation": "insert"
+    },
+    {
+      "file": "src/server/pluggy/pluggy-real-automatic.server.ts",
+      "line": 61,
+      "table": "RPC",
+      "operation": "pluggy_import_apply_real_automatic"
+    },
+    {
+      "file": "src/server/whatsapp-boleto-intents.server.ts",
+      "line": 798,
+      "table": "contas_a_pagar",
+      "operation": "insert"
+    },
+    {
+      "file": "src/server/whatsapp-boleto-intents.server.ts",
+      "line": 1429,
+      "table": "contas_a_pagar",
+      "operation": "insert"
+    },
+    {
+      "file": "src/server/whatsapp-comprovantes.server.ts",
+      "line": 886,
+      "table": "gastos",
+      "operation": "insert"
+    },
+    {
+      "file": "src/server/whatsapp-contas-criar.server.ts",
+      "line": 1225,
+      "table": "contas_a_pagar",
+      "operation": "insert"
+    },
+    {
+      "file": "src/server/whatsapp-contas-editar.server.ts",
+      "line": 745,
+      "table": "contas_a_pagar",
+      "operation": "update"
+    },
+    {
+      "file": "src/server/whatsapp-contas-editar.server.ts",
+      "line": 784,
+      "table": "contas_a_pagar",
+      "operation": "update"
+    },
+    {
+      "file": "src/server/whatsapp-contas-pagar.server.ts",
+      "line": 825,
+      "table": "RPC",
+      "operation": "whatsapp_baixa_conta_atomic"
+    },
+    {
+      "file": "src/server/whatsapp-editar-antigo.server.ts",
+      "line": 470,
+      "table": "RPC",
+      "operation": "whatsapp_entry_mutate_v2"
+    },
+    {
+      "file": "src/server/whatsapp-editar-antigo.server.ts",
+      "line": 491,
+      "table": "RPC",
+      "operation": "whatsapp_entry_mutate_v2"
+    },
+    {
+      "file": "src/server/whatsapp-fatura-escolha.server.ts",
+      "line": 159,
+      "table": "gastos",
+      "operation": "update"
+    },
+    {
+      "file": "src/server/whatsapp-pagar-pessoa-flow.server.ts",
+      "line": 582,
+      "table": "gastos",
+      "operation": "insert"
+    },
+    {
+      "file": "src/server/whatsapp-parcelamento.server.ts",
+      "line": 1219,
+      "table": "RPC",
+      "operation": "create_installment_purchase"
+    },
+    {
+      "file": "src/server/whatsapp-pix-intents.server.ts",
+      "line": 472,
+      "table": "gastos",
+      "operation": "insert"
+    },
+    {
+      "file": "src/server/whatsapp-planning.server.ts",
+      "line": 307,
+      "table": "RPC",
+      "operation": "whatsapp_apply_planning_action"
+    },
+    {
+      "file": "src/server/whatsapp-postlaunch.server.ts",
+      "line": 292,
+      "table": "RPC",
+      "operation": "whatsapp_undo_recent_action_v2"
+    },
+    {
+      "file": "src/server/whatsapp-postlaunch.server.ts",
+      "line": 350,
+      "table": "RPC",
+      "operation": "whatsapp_edit_recent_action"
+    },
+    {
+      "file": "src/server/whatsapp-receitas.server.ts",
+      "line": 511,
+      "table": "receitas",
+      "operation": "insert"
+    },
+    {
+      "file": "src/server/whatsapp-receitas.server.ts",
+      "line": 419,
+      "table": "RPC",
+      "operation": "whatsapp_create_recurring_income_once"
+    },
+    {
+      "file": "src/server/whatsapp-reorganizacao-store.server.ts",
+      "line": 23,
+      "table": "RPC",
+      "operation": "wa_reorganization_authorized"
+    },
+    {
+      "file": "src/server/whatsapp.server.ts",
+      "line": 2140,
+      "table": "gastos",
+      "operation": "insert"
+    }
+  ]
+}
