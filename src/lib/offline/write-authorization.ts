@@ -18,13 +18,14 @@ export async function authorizeOfflineWrite(
 
 export async function validateOwnerReferences(
   ownerId: string,
-  refs: { cartaoId?: string | null; clienteId?: string | null; fornecedorId?: string | null },
+  refs: { cartaoId?: string | null; clienteId?: string | null; fornecedorId?: string | null; financialBankId?: string },
   signal: AbortSignal,
 ): Promise<string | undefined> {
   for (const [table, id] of [
     ["cartoes", refs.cartaoId],
     ["clientes", refs.clienteId],
     ["fornecedores", refs.fornecedorId],
+    ["bancos", refs.financialBankId],
   ] as const) {
     if (!id) continue;
     const { data, error } = await supabase

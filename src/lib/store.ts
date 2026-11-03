@@ -1,5 +1,7 @@
 import { calcMetaProgresso } from "./metas-progresso";
 import { refreshFinancialGeneration } from "./offline/financial-generation-reader";
+import { financialCashColumns, type FinancialCashInput } from "./financial-cash-input";
+import { FINANCIAL_GROUP_WRITER_AUTHORIZED, writeFinancialGroup, type FinancialGroupRequest } from "./financial-group-writer";
 import {
   addMonthsYm,
   cicloParaCompetencia,
@@ -355,6 +357,8 @@ type GastoRow = {
   import_batch_id?: string | null;
   id_operacao_banco?: string | null;
   fornecedor_id?: string | null;
+  financial_bank_id?: string | null;
+  cash_effective_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -387,6 +391,8 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     importBatchId: r.import_batch_id ?? undefined,
     idOperacaoBanco: r.id_operacao_banco ?? undefined,
     fornecedorId: r.fornecedor_id ?? undefined,
+    financialBankId: r.financial_bank_id ?? undefined,
+    cashEffectiveAt: r.cash_effective_at ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -581,6 +587,8 @@ type ReceitaRow = {
   import_batch_id?: string | null;
   id_operacao_banco?: string | null;
   cliente_id?: string | null;
+  financial_bank_id?: string | null;
+  cash_effective_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -600,6 +608,8 @@ function rowToReceita(r: ReceitaRow): Receita {
     importBatchId: r.import_batch_id ?? undefined,
     idOperacaoBanco: r.id_operacao_banco ?? undefined,
     clienteId: r.cliente_id ?? null,
+    financialBankId: r.financial_bank_id ?? undefined,
+    cashEffectiveAt: r.cash_effective_at ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -1973,7 +1983,7 @@ export async function refreshFinancialCore(options: FinancialRefreshOptions = {}
 }
 
 // ---------- Gastos ----------
-export type NovoGastoInput = {
+export type NovoGastoInput = FinancialCashInput & {
   descricao?: string;
   valor: number;
   data: string;
@@ -2286,6 +2296,12 @@ function buildGastosFromInput(
     if (fornecedorVal) o.client.fornecedorId = fornecedorVal;
   }
   aplicarCompetenciaFatura(input, out, inputData);
+  const cash = financialCashColumns(input, {credit: input.formaPagamento === "credito",generated: out.length > 1});
+  for (const built of out) {
+    Object.assign(built.row,cash);
+    built.client.financialBankId = input.financialBankId;
+    built.client.cashEffectiveAt = input.cashEffectiveAt;
+  }
   return out;
 }
 
@@ -2476,6 +2492,41 @@ export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
     }
   }
   return created;
+}
+
+/** Awaited invoice importer: one INSERT is atomic, response loss rereads exact IDs.
+ * Candidate mode additionally requires durable generation + operation context.
+ */
+export async function addGastosBulkAwait(inputs: NovoGastoInput[], operationId: string, pending?: FinancialGroupRequest): Promise<{gastos:Gasto[];request?:FinancialGroupRequest}> {
+  const ownerId = activeUserId;
+  const session = userSessionGeneration;
+  if (!ownerId || !ensureCanWrite("addGastosBulkAwait")) throw new Error("Importação indisponível.");
+  const signal = new AbortController().signal;
+  const authError = await authorizeOfflineWrite(ownerId,ownerId,signal);
+  if (authError) throw new Error(authError);
+  for (const input of inputs) {
+    const refError = await validateOwnerReferences(ownerId,input,signal);
+    if (refError) throw new Error(refError);
+  }
+  const built = inputs.flatMap(input => buildGastosFromInput(input,ownerId));
+  if (!built.length) return {gastos:[]};
+  if (FINANCIAL_GROUP_WRITER_AUTHORIZED) {
+    const version = pending?.generation ?? await refreshFinancialGeneration(ownerId);
+    if (version === null) throw new Error("Versão financeira indisponível; importação preservada para revisão.");
+    const kind = inputs[0]?.origem?.includes("csv") ? "csv" : inputs[0]?.origem?.includes("pdf") ? "pdf" : "image";
+    const request = pending ?? {ownerId,operationId,generation:version,kind,rows:built.map(b=>({table:"gastos" as const,row:b.row as Record<string,unknown>}))};
+    if (request.ownerId !== ownerId || request.operationId !== operationId) throw new Error("A sessão da importação mudou.");
+    const outcome = await writeFinancialGroup(sbAny,request);
+    if (activeUserId === ownerId && session === userSessionGeneration) await refreshGastos();
+    return {gastos:outcome.rows.map(item=>rowToGasto(item.row,new Map([...categoriaKeyToUuid].map(([key,id])=>[id,key])))),request};
+  }
+  // Legacy schema still enforces RLS/quota. No optimistic success; retries use the same row IDs supplied by the dialog.
+  const rows = built.map((b,index)=>({...b.row,id:inputs[index]?.idOperacaoBanco && /^[0-9a-f-]{36}$/i.test(inputs[index].idOperacaoBanco ?? "") ? inputs[index].idOperacaoBanco : b.row.id}));
+  const ids = rows.map(row=>row.id).filter((id):id is string=>typeof id === "string");
+  const {error} = await supabase.from("gastos").insert(rows);
+  if (error) throw new Error(error.message);
+  if (activeUserId === ownerId && session === userSessionGeneration) await refreshGastos();
+  return {gastos:memGastos.filter(row=>ids.includes(row.id))};
 }
 
 export function updateGasto(id: string, patch: Partial<Gasto>) {
@@ -2851,7 +2902,7 @@ export function suggestCategory(text: string): string {
 }
 
 // ---------- Receitas ----------
-export type NovaReceitaInput = {
+export type NovaReceitaInput = FinancialCashInput & {
   descricao: string;
   valor: number;
   data: string;
@@ -2897,6 +2948,7 @@ export async function addReceita(input: NovaReceitaInput, ownerId = activeUserId
     throw new Error(msg);
   }
   input = { ...input, valor: amount.value };
+  const cash = financialCashColumns(input,{generated:!!input.recorrente});
   const now = new Date().toISOString();
   const baseDate = new Date(input.data + "T00:00:00");
   const created: Receita[] = [];
@@ -2971,6 +3023,8 @@ export async function addReceita(input: NovaReceitaInput, ownerId = activeUserId
       ...(clienteId ? { cliente_id: clienteId } : {}),
     } as ReceitaInsert);
   }
+  for (const row of rows) Object.assign(row,cash);
+  for (const row of created) { row.financialBankId=input.financialBankId; row.cashEffectiveAt=input.cashEffectiveAt; }
   // Aplica otimisticamente para UI responsiva, mas aguarda o insert e
   // reverte se houver falha — evita toast de sucesso silencioso quando
   // RLS, quota ou trigger rejeita a operação.
@@ -3018,6 +3072,8 @@ export async function addReceitaAwait(
     (await validateOwnerReferences(userId, input, signal));
   if (authError) return { ok: false, error: authError };
   if (input.recorrente) return { ok: false, error: "A fila offline aceita apenas receita única." };
+  let cash: ReturnType<typeof financialCashColumns>;
+  try { cash=financialCashColumns(input); } catch(error) { return {ok:false,error:error instanceof Error ? error.message : "Vínculo bancário inválido."}; }
   const amountAwait = validateFinancialAmount(input.valor);
   if (!amountAwait.ok) {
     return { ok: false, error: financialAmountMessage(amountAwait.code) };
@@ -3039,6 +3095,7 @@ export async function addReceitaAwait(
     ...(clienteId ? { cliente_id: clienteId } : {}),
   } as ReceitaInsert & { offline_client_id?: string | null };
   if (offlineClientId) row.offline_client_id = offlineClientId;
+  Object.assign(row,cash);
   if (offlineClientId && financialGeneration !== undefined && financialGeneration !== null) row.offline_generation = financialGeneration;
 
   const insert = async () => {
@@ -3094,6 +3151,8 @@ export async function addReceitaAwait(
         mes: baseDate.getMonth() + 1,
         ano: baseDate.getFullYear(),
         clienteId,
+        financialBankId: input.financialBankId,
+        cashEffectiveAt: input.cashEffectiveAt,
         criadoEm: now,
         atualizadoEm: now,
       },

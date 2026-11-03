@@ -1,5 +1,6 @@
 type Row = Record<string, unknown>;
 export const INCOME_FIELDS = [
+  "financial_bank_id", "cash_effective_at", "offline_generation",
   "user_id",
   "offline_client_id",
   "descricao",
@@ -12,6 +13,7 @@ export const INCOME_FIELDS = [
   "cliente_id",
 ];
 const FIELDS = [
+  "financial_bank_id", "cash_effective_at", "offline_generation",
   "estabelecimento",
   "cliente_id",
   "fornecedor_id",
