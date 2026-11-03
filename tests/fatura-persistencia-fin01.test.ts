@@ -106,7 +106,7 @@ test("UPDATE confirmado preserva observação e recarrega como paga", async () =
   expect(store.getFatura("card",10,2026)?.status).toBe("paga");
   expect(store.getFatura("card",10,2026)?.observacao).toBe("original");
 });
-for (const op of ["insert", "update", "delete", "read", "connection"]) {
+for (const op of ["insert", "update", "read", "connection"]) {
   test("falha " + op + " rejeita, preserva memória/banco/alertas e libera retry", async () => {
     if (op !== "insert") seed(op === "delete" ? "paga" : "aberta");
     const previous = structuredClone(store.getFaturas());
@@ -122,12 +122,14 @@ for (const op of ["insert", "update", "delete", "read", "connection"]) {
     await (op === "delete" ? reopen() : paid());
   });
 }
-test("DELETE confirmado e reabertura repetida não repetem escrita", async () => {
+test("reabertura preserva pagamento real e repetição não escreve de novo", async () => {
   seed("paga"); await reopen(); await reopen();
-  expect(writes).toEqual(["delete"]);
-  expect(store.getFaturas()).toEqual([]);
+  expect(writes).toEqual(["update"]);
+  expect(rows[0].valor_pago).toBe(123.45);
+  expect(rows[0].data_pagamento).toBe("2026-11-02");
+  expect(store.getFaturas()[0].status).toBe("aberta");
   expect(alerts).toEqual([]);
-  reload(); expect(store.getFaturas()).toEqual([]);
+  reload(); expect(store.getFaturas()[0].valorPago).toBe(123.45);
 });
 test("pagamento repetido preserva data/valor sem duplicar INSERT ou UPDATE", async () => {
   await paid();
@@ -148,7 +150,7 @@ test("duplo clique e ação oposta concorrente bloqueados antes de escrita", asy
   release(); await first;
   expect(writes).toEqual(["insert"]);
 });
-for (const op of ["insert", "update", "delete"]) {
+for (const op of ["insert", "update"]) {
   test(op + " sem confirmação de linha nunca resolve como sucesso", async () => {
     if (op !== "insert") seed(op === "delete" ? "paga" : "aberta");
     const previous = structuredClone(store.getFaturas());
@@ -158,7 +160,7 @@ for (const op of ["insert", "update", "delete"]) {
     expect(alerts).toEqual([]);
   });
 }
-for (const op of ["insert", "update", "delete"]) {
+for (const op of ["insert", "update"]) {
   test("resposta perdida após " + op + ": retry consulta banco sem duplicar", async () => {
     if (op !== "insert") seed(op === "delete" ? "paga" : "aberta");
     lostResponse = true;

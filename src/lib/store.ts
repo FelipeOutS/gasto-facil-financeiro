@@ -5700,19 +5700,20 @@ async function persistirStatusFatura(
         throw new Error("Não foi possível confirmar o pagamento da fatura.");
       }
       persisted = data as FaturaRow;
-    } else if (!paga && existente) {
+    } else if (!paga && existente && existente.status !== "aberta") {
       const { data, error } = await sbAny
         .from("faturas_cartao")
-        .delete()
+        .update({status:"aberta"})
         .eq("user_id", userId)
         .eq("id", existente.id)
-        .select("id")
+        .select("*")
         .single();
       if (error) throw error;
-      if (!data || data.id !== existente.id) {
+      if (!data || data.id !== existente.id || data.status !== "aberta") {
         throw new Error("Não foi possível confirmar a reabertura da fatura.");
       }
-      persisted = null;
+      // Reopening is workflow-only: paid amount/date/history are never erased or refunded.
+      persisted = data as FaturaRow;
     }
     assertSession();
     // Nenhuma alteração otimista: erro mantém o estado anterior e os alertas.
