@@ -256,7 +256,7 @@ BEGIN
  IF op.balance_id IS NOT NULL AND EXISTS(SELECT 1 FROM jsonb_array_elements(op.after_snapshot) entry_snapshot WHERE
  public.wa_reorganization_has_dependency((entry_snapshot->'row'->>'id')::uuid,entry_snapshot->>'table') OR
  (entry_snapshot->>'table'='gastos' AND NOT EXISTS(SELECT 1 FROM public.gastos g WHERE g.user_id=p_user AND g.id=(entry_snapshot->'row'->>'id')::uuid AND to_jsonb(g)=entry_snapshot->'row')) OR
- (entry_snapshot->>'table'='receitas' AND NOT EXISTS(SELECT 1 FROM public.receitas r WHERE r.user_id=p_user AND r.id=(entry_snapshot->'row'->>'id')::uuid AND to_jsonb(r)=entry_snapshot->'row')))
+ (entry_snapshot->>'table'='receitas' AND NOT EXISTS(SELECT 1 FROM public.receitas income_row WHERE income_row.user_id=p_user AND income_row.id=(entry_snapshot->'row'->>'id')::uuid AND to_jsonb(income_row)=entry_snapshot->'row')))
  THEN RETURN jsonb_build_object('status','changed'); END IF;
  PERFORM set_config('gi.reorganization_mutation','on',true);
  IF op.balance_id IS NOT NULL THEN UPDATE public.account_opening_balances SET revoked_at=clock_timestamp() WHERE id=op.balance_id AND user_id=p_user; END IF;
