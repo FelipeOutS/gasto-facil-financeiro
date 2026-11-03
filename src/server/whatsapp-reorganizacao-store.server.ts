@@ -9,6 +9,12 @@ export function createReorganizationStore(db: ReorganizationRpcClient): Reorgani
     const result = await db.rpc(name, args);
     if (result.error) throw new Error(result.error.message);
     if (!result.data || typeof result.data !== "object" || !("status" in result.data) || typeof result.data.status !== "string") throw new Error("invalid_reorganization_result");
+    if (["preview", "applied", "restored", "partial"].includes(result.data.status)) {
+      for (const field of ["expenses", "incomes"]) {
+        const value = Reflect.get(result.data, field);
+        if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) throw new Error("invalid_reorganization_counts");
+      }
+    }
     return result.data as ReorganizationResult;
   };
   const identity = (input: ReorganizationInput) => ({ p_user: input.userId, p_phone: input.phone });
@@ -21,6 +27,7 @@ export function createReorganizationStore(db: ReorganizationRpcClient): Reorgani
     confirm: (input, code) => call("wa_reorganization_confirm", { ...identity(input), p_code: code }),
     cancel: (input) => call("wa_reorganization_control", { ...identity(input), p_action: "cancel" }),
     status: (input) => call("wa_reorganization_control", { ...identity(input), p_action: "status" }),
-    restore: (input) => call("wa_reorganization_control", { ...identity(input), p_action: "restore" }),
+    // No implicit latest-operation reversal; own operation selection + separate confirmation pending.
+    restore: async () => ({ status: "blocked" }),
   };
 }

@@ -54,6 +54,7 @@ export function interpretReorganization(text: string, localDate: string): Reorga
   }
   if (/\b(mantenha|manter|preserve)\b/.test(deletion) && !/\b(mes atual|deste mes|desse mes)\b/.test(deletion)) return { kind: "clarify", question: "Quais informações devem ser preservadas? Confirme o alcance antes de continuar." };
   if (/\b(mes atual|deste mes|desse mes)\b/.test(deletion)) {
+    if (!/\b(mantenha|manter|preserve)\b/.test(deletion)) return { kind: "clarify", question: "Deseja excluir o mês atual ou preservá-lo? Confirme as datas exatas." };
     if (explicitPeriod) return { kind: "clarify", question: "Confirme como o período solicitado se combina com a preservação do mês atual." };
     end = `${localDate.slice(0, 7)}-01`;
   }
