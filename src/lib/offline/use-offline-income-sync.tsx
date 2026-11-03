@@ -25,6 +25,7 @@ export function syncAllIncomesForUser(
     let synced = 0,
       failed = 0;
     for (const candidate of await listIncomes(actorId, actorId, true)) {
+      if (candidate.technical_error?.includes("financial_generation_stale_review_required")) continue;
       if (typeof navigator !== "undefined" && navigator.onLine === false) break;
       try {
         await withSyncAttempt("gf:income:" + candidate.local_id, async (signal) => {

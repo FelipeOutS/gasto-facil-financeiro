@@ -23,6 +23,7 @@ export function syncAllForUser(actorId: string): Promise<{ synced: number; faile
     let synced = 0,
       failed = 0;
     for (const candidate of await listExpenses(actorId, actorId, true)) {
+      if (candidate.technical_error?.includes("financial_generation_stale_review_required")) continue;
       if (typeof navigator !== "undefined" && navigator.onLine === false) break;
       try {
         await withSyncAttempt("gf:expense:" + candidate.local_id, async (signal) => {

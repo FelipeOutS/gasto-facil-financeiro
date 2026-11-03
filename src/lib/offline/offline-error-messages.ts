@@ -47,6 +47,9 @@ export function normalizeOfflineError(raw: unknown): OfflineFriendlyError {
             })();
 
   const t = technical.toLowerCase();
+  if (t.includes("financial_generation_stale_review_required") || t.includes("offline_cannot_restore_deleted_entry")) {
+    return { friendly: "Esta pendência é anterior à reorganização da conta. Ela não foi enviada nem restaurada. Confira os lançamentos antes de criar uma nova operação.", technical };
+  }
 
   // Conexão / rede / offline
   if (
