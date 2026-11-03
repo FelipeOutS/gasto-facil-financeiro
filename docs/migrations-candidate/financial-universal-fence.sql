@@ -1,6 +1,12 @@
 -- CANDIDATE ONLY. No activation. Quarantine legacy writers after the first reset.
 -- Deliberately denies non-offline unversioned writers, including service-role writers.
 -- This is NOT automatic reversioning of old provider jobs into new operations.
+CREATE FUNCTION public.financial_current_generation(p_user uuid)
+RETURNS bigint LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+ SELECT coalesce((SELECT generation FROM public.financial_write_generations WHERE user_id=p_user),0)
+$$;
+REVOKE ALL ON FUNCTION public.financial_current_generation(uuid) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.financial_current_generation(uuid) TO authenticated,service_role;
 CREATE FUNCTION public.financial_universal_fence()
 RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
 DECLARE owner_id uuid; version bigint; privileged boolean;
@@ -8,7 +14,7 @@ BEGIN
  owner_id:=CASE WHEN TG_OP='DELETE' THEN OLD.user_id ELSE NEW.user_id END;
  IF TG_OP='UPDATE' AND OLD.user_id IS DISTINCT FROM NEW.user_id THEN RAISE EXCEPTION 'financial_owner_reassignment_forbidden'; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('gi_gastos_soft_delete:'||owner_id::text,0));
- SELECT generation INTO version FROM public.financial_write_generations WHERE user_id=owner_id;
+ version:=public.financial_current_generation(owner_id);
  privileged:=current_user=(SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid=TG_RELID)
  AND current_setting('gi.reorganization_mutation',true)='on';
  IF privileged THEN IF TG_OP='DELETE' THEN RAISE EXCEPTION 'reorganization_physical_delete_forbidden'; END IF; RETURN NEW; END IF;

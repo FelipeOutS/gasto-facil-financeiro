@@ -109,7 +109,8 @@ BEGIN
  OR coalesce(p_income->>'tipo','') NOT IN('salario','outros')) THEN RAISE EXCEPTION 'invalid_income'; END IF;
  IF p_income IS NOT NULL THEN PERFORM (p_income->>'data')::date; END IF;
  IF p_balance IS NOT NULL THEN
- IF p_income IS NOT NULL OR p_balance->>'accountName' IS NULL OR (p_balance->>'amountCents')::bigint<0 OR p_balance->>'effectiveDate' IS NULL THEN RAISE EXCEPTION 'invalid_baseline'; END IF;
+ IF p_income IS NOT NULL OR jsonb_typeof(p_balance)<>'object' OR p_balance->>'accountName' IS NULL OR p_balance->>'amountCents' IS NULL OR p_balance->>'amountCents' !~ '^\d+$' OR (p_balance->>'amountCents')::numeric>=100000000000000 OR p_balance->>'effectiveDate' IS NULL THEN RAISE EXCEPTION 'invalid_baseline'; END IF;
+ PERFORM (p_balance->>'effectiveDate')::date;
  SELECT count(*),jsonb_agg(to_jsonb(b))->0 INTO bank_count,bank FROM public.bancos b WHERE b.user_id=p_user AND lower(trim(b.nome))=lower(trim(p_balance->>'accountName'));
  IF bank_count<>1 THEN RETURN jsonb_build_object('status','blocked'); END IF;
  END IF;
@@ -251,6 +252,12 @@ BEGIN
  IF NOT coalesce(public.has_feature_access(p_user,'whatsapp'),false) OR NOT EXISTS(SELECT 1 FROM public.whatsapp_links l WHERE l.user_id=p_user AND l.ativo AND l.opt_in_em IS NOT NULL AND l.revogado_em IS NULL AND regexp_replace(l.telefone,'\D','','g')=regexp_replace(p_phone,'\D','','g')) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  IF public.wa_reorganization_card_snapshot(p_user,op.snapshot) IS DISTINCT FROM op.card_snapshot THEN RETURN jsonb_build_object('status','changed'); END IF;
  IF op.balance_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.account_opening_balances b WHERE b.user_id=p_user AND b.id=op.balance_id AND to_jsonb(b)=op.balance_after) THEN RETURN jsonb_build_object('status','changed'); END IF;
+ -- Compound baseline restore must never revoke the baseline while leaving conflicted deletion rows.
+ IF op.balance_id IS NOT NULL AND EXISTS(SELECT 1 FROM jsonb_array_elements(op.after_snapshot) x WHERE
+ public.wa_reorganization_has_dependency((x->'row'->>'id')::uuid,x->>'table') OR
+ (x->>'table'='gastos' AND NOT EXISTS(SELECT 1 FROM public.gastos g WHERE g.user_id=p_user AND g.id=(x->'row'->>'id')::uuid AND to_jsonb(g)=x->'row')) OR
+ (x->>'table'='receitas' AND NOT EXISTS(SELECT 1 FROM public.receitas r WHERE r.user_id=p_user AND r.id=(x->'row'->>'id')::uuid AND to_jsonb(r)=x->'row')))
+ THEN RETURN jsonb_build_object('status','changed'); END IF;
  PERFORM set_config('gi.reorganization_mutation','on',true);
  IF op.balance_id IS NOT NULL THEN UPDATE public.account_opening_balances SET revoked_at=clock_timestamp() WHERE id=op.balance_id AND user_id=p_user; END IF;
  -- Full after snapshots preserve edits. Only own exact deletion stamp may be reversed.

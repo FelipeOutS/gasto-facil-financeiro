@@ -6,7 +6,7 @@ export function parseOpeningBalance(text: string, date: string): OpeningBalanceR
   const monetary = text.match(/r\$\s*\d[\d.,]*|\d[\d.,]*\s*reais/i);
   const amount = monetary ? parseValor(monetary[0]) : null;
   if (amount === null || amount < 0 || !Number.isSafeInteger(Math.round(amount * 100))) return null;
-  const account = /(?:conta\s+(?:(?:do|da|no|na)\s+)?|(?:no|na)\s+)([\p{L}\d][\p{L}\d .-]*?)(?=\s+(?:como|coloque|saldo|e\s|é\b|e de\b)|[,.!?]|$)/iu.exec(text);
+  const account = /(?:conta\s+(?:(?:do|da|no|na)\s+)?|(?:no|na)\s+)([\p{L}\d][\p{L}\d .-]*?)(?=\s+(?:como|coloque|saldo|e\s|é(?:\s|$))|[,.!?]|$)/iu.exec(text);
   return { accountName: account?.[1]?.trim() ?? null, amountCents: Math.round(amount * 100), effectiveDate: date };
 }
 export type BalanceAccount = { id: string; userId: string; name: string };
