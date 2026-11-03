@@ -13,11 +13,14 @@ P=(psql -X -q -v ON_ERROR_STOP=1 -h "$D" -p 55459 -U gi_test -d postgres)
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-offline-generation.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/05-account-card-stub.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/account-opening-balances.sql"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-fact-ledger.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/reorganization-card-accounting.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/whatsapp-reorganizacao.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/10-tests.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/20-balance.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/30-compound-card.sql"
+
+"${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/50-current-adjustment.sql"
 
 U=aaaaaaaa-0000-0000-0000-000000000001
 "${P[@]}" -c "SELECT public.wa_reorganization_prepare('$U','5511999999999','race','{\"tables\":[\"receitas\"],\"start\":null,\"end\":\"2026-11-01\"}',NULL,'888888');"

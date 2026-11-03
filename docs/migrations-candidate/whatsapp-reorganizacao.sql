@@ -20,7 +20,7 @@ ALTER TABLE public.whatsapp_reorganization_policy ENABLE ROW LEVEL SECURITY;
 CREATE TABLE public.whatsapp_reorganization_operations (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL,
  phone_hash text NOT NULL, request_id text NOT NULL,
- scope jsonb NOT NULL, income jsonb, opening_balance jsonb, bank_snapshot jsonb, balance_id uuid, balance_after jsonb, card_snapshot jsonb, code_hash text NOT NULL UNIQUE,
+ scope jsonb NOT NULL, income jsonb, opening_balance jsonb, bank_snapshot jsonb, balance_id uuid, balance_after jsonb, card_snapshot jsonb, cash_fact_id uuid, cash_fact_after jsonb, code_hash text NOT NULL UNIQUE,
  failed_attempts int NOT NULL DEFAULT 0 CHECK(failed_attempts BETWEEN 0 AND 5),
  expires_at timestamptz NOT NULL, snapshot jsonb NOT NULL,
  status text NOT NULL DEFAULT 'preview' CHECK(status IN('preview','applied','cancelled','changed','expired','restored','partial')),
@@ -168,11 +168,12 @@ BEGIN
  IF NOT public.wa_reorganization_authorized(p_user,p_phone) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  IF op.opening_balance IS NOT NULL THEN
  IF NOT EXISTS(SELECT 1 FROM public.bancos b WHERE b.user_id=p_user AND to_jsonb(b)=op.bank_snapshot) THEN RETURN jsonb_build_object('status','changed'); END IF;
- IF EXISTS(SELECT 1 FROM public.account_opening_balances b WHERE b.user_id=p_user AND b.banco_id=(op.bank_snapshot->>'id')::uuid) THEN RETURN jsonb_build_object('status','changed'); END IF;
+ IF coalesce(op.opening_balance->>'kind','opening')<>'current_adjustment' AND EXISTS(SELECT 1 FROM public.account_opening_balances b WHERE b.user_id=p_user AND b.banco_id=(op.bank_snapshot->>'id')::uuid) THEN RETURN jsonb_build_object('status','changed'); END IF;
  END IF;
  stamp:=clock_timestamp();
  IF to_regclass('public.financial_write_generations') IS NULL THEN RAISE EXCEPTION 'financial_generation_required'; END IF;
  PERFORM set_config('gi.reorganization_mutation','on',true);
+ PERFORM public.financial_capture_card_history(p_user,snap);
  PERFORM set_config('gi.gastos_soft_delete','on',true);
  UPDATE public.gastos SET deleted_at=stamp,deleted_by=p_user,deletion_batch_id=op.id,deletion_source='whatsapp_periodo',updated_at=stamp
  WHERE user_id=p_user AND id IN(SELECT (x->'row'->>'id')::uuid FROM jsonb_array_elements(snap) x WHERE x->>'table'='gastos');
@@ -192,15 +193,19 @@ BEGIN
  SELECT to_jsonb(r) INTO created_income FROM public.receitas r WHERE r.id=op.income_id AND r.user_id=p_user;
  END IF;
  IF op.opening_balance IS NOT NULL THEN
+ IF op.opening_balance->>'kind'='current_adjustment' THEN
+ op.cash_fact_id:=public.financial_reconcile_current(p_user,(op.bank_snapshot->>'id')::uuid,(op.opening_balance->>'amountCents')::bigint,op.id::text);
+ SELECT to_jsonb(f) INTO op.cash_fact_after FROM public.financial_cash_facts f WHERE f.id=op.cash_fact_id;
+ ELSE
  PERFORM public.account_opening_balance_candidate(p_user,(op.bank_snapshot->>'id')::uuid,(op.opening_balance->>'amountCents')::bigint,(op.opening_balance->>'effectiveDate')::date,op.id::text);
  SELECT id,to_jsonb(b) INTO op.balance_id,op.balance_after FROM public.account_opening_balances b WHERE b.user_id=p_user AND b.request_id=op.id::text;
  IF op.balance_id IS NULL THEN RAISE EXCEPTION 'baseline_not_committed'; END IF;
- END IF;
+ END IF; END IF;
  INSERT INTO public.financial_write_generations(user_id,generation) VALUES(p_user,1) ON CONFLICT(user_id) DO UPDATE SET generation=financial_write_generations.generation+1;
  PERFORM set_config('gi.reorganization_mutation','off',true);
- op.result:=jsonb_build_object('status','applied','operationId',op.id,'expenses',ng,'incomes',nr,'incomeId',op.income_id,'balanceId',op.balance_id);
+ op.result:=jsonb_build_object('status','applied','operationId',op.id,'expenses',ng,'incomes',nr,'incomeId',op.income_id,'balanceId',coalesce(op.balance_id,op.cash_fact_id));
  UPDATE public.whatsapp_reorganization_operations SET status='applied',deleted_stamp=stamp,after_snapshot=after_snap,
- balance_id=op.balance_id,balance_after=op.balance_after,income_id=op.income_id,income_after=created_income,result=op.result,completed_at=clock_timestamp() WHERE id=op.id;
+ balance_id=op.balance_id,balance_after=op.balance_after,cash_fact_id=op.cash_fact_id,cash_fact_after=op.cash_fact_after,income_id=op.income_id,income_after=created_income,result=op.result,completed_at=clock_timestamp() WHERE id=op.id;
  INSERT INTO public.audit_logs(actor_user_id,target_user_id,action,entity_type,entity_id,metadata)
  VALUES(p_user,p_user,'whatsapp_reorganization','financial_operation',op.id::text,op.result-'incomeId');
  RETURN op.result;
@@ -253,12 +258,16 @@ BEGIN
  IF public.wa_reorganization_card_snapshot(p_user,op.snapshot) IS DISTINCT FROM op.card_snapshot THEN RETURN jsonb_build_object('status','changed'); END IF;
  IF op.balance_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.account_opening_balances b WHERE b.user_id=p_user AND b.id=op.balance_id AND to_jsonb(b)=op.balance_after) THEN RETURN jsonb_build_object('status','changed'); END IF;
  -- Compound baseline restore must never revoke the baseline while leaving conflicted deletion rows.
- IF op.balance_id IS NOT NULL AND EXISTS(SELECT 1 FROM jsonb_array_elements(op.after_snapshot) entry_snapshot WHERE
+ IF (op.balance_id IS NOT NULL OR op.cash_fact_id IS NOT NULL) AND EXISTS(SELECT 1 FROM jsonb_array_elements(op.after_snapshot) entry_snapshot WHERE
  public.wa_reorganization_has_dependency((entry_snapshot->'row'->>'id')::uuid,entry_snapshot->>'table') OR
  (entry_snapshot->>'table'='gastos' AND NOT EXISTS(SELECT 1 FROM public.gastos g WHERE g.user_id=p_user AND g.id=(entry_snapshot->'row'->>'id')::uuid AND to_jsonb(g)=entry_snapshot->'row')) OR
  (entry_snapshot->>'table'='receitas' AND NOT EXISTS(SELECT 1 FROM public.receitas income_row WHERE income_row.user_id=p_user AND income_row.id=(entry_snapshot->'row'->>'id')::uuid AND to_jsonb(income_row)=entry_snapshot->'row')))
  THEN RETURN jsonb_build_object('status','changed'); END IF;
  PERFORM set_config('gi.reorganization_mutation','on',true);
+ IF op.cash_fact_id IS NOT NULL THEN
+ IF NOT EXISTS(SELECT 1 FROM public.financial_cash_facts f WHERE f.id=op.cash_fact_id AND to_jsonb(f)=op.cash_fact_after) THEN RAISE EXCEPTION 'cash_snapshot_changed'; END IF;
+ INSERT INTO public.financial_cash_facts(user_id,banco_id,kind,amount_cents,request_id,source_id) SELECT user_id,banco_id,'accounting_reversal',-amount_cents,'restore:'||op.id,id FROM public.financial_cash_facts WHERE id=op.cash_fact_id ON CONFLICT(user_id,request_id) DO NOTHING;
+ END IF;
  IF op.balance_id IS NOT NULL THEN UPDATE public.account_opening_balances SET revoked_at=clock_timestamp() WHERE id=op.balance_id AND user_id=p_user; END IF;
  -- Full after snapshots preserve edits. Only own exact deletion stamp may be reversed.
  FOR x IN SELECT value FROM jsonb_array_elements(op.after_snapshot) LOOP
