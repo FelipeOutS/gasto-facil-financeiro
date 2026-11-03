@@ -16,7 +16,7 @@ P=(psql -X -q -v ON_ERROR_STOP=1 -h "$D" -p 55459 -U gi_test -d postgres)
 
 U=aaaaaaaa-0000-0000-0000-000000000001
 "${P[@]}" -c "SELECT public.wa_reorganization_prepare('$U','5511999999999','race','{\"tables\":[\"receitas\"],\"start\":null,\"end\":\"2026-11-01\"}',NULL,'888888');"
-CALL="SET ROLE service_role; SELECT public.wa_reorganization_confirm('$U','5511999999999','888888');"
+CALL="SET ROLE service_role; SELECT public.wa_reorganization_confirm('$U','5511999999999','888888',(SELECT id FROM public.whatsapp_reorganization_operations WHERE request_id='race'));"
 ( "${P[@]}" -tAc "BEGIN; $CALL SELECT pg_sleep(1); COMMIT;" > "$D/r1" 2>&1 ) &
 PID=$!
 "${P[@]}" -tAc "$CALL" > "$D/r2" 2>&1

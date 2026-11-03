@@ -116,11 +116,12 @@ CREATE FUNCTION public.wa_reorganization_confirm(p_user uuid,p_phone text,p_code
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE op public.whatsapp_reorganization_operations%ROWTYPE; stamp timestamptz; snap jsonb; after_snap jsonb; ng int; nr int; created_income jsonb;
 BEGIN
+ IF p_operation IS NULL THEN RETURN jsonb_build_object('status','wrong_code'); END IF;
  IF NOT public.wa_reorganization_authorized(p_user,p_phone) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('gi_gastos_soft_delete:'||p_user::text,0));
  SELECT * INTO op FROM public.whatsapp_reorganization_operations WHERE user_id=p_user
  AND phone_hash=encode(sha256(convert_to(regexp_replace(p_phone,'\D','','g'),'UTF8')),'hex')
- AND (p_operation IS NULL AND code_hash=encode(sha256(convert_to(p_user::text||encode(sha256(convert_to(regexp_replace(p_phone,'\D','','g'),'UTF8')),'hex')||p_code,'UTF8')),'hex') OR id=p_operation)
+ AND id=p_operation
  ORDER BY created_at DESC,id DESC LIMIT 1 FOR UPDATE;
  IF NOT FOUND THEN
  -- Unrecognized codes cannot charge attempts against an unrelated latest request.
