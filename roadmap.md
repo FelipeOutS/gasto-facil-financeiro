@@ -42,7 +42,9 @@
 - [ ] Investigar recorrência "Cabelo" inexistente (gastos 27/09 e 27/10 preservados) — futura
 
 ## Reorganização financeira por áudio/texto
-- [ ] Continuação solicitada 03/11: confirmação própria de restauração, proteção das filas offline, contrato de saldo inicial e vínculos, testes ampliados e parecer de homologação; sem dados reais, migração ou publicação.
+- [x] Continuação 03/11 local: restauração confirmada por lote/código, candidatos de geração offline e baseline, recusa ampliada de vínculos, 164 testes JS/49 SQL e IndexedDB no Chromium; sem dados reais/migração/publicação.
+- [ ] Continuação completa: executor contábil de vínculos, baseline atômico integrado às telas, geração em todos os escritores e hidratações, sessões reais; depende de contratos contábeis e homologação isolada, schemas ainda não autorizados.
+- [ ] Android real: depende de fonte do wrapper e aparelho de homologação; Chromium não equivale a WebView nativa.
 - [x] Auditar serviços existentes e preparar plano seguro para limpeza financeira reversível, confirmação por código e operações compostas; 63 testes locais aprovados, sem mudanças reais.
 - [x] Preparação local: interpretação conservadora, bloqueio de comandos compostos, contrato por código, adaptador RPC e SQL candidato compatível com F2; testes fictícios e PostgreSQL descartável, nenhuma alteração real.
 - [ ] Fluxo completo e ativação — BLOQUEADOS: confirmação própria da restauração, barreira offline persistente em todos os escritores, regras de vínculos/saldo inicial, validação Android e aprovações separadas de schema/liberação/publicação.
