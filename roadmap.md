@@ -47,4 +47,4 @@
 - [ ] Android real: depende de fonte do wrapper e aparelho de homologação; Chromium não equivale a WebView nativa.
 - [x] Auditar serviços existentes e preparar plano seguro para limpeza financeira reversível, confirmação por código e operações compostas; 63 testes locais aprovados, sem mudanças reais.
 - [x] Preparação local: interpretação conservadora, bloqueio de comandos compostos, contrato por código, adaptador RPC e SQL candidato compatível com F2; testes fictícios e PostgreSQL descartável, nenhuma alteração real.
-- [ ] Fluxo completo e ativação — BLOQUEADOS: confirmação própria da restauração, barreira offline persistente em todos os escritores, regras de vínculos/saldo inicial, validação Android e aprovações separadas de schema/liberação/publicação.
+- [ ] Fluxo completo e ativação — BLOQUEADOS: integração real da restauração, barreira em todos os escritores, executor contábil de vínculos/saldo inicial, validação Android e aprovações separadas de schema/liberação/publicação.
