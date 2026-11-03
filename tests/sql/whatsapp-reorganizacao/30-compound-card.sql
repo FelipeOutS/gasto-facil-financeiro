@@ -12,7 +12,7 @@ SELECT public.assert_true((SELECT status='aberta' AND valor_pago=0 FROM faturas_
 UPDATE faturas_cartao SET status='paga',valor_pago=35 WHERE id='99999999-0000-0000-0000-000000000006';
 SELECT public.wa_reorganization_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='compound-baseline'),'929292');
 SELECT public.assert_true(public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='compound-baseline')||':929292')->>'status'='changed','payment after deletion blocks whole compound restore');
-SELECT public.assert_true((SELECT revoked_at IS NULL FROM account_opening_balances WHERE banco_id='bbbbbbbb-0000-0000-000000000005'),'failed restore does not revoke baseline');
+SELECT public.assert_true((SELECT revoked_at IS NULL FROM account_opening_balances WHERE banco_id='bbbbbbbb-0000-0000-0000-000000000005'),'failed restore does not revoke baseline');
 UPDATE faturas_cartao SET status='aberta',valor_pago=0 WHERE id='99999999-0000-0000-0000-000000000006';
 SELECT public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='compound-baseline')||':929292');
 SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE descricao='Compra isolada'),'original purchase restored');
