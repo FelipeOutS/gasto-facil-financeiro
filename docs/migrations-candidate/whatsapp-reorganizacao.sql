@@ -47,12 +47,12 @@ $$;
 -- Known financial reverse edges: never unlink/reconstruct these during generic cleanup.
 CREATE FUNCTION public.wa_reorganization_has_dependency(p_entry uuid,p_table text)
 RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE relation_name text; linked boolean; column_name text;
+DECLARE relation_name text; linked boolean; target_column text;
 BEGIN
- column_name:=CASE WHEN p_table='gastos' THEN 'gasto_id' ELSE 'receita_id' END;
+ target_column:=CASE WHEN p_table='gastos' THEN 'gasto_id' ELSE 'receita_id' END;
  FOREACH relation_name IN ARRAY ARRAY['bens_pagamentos','bens_custos_aquisicao','bens_amortizacoes','contas_a_pagar','contas_a_receber'] LOOP
- IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name=relation_name AND information_schema.columns.column_name=column_name) THEN
- EXECUTE format('SELECT EXISTS(SELECT 1 FROM public.%I WHERE %I=$1)',relation_name,column_name) INTO linked USING p_entry;
+ IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name=relation_name AND information_schema.columns.column_name=target_column) THEN
+ EXECUTE format('SELECT EXISTS(SELECT 1 FROM public.%I WHERE %I=$1)',relation_name,target_column) INTO linked USING p_entry;
  IF linked THEN RETURN true; END IF; END IF;
  END LOOP;
  RETURN EXISTS(SELECT 1 FROM public.pluggy_import_entries e WHERE e.entry_id=p_entry);
