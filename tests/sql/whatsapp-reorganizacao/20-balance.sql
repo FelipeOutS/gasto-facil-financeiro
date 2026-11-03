@@ -1,6 +1,4 @@
-CREATE TABLE public.bancos(id uuid PRIMARY KEY,user_id uuid NOT NULL);
-\ir ../../../docs/migrations-candidate/account-opening-balances.sql
-INSERT INTO bancos VALUES('bbbbbbbb-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001');
+INSERT INTO bancos VALUES('bbbbbbbb-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','Banco Teste');
 SELECT public.assert_true(public.account_opening_balance_candidate('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000001',500000,'2026-11-03','balance-one')->>'status'='created','5000 baseline stored separately');
 SELECT public.assert_true((SELECT amount_cents=500000 FROM account_opening_balances),'exact 5000 baseline cents');
 SELECT public.assert_true(public.account_opening_balance_candidate('aaaaaaaa-0000-0000-0000-000000000001','bbbbbbbb-0000-0000-0000-000000000001',500000,'2026-11-03','balance-one')->>'status'='replay','baseline webhook replay idempotent');

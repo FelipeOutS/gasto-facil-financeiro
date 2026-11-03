@@ -15,12 +15,12 @@ export function AccountBaselines() {
   useEffect(()=>{
     let active=true;
     setBalances([]);
-    if (!user || (account.activeAccountId && account.activeAccountId !== user.id)) return;
+    if (!user || (account.activeOwnerId && account.activeOwnerId !== user.id)) return;
     const refresh=()=>{ void read().then(r=>{ if(active) setBalances(r.balances); }).catch(()=>{ if(active) setBalances([]); }); };
     refresh();
     window.addEventListener("focus",refresh); window.addEventListener("online",refresh);
     return ()=>{active=false;window.removeEventListener("focus",refresh);window.removeEventListener("online",refresh);};
-  },[user?.id,account.activeAccountId,read]);
+  },[user?.id,account.activeOwnerId,read]);
   if(!balances.length) return null;
   return <section className="mt-5 border-y border-border py-4" aria-label="Saldos informados das contas">
     <h2 className="text-sm font-semibold">Saldos informados das contas</h2>

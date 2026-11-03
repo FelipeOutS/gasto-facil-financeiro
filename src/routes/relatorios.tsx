@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { AccountBaselines } from "@/components/AccountBaselines";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -95,6 +96,10 @@ export const Route = createFileRoute("/relatorios")({
   head: () => ({
     meta: [
       { title: "Relatórios — Gasto Inteligente" },
+      { property: "og:title", content: "Relatórios financeiros — Gasto Inteligente" },
+      { property: "og:description", content: "Receitas, despesas e saldos informados sem duplicar movimentações." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         name: "description",
         content: "Entenda para onde seu dinheiro foi e como melhorar no próximo mês.",
@@ -495,6 +500,7 @@ function RelatoriosPage() {
       </header>
 
       {/* Filtros de período + Ações */}
+      <AccountBaselines />
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center print:hidden">
         <div className="-mx-1 flex w-full flex-1 min-w-0 gap-2 overflow-x-auto px-1 scrollbar-none">
           {(
