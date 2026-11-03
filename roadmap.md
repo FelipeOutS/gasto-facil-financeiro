@@ -42,6 +42,7 @@
 - [ ] Investigar recorrência "Cabelo" inexistente (gastos 27/09 e 27/10 preservados) — futura
 
 ## Reorganização financeira por áudio/texto
+- [ ] Pedido 03/11 23:40 — integrar writers/vínculos/importadores e atribuição bancária no candidato, testar rollback/replay/isolamento e verificar recursos Meta/Android; sem migrações, dados reais, flags ou publicação.
 - [x] Pedido 03/11 23:11 — candidato restrito: fatos imutáveis, compra paga ocultada/restaurada sem estorno, conciliação atual/compensação, atribuição bancária SQL, dispatch gated e conversa SQL end-to-end; relatório/homologação executável entregues.
 - [ ] Pedido 03/11 23:11 — conclusão integral bloqueada: migrar writers não offline/compartilhados e módulos parcelados/recorrentes/importados para contrato transacional; implementar atribuição bancária em formulários/importadores; homologar schema real isolado e Android/Meta. Quarentena candidata não equivale a compatibilidade.
 - [x] Pedido 03/11 22:54 — núcleo isolado: compras simples não pagas, baseline atômico sem receita, leitura separada nas telas e geração própria na hidratação/reconexão; 193 JS/65 SQL aprovados, sem mutações reais/publicação.
