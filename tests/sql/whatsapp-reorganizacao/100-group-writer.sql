@@ -41,3 +41,18 @@ SET ROLE service_role;
 DO $$ BEGIN PERFORM public.financial_group_write('aaaaaaaa-0000-0000-0000-000000000001','eeeeeeee-0000-0000-0000-000000000001',8,'csv','[]'); RAISE EXCEPTION 'expected_failure'; EXCEPTION WHEN insufficient_privilege THEN NULL; END $$;
 RESET ROLE;
 SELECT public.assert_true((SELECT count(*)=1 FROM financial_group_operations),'service role denied candidate ordinary writer');
+DO $$ DECLARE kind text; op_id uuid; row_id uuid; response jsonb; BEGIN
+ FOREACH kind IN ARRAY ARRAY['csv','pdf','image','recurrence'] LOOP
+ op_id:=gen_random_uuid(); row_id:=gen_random_uuid();
+ response:=public.financial_group_write('aaaaaaaa-0000-0000-0000-000000000001',op_id,(SELECT generation FROM group_fixture),kind,jsonb_build_array(jsonb_build_object('table','receitas','row',jsonb_build_object('id',row_id,'user_id','aaaaaaaa-0000-0000-0000-000000000001','descricao','Formato '||kind,'valor',0.01,'data','2026-12-01','recorrencia_id',CASE WHEN kind='recurrence' THEN gen_random_uuid() ELSE NULL END))));
+ PERFORM public.assert_true(response->>'status'='committed' AND EXISTS(SELECT 1 FROM receitas WHERE id=row_id AND valor=0.01),'candidate format '||kind||' commits exact income');
+ END LOOP;
+END $$;
+-- Fixture-only trusted visibility change simulates a prior authorized reset, not a new executable group undo.
+SELECT set_config('gi.reorganization_mutation','on',false);
+SELECT set_config('gi.gastos_soft_delete','on',false);
+UPDATE gastos SET deleted_at=now(),deleted_by=user_id,deletion_batch_id='eeeeeeee-0000-0000-0000-000000000001',deletion_source='whatsapp_periodo' WHERE id='eeeeeeee-0000-0000-0000-000000000010';
+SELECT set_config('gi.gastos_soft_delete','off',false);
+SELECT set_config('gi.reorganization_mutation','off',false);
+SELECT public.assert_true((SELECT public.financial_group_write(user_id,id,generation,kind,payload)->'rows'='[]'::jsonb FROM financial_group_operations WHERE id='eeeeeeee-0000-0000-0000-000000000001'),'replay after tombstone returns no active rows');
+SELECT public.assert_true((SELECT deleted_at IS NOT NULL FROM gastos WHERE id='eeeeeeee-0000-0000-0000-000000000010'),'group replay never restores original tombstone');
