@@ -14,6 +14,8 @@ RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,pub
 DECLARE current_generation bigint;
 BEGIN
  IF NEW.offline_client_id IS NULL THEN RETURN NEW; END IF;
+ -- Only trusted security-definer reset functions set this transaction-local marker.
+ IF current_setting('gi.reorganization_mutation',true)='on' THEN RETURN NEW; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('gi_gastos_soft_delete:'||NEW.user_id::text,0));
  SELECT generation INTO current_generation FROM public.financial_write_generations WHERE user_id=NEW.user_id;
  IF coalesce(NEW.offline_generation,0)<>coalesce(current_generation,0) THEN RAISE EXCEPTION 'financial_generation_stale_review_required'; END IF;

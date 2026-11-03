@@ -24,10 +24,12 @@ SELECT public.assert_true((SELECT count(*)=2 FROM gastos WHERE deleted_at IS NUL
 SELECT public.assert_true(public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','004821')->>'status'='replay','repeat confirmation idempotent');
 SELECT public.assert_true((SELECT count(*)=2 FROM receitas),'no duplicate income');
 UPDATE public.whatsapp_reorganization_policy SET release_enabled=false;
-SELECT public.assert_true(public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore')->>'status'='restored','restore while paused');
+SELECT public.assert_true(public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore')->>'status'='blocked','bare restore blocked');
+SELECT public.wa_reorganization_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='one'),'121212');
+SELECT public.assert_true(public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='one')||':121212')->>'status'='restored','confirmed restore while release paused');
 SELECT public.assert_true((SELECT count(*)=3 FROM gastos WHERE deleted_at IS NULL),'restored old rows');
 SELECT public.assert_true((SELECT sum(valor)=50 FROM receitas WHERE deleted_at IS NULL),'compound new income soft reverted');
-SELECT public.assert_true(public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore')->>'status'='replay','repeat restore idempotent');
+SELECT public.assert_true(public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='one')||':121212')->>'status'='replay','repeat restore idempotent');
 UPDATE public.whatsapp_reorganization_policy SET release_enabled=true;
 SELECT public.wa_reorganization_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','two','{"tables":["gastos"],"start":null,"end":"2026-11-01"}',null,'111111');
 UPDATE public.whatsapp_reorganization_operations SET expires_at=now()-interval '1 second' WHERE request_id='two';
@@ -50,7 +52,8 @@ SELECT public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','
 SELECT set_config('gi.gastos_soft_delete','on',false);
 UPDATE gastos SET descricao='Editada depois' WHERE id='11111111-0000-0000-0000-000000000001';
 SELECT set_config('gi.gastos_soft_delete','off',false);
-SELECT public.assert_true((public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore')->>'kept')::int=1,'partial restore preserves changed snapshot');
+SELECT public.wa_reorganization_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='six'),'343434');
+SELECT public.assert_true((public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='six')||':343434')->>'kept')::int=1,'partial restore preserves changed snapshot');
 SELECT public.assert_true((SELECT deleted_at IS NULL AND valor=30 FROM gastos WHERE id='11111111-0000-0000-0000-000000000003'),'other owner still untouched');
 
 -- Linked rows cause all-or-nothing refusal, never silent partial cleanup.

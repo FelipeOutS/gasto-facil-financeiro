@@ -6,3 +6,5 @@ CREATE TABLE public.pluggy_import_entries(id uuid PRIMARY KEY,entry_id uuid);
 CREATE TABLE public.whatsapp_links(user_id uuid,telefone text,ativo boolean,opt_in_em timestamptz,revogado_em timestamptz);
 CREATE FUNCTION public.has_feature_access(uuid,text) RETURNS boolean LANGUAGE sql AS $$ SELECT $1='aaaaaaaa-0000-0000-0000-000000000001'::uuid $$;
 GRANT ALL ON public.receitas,public.contas_a_pagar,public.pluggy_import_entries,public.whatsapp_links TO service_role;
+ALTER TABLE public.gastos ADD COLUMN offline_client_id text;
+ALTER TABLE public.receitas ADD COLUMN offline_client_id text;

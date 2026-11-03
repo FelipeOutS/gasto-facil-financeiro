@@ -143,6 +143,8 @@ BEGIN
  IF snap<>op.snapshot THEN UPDATE public.whatsapp_reorganization_operations SET status='changed' WHERE id=op.id; RETURN jsonb_build_object('status','changed'); END IF;
  IF NOT public.wa_reorganization_authorized(p_user,p_phone) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  stamp:=clock_timestamp();
+ IF to_regclass('public.financial_write_generations') IS NULL THEN RAISE EXCEPTION 'financial_generation_required'; END IF;
+ PERFORM set_config('gi.reorganization_mutation','on',true);
  PERFORM set_config('gi.gastos_soft_delete','on',true);
  UPDATE public.gastos SET deleted_at=stamp,deleted_by=p_user,deletion_batch_id=op.id,deletion_source='whatsapp_periodo',updated_at=stamp
  WHERE user_id=p_user AND id IN(SELECT (x->'row'->>'id')::uuid FROM jsonb_array_elements(snap) x WHERE x->>'table'='gastos');
@@ -161,6 +163,8 @@ BEGIN
  VALUES(op.income_id,p_user,op.income->>'descricao',(op.income->>'valor')::numeric,(op.income->>'data')::date,op.income->>'tipo',extract(month FROM (op.income->>'data')::date),extract(year FROM (op.income->>'data')::date),'whatsapp');
  SELECT to_jsonb(r) INTO created_income FROM public.receitas r WHERE r.id=op.income_id AND r.user_id=p_user;
  END IF;
+ INSERT INTO public.financial_write_generations(user_id,generation) VALUES(p_user,1) ON CONFLICT(user_id) DO UPDATE SET generation=financial_write_generations.generation+1;
+ PERFORM set_config('gi.reorganization_mutation','off',true);
  op.result:=jsonb_build_object('status','applied','operationId',op.id,'expenses',ng,'incomes',nr,'incomeId',op.income_id);
  UPDATE public.whatsapp_reorganization_operations SET status='applied',deleted_stamp=stamp,after_snapshot=after_snap,
  income_id=op.income_id,income_after=created_income,result=op.result,completed_at=clock_timestamp() WHERE id=op.id;
@@ -212,6 +216,7 @@ BEGIN
  LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries IN SHARE ROW EXCLUSIVE MODE;
  PERFORM 1 FROM public.whatsapp_links WHERE user_id=p_user FOR SHARE;
  IF NOT coalesce(public.has_feature_access(p_user,'whatsapp'),false) OR NOT EXISTS(SELECT 1 FROM public.whatsapp_links l WHERE l.user_id=p_user AND l.ativo AND l.opt_in_em IS NOT NULL AND l.revogado_em IS NULL AND regexp_replace(l.telefone,'\D','','g')=regexp_replace(p_phone,'\D','','g')) THEN RETURN jsonb_build_object('status','blocked'); END IF;
+ PERFORM set_config('gi.reorganization_mutation','on',true);
  -- Full after snapshots preserve edits. Only own exact deletion stamp may be reversed.
  FOR x IN SELECT value FROM jsonb_array_elements(op.after_snapshot) LOOP
  r:=NULL;
@@ -235,6 +240,7 @@ BEGIN
  ELSIF r=op.income_after AND NOT EXISTS(SELECT 1 FROM public.pluggy_import_entries e WHERE e.entry_id=op.income_id) AND r->>'recorrencia_id' IS NULL AND r->>'import_batch_id' IS NULL THEN UPDATE public.receitas SET deleted_at=clock_timestamp(),deleted_source='whatsapp',deleted_reason='reorganizacao_desfeita:'||op.id,updated_at=clock_timestamp() WHERE id=op.income_id AND user_id=p_user;
  ELSE kept:=kept+1; END IF;
  END IF;
+ PERFORM set_config('gi.reorganization_mutation','off',true);
  op.restore_result:=jsonb_build_object('status',CASE WHEN kept>0 THEN 'partial' ELSE 'restored' END,'operationId',op.id,'expenses',ng,'incomes',nr,'kept',kept);
  UPDATE public.whatsapp_reorganization_operations SET status=CASE WHEN kept>0 THEN 'partial' ELSE 'restored' END,restore_result=op.restore_result,
  restore_expires_at=NULL,
