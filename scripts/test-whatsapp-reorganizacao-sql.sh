@@ -3,7 +3,7 @@ set -euo pipefail
 unset PGHOST PGPORT PGUSER PGPASSWORD PGDATABASE PGSSLMODE DATABASE_URL || true
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 D="$(mktemp -d /tmp/gi-pg-reorganization.XXXX)"; chmod 777 "$D"
-RUN=(); [ "$(id -u)" = 0 ] && RUN=(runuser -u nobody --)
+RUN=(); [ "$(id -u)" = 0 ] && RUN=(runuser -u lovable --)
 "${RUN[@]}" initdb -D "$D/data" -U gi_test --auth=trust >/dev/null
 "${RUN[@]}" pg_ctl -D "$D/data" -o "-k $D -p 55459 -c listen_addresses=''" -l "$D/log" start >/dev/null
 trap '"${RUN[@]}" pg_ctl -D "$D/data" stop -m immediate >/dev/null 2>&1; rm -rf "$D"' EXIT

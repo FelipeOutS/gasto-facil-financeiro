@@ -32,10 +32,10 @@ function response(result: ReorganizationResult): string {
 
 /** Isolated orchestration contract. Production wrapper below never injects a writer. */
 export async function runReorganization(input: ReorganizationInput, store: ReorganizationStore): Promise<string | null> {
-  if (!await store.authorize(input.userId, input.phone)) return "Não foi possível validar seu vínculo e sua autorização. A operação não foi executada.";
-  if (input.pendingSession) return "Há outra solicitação pendente. Conclua ou cancele essa solicitação antes de iniciar uma limpeza; nenhum valor deste pedido foi cadastrado.";
-  const code = confirmationCode(input.text);
   try {
+    if (!await store.authorize(input.userId, input.phone)) return "Não foi possível validar seu vínculo e sua autorização. A operação não foi executada.";
+    if (input.pendingSession) return "Há outra solicitação pendente. Conclua ou cancele essa solicitação antes de iniciar uma limpeza; nenhum valor deste pedido foi cadastrado.";
+    const code = confirmationCode(input.text);
     if (code) return response(await store.confirm(input, code));
     if (/^(cancelar|cancela)( a)? limpeza[.!]?$/i.test(input.text.trim())) return response(await store.cancel(input));
     if (/^consultar limpeza[.!]?$/i.test(input.text.trim())) return response(await store.status(input));
