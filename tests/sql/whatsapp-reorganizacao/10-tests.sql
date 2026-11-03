@@ -8,7 +8,7 @@ INSERT INTO public.receitas(id,user_id,descricao,valor,data) VALUES('22222222-00
 SELECT public.assert_true(NOT public.wa_reorganization_authorized('aaaaaaaa-0000-0000-0000-000000000001','5511999999999'),'policy absent blocks');
 -- Local isolated fixture only, never production release.
 INSERT INTO public.whatsapp_reorganization_policy VALUES(true,true);
-SELECT public.assert_true(NOT has_function_privilege('authenticated','public.wa_reorganization_confirm(uuid,text,text)','EXECUTE'),'authenticated cannot execute');
+SELECT public.assert_true(NOT has_function_privilege('authenticated','public.wa_reorganization_confirm(uuid,text,text,uuid)','EXECUTE'),'authenticated cannot execute');
 SELECT public.assert_true(NOT has_table_privilege('authenticated','public.whatsapp_reorganization_operations','SELECT'),'journal private');
 SELECT public.assert_true(NOT public.wa_reorganization_authorized('cccccccc-0000-0000-0000-000000000003','5511999999999'),'other owner blocked');
 SELECT public.assert_true(NOT public.wa_reorganization_authorized('aaaaaaaa-0000-0000-0000-000000000001','5511888888888'),'wrong phone blocked');
