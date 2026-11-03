@@ -85,3 +85,11 @@ SELECT public.assert_true(public.wa_reorganization_restore_prepare('cccccccc-000
 SELECT public.wa_reorganization_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='six'),'454545');
 SELECT public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='six')||':000000') FROM generate_series(1,5);
 SELECT public.assert_true(public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='six')||':454545')->>'status'='blocked','restoration guesses limited');
+-- An untrusted GUC and another owner's RLS-hidden generation cannot bypass the fence.
+DO $$ BEGIN
+ PERFORM set_config('request.jwt.claim.sub','cccccccc-0000-0000-0000-000000000003',true);
+ SET LOCAL ROLE authenticated;
+ PERFORM set_config('gi.reorganization_mutation','on',true);
+ INSERT INTO gastos(user_id,descricao,valor,data,offline_client_id,offline_generation) VALUES('aaaaaaaa-0000-0000-0000-000000000001','Spoof',10,'2026-10-01','spoof',0);
+ RAISE EXCEPTION 'expected stale'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'financial_generation_stale_review_required' THEN RAISE; END IF; END $$;
+SELECT public.assert_true(NOT EXISTS(SELECT 1 FROM gastos WHERE descricao='Spoof'),'shared owner hidden generation and marker cannot bypass fence');
