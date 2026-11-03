@@ -42,5 +42,5 @@
 - [ ] Investigar recorrência "Cabelo" inexistente (gastos 27/09 e 27/10 preservados) — futura
 
 ## Reorganização financeira por áudio/texto
-- [ ] Auditar serviços existentes e apresentar plano seguro para limpeza financeira, confirmação por código e operações compostas, sem mudanças reais.
-- [ ] Implementação e testes isolados — aguardam aprovação do plano e decisão sobre exclusão reversível/permanente; migrações, ativação e publicação exigem autorização separada.
+- [x] Auditar serviços existentes e preparar plano seguro para limpeza financeira reversível, confirmação por código e operações compostas; 63 testes locais aprovados, sem mudanças reais.
+- [ ] Implementação reversível e testes isolados — aguardam aprovação do plano; migrações, ativação e publicação exigem autorização separada.
