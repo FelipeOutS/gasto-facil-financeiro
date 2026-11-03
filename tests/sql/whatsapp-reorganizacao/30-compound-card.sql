@@ -1,0 +1,27 @@
+INSERT INTO bancos VALUES('bbbbbbbb-0000-0000-0000-000000000005','aaaaaaaa-0000-0000-0000-000000000001','Nubank');
+INSERT INTO cartoes VALUES('99999999-0000-0000-0000-000000000005','aaaaaaaa-0000-0000-0000-000000000001',5,10,1000);
+INSERT INTO faturas_cartao(id,user_id,cartao_id,mes,ano,status,valor_pago) VALUES('99999999-0000-0000-0000-000000000006','aaaaaaaa-0000-0000-0000-000000000001','99999999-0000-0000-0000-000000000005',1,2027,'aberta',0);
+INSERT INTO gastos(id,user_id,descricao,valor,data,forma_pagamento,cartao_id,fatura_competencia) VALUES('99999999-0000-0000-0000-000000000007','aaaaaaaa-0000-0000-0000-000000000001','Compra isolada',35,'2027-01-16','credito','99999999-0000-0000-0000-000000000005','2027-02');
+SELECT public.wa_reorganization_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','compound-baseline','{"tables":["gastos","receitas"],"start":"2027-01-01","end":"2027-02-01"}',null,'919191','{"accountName":"Nubank","amountCents":500000,"effectiveDate":"2027-02-03"}');
+SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE descricao='Compra isolada'),'card preview is read only');
+SELECT public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','919191',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='compound-baseline'));
+SELECT public.assert_true((SELECT deleted_at IS NOT NULL FROM gastos WHERE descricao='Compra isolada'),'unpaid card purchase soft deleted');
+SELECT public.assert_true((SELECT amount_cents=500000 FROM account_opening_balances WHERE banco_id='bbbbbbbb-0000-0000-0000-000000000005'),'compound baseline exact 5000');
+SELECT public.assert_true(NOT EXISTS(SELECT 1 FROM receitas WHERE valor=5000),'compound balance never income');
+SELECT public.assert_true((SELECT status='aberta' AND valor_pago=0 FROM faturas_cartao WHERE id='99999999-0000-0000-0000-000000000006'),'invoice and payments untouched');
+UPDATE faturas_cartao SET status='paga',valor_pago=35 WHERE id='99999999-0000-0000-0000-000000000006';
+SELECT public.wa_reorganization_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='compound-baseline'),'929292');
+SELECT public.assert_true(public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='compound-baseline')||':929292')->>'status'='changed','payment after deletion blocks whole compound restore');
+SELECT public.assert_true((SELECT revoked_at IS NULL FROM account_opening_balances WHERE banco_id='bbbbbbbb-0000-0000-000000000005'),'failed restore does not revoke baseline');
+UPDATE faturas_cartao SET status='aberta',valor_pago=0 WHERE id='99999999-0000-0000-0000-000000000006';
+SELECT public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='compound-baseline')||':929292');
+SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE descricao='Compra isolada'),'original purchase restored');
+SELECT public.assert_true((SELECT revoked_at IS NOT NULL FROM account_opening_balances WHERE banco_id='bbbbbbbb-0000-0000-0000-000000000005'),'restore reversibly revokes own baseline');
+-- Baseline failure must roll back deletion: trigger is fixture only.
+CREATE FUNCTION public.fail_balance_fixture() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.amount_cents=500001 THEN RAISE EXCEPTION 'fixture_balance_failure'; END IF; RETURN NEW; END $$;
+CREATE TRIGGER fail_balance_fixture BEFORE INSERT ON account_opening_balances FOR EACH ROW EXECUTE FUNCTION public.fail_balance_fixture();
+INSERT INTO bancos VALUES('bbbbbbbb-0000-0000-0000-000000000009','aaaaaaaa-0000-0000-0000-000000000001','Falha');
+SELECT public.wa_reorganization_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','balance-rollback','{"tables":["gastos"],"start":"2027-01-01","end":"2027-02-01"}',null,'939393','{"accountName":"Falha","amountCents":500001,"effectiveDate":"2027-02-03"}');
+DO $$ BEGIN PERFORM public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','939393',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='balance-rollback')); RAISE EXCEPTION 'expected failure'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'fixture_balance_failure' THEN RAISE; END IF; END $$;
+SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE descricao='Compra isolada'),'baseline failure rolls back card deletion');
+SELECT public.assert_true((SELECT status='preview' FROM whatsapp_reorganization_operations WHERE request_id='balance-rollback'),'baseline failure leaves confirmation unconsumed');
