@@ -10,12 +10,12 @@ CREATE POLICY own_generation ON public.financial_write_generations FOR SELECT TO
 ALTER TABLE public.gastos ADD COLUMN offline_generation bigint;
 ALTER TABLE public.receitas ADD COLUMN offline_generation bigint;
 CREATE FUNCTION public.financial_offline_generation_guard()
-RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
 DECLARE current_generation bigint;
 BEGIN
  IF NEW.offline_client_id IS NULL THEN RETURN NEW; END IF;
  -- Only trusted security-definer reset functions set this transaction-local marker.
- IF current_setting('gi.reorganization_mutation',true)='on' THEN RETURN NEW; END IF;
+ IF current_setting('gi.reorganization_mutation',true)='on' AND current_user=(SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid=TG_RELID) THEN RETURN NEW; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('gi_gastos_soft_delete:'||NEW.user_id::text,0));
  SELECT generation INTO current_generation FROM public.financial_write_generations WHERE user_id=NEW.user_id;
  IF coalesce(NEW.offline_generation,0)<>coalesce(current_generation,0) THEN RAISE EXCEPTION 'financial_generation_stale_review_required'; END IF;

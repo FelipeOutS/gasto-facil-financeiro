@@ -67,4 +67,21 @@ SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE id='33333
 SELECT public.wa_reorganization_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','attempts','{"tables":["receitas"],"start":null,"end":"2026-11-01"}',null,'777777');
 SELECT public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','000000') FROM generate_series(1,5);
 SELECT public.assert_true((SELECT failed_attempts=0 FROM whatsapp_reorganization_operations WHERE request_id='attempts'),'unrelated codes do not charge latest operation');
-SELECT public.assert_true((SELECT sum(valor)=50 FROM receitas WHERE deleted_at IS NULL),'unrecognized codes do not mutate income');
+SELECT public.assert_true((SELECT sum(valor)=50 FROM receitas WHERE deleted_at IS NULL),'unrecognized codes do not mutate income');-- Delayed offline submissions and guessed confirmation codes never mutate finance.
+DO $$ BEGIN
+ INSERT INTO receitas(user_id,descricao,valor,data,offline_client_id) VALUES('aaaaaaaa-0000-0000-0000-000000000001','Stale',5000,'2026-10-01','old-device');
+ RAISE EXCEPTION 'expected stale'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'financial_generation_stale_review_required' THEN RAISE; END IF; END $$;
+SELECT public.assert_true(NOT EXISTS(SELECT 1 FROM receitas WHERE descricao='Stale'),'stale offline income rejected');
+DO $$ BEGIN
+ INSERT INTO gastos(user_id,descricao,valor,data,offline_client_id,offline_generation) VALUES('aaaaaaaa-0000-0000-0000-000000000001','Stale expense',10,'2026-10-01','old-device',0);
+ RAISE EXCEPTION 'expected stale'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'financial_generation_stale_review_required' THEN RAISE; END IF; END $$;
+SELECT public.assert_true(NOT EXISTS(SELECT 1 FROM gastos WHERE descricao='Stale expense'),'stale offline expense rejected');
+INSERT INTO receitas(user_id,descricao,valor,data,offline_client_id,offline_generation) SELECT 'aaaaaaaa-0000-0000-0000-000000000001','Current generation',10,'2026-11-04','new-device',generation FROM financial_write_generations WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001';
+SELECT public.assert_true(EXISTS(SELECT 1 FROM receitas WHERE descricao='Current generation'),'current offline generation accepted');
+SELECT public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','000000',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='attempts')) FROM generate_series(1,5);
+SELECT public.assert_true((SELECT failed_attempts=5 FROM whatsapp_reorganization_operations WHERE request_id='attempts'),'operation-bound guesses limited');
+SELECT public.assert_true(public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','777777',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='attempts'))->>'status'='blocked','correct code blocked after attempt limit');
+SELECT public.assert_true(public.wa_reorganization_restore_prepare('cccccccc-0000-0000-0000-000000000003','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='one'),'121212')->>'status'='blocked','foreign owner cannot prepare restoration');
+SELECT public.wa_reorganization_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='six'),'454545');
+SELECT public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='six')||':000000') FROM generate_series(1,5);
+SELECT public.assert_true(public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='six')||':454545')->>'status'='blocked','restoration guesses limited');
