@@ -34,3 +34,6 @@ wait "$PID"
 if grep -q '"applied"' "$D/r1" "$D/r2" && grep -q '"replay"' "$D/r1" "$D/r2"; then echo 'PASS: two connections one apply one replay'; else cat "$D/r1" "$D/r2"; exit 1; fi
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-universal-fence.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/40-universal-fence.sql"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-linked-writer-fence.sql"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/financial-fact-boundaries.sql"
+"${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/70-boundaries.sql"

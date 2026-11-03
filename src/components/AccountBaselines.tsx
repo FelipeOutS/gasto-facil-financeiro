@@ -27,7 +27,7 @@ export function AccountBaselines() {
     <ul className="mt-3 grid gap-3 sm:grid-cols-2">{balances.map(b=><li key={b.id} className="min-w-0">
       <p className="text-sm font-medium break-words">{b.bankName}</p>
       <Money value={b.amountCents/100} className="block text-lg font-semibold" />
-      <p className="text-xs text-muted-foreground">Saldo informado em {formatDateBR(b.effectiveDate)} · fim do dia</p>
+      <p className="text-xs text-muted-foreground">Referência: {formatDateBR(b.effectiveDate)}</p>
     </li>)}</ul>
   </section>;
 }
