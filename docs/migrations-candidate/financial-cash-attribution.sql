@@ -11,7 +11,7 @@ BEGIN
  IF NEW.cash_effective_at IS NULL AND NEW.financial_bank_id IS NULL THEN RETURN NEW; END IF;
  IF NEW.cash_effective_at IS NULL OR NEW.financial_bank_id IS NULL THEN RAISE EXCEPTION 'cash_bank_and_payment_date_required'; END IF;
  IF NOT EXISTS(SELECT 1 FROM public.bancos WHERE id=NEW.financial_bank_id AND user_id=NEW.user_id) THEN RAISE EXCEPTION 'bank_owner_mismatch'; END IF;
- IF TG_TABLE_NAME='gastos' AND NEW.forma_pagamento='credito' THEN RAISE EXCEPTION 'credit_purchase_not_bank_payment'; END IF;
+ IF TG_TABLE_NAME='gastos' AND to_jsonb(NEW)->>'forma_pagamento'='credito' THEN RAISE EXCEPTION 'credit_purchase_not_bank_payment'; END IF;
  sign_value:=CASE WHEN TG_TABLE_NAME='receitas' THEN 1 ELSE -1 END;
  old_amount:=CASE WHEN TG_OP='UPDATE' AND OLD.cash_effective_at IS NOT NULL THEN round(OLD.valor*100)::bigint ELSE 0 END;
  new_amount:=round(NEW.valor*100)::bigint;
