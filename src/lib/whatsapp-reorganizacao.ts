@@ -1,4 +1,5 @@
 import { parseValor } from "./whatsappParser";
+import { parseOpeningBalance, type OpeningBalanceRequest } from "./account-opening-balance";
 
 export const REORGANIZACAO_TTL_MS = 5 * 60 * 1000;
 export const REORGANIZACAO_MAX = 500;
@@ -7,7 +8,7 @@ export type NewIncome = { descricao: string; valor: number; data: string; tipo: 
 export type ReorganizationIntent =
   | { kind: "ignore" }
   | { kind: "clarify"; question: string }
-  | { kind: "unsupported_balance" }
+  | { kind: "unsupported_balance"; balance?: OpeningBalanceRequest | null }
   | { kind: "request"; scope: FinancialScope; income: NewIncome | null };
 
 export function normalizeReorganization(text: string): string {
@@ -20,7 +21,7 @@ const nextMonth = (year: number, month: number) => isoMonth(month === 12 ? year 
 /** Local date is supplied by the user's existing timezone resolver, not machine UTC. */
 export function interpretReorganization(text: string, localDate: string): ReorganizationIntent {
   const t = normalizeReorganization(text);
-  if (/\bsaldo inicial\b/.test(t)) return { kind: "unsupported_balance" };
+  if (/\bsaldo inicial\b/.test(t)) return { kind: "unsupported_balance", balance: parseOpeningBalance(text, localDate) };
   const verb = /\b(apag\w*|exclu\w*|limp\w*|zer\w*|reinici\w*|comec\w*)\b/.test(t);
   const bulk = /\b(todos?|todas?|tudo|inteir\w*|historico|financas|despesas|gastos|receitas|meses|em massa)\b/.test(t);
   if (!verb || !bulk) return { kind: "ignore" };
@@ -77,8 +78,12 @@ export function interpretReorganization(text: string, localDate: string): Reorga
 }
 
 export function confirmationCode(text: string): string | null {
-  const match = /^APAGAR\s+(\d{6})$/i.exec(text.trim());
+  const match = /^APAGAR\s+(?:[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}\s+)?(\d{6})$/i.exec(text.trim());
   return match?.[1] ?? null;
+}
+export function operationConfirmation(text: string, action: "APAGAR" | "RESTAURAR"): { operationId: string; code: string } | null {
+  const m = new RegExp(`^${action}\\s+([\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12})\\s+(\\d{6})$`, "i").exec(text.trim());
+  return m ? { operationId: m[1], code: m[2] } : null;
 }
 export function randomConfirmationCode(): string {
   const data = new Uint32Array(1);

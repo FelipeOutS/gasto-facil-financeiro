@@ -24,10 +24,12 @@ export function createReorganizationStore(db: ReorganizationRpcClient): Reorgani
       return !result.error && result.data === true;
     },
     prepare: (input, scope, income, code) => call("wa_reorganization_prepare", { ...identity(input), p_request: input.externalId, p_scope: scope, p_income: income, p_code: code }),
-    confirm: (input, code) => call("wa_reorganization_confirm", { ...identity(input), p_code: code }),
+    confirm: (input, code, operationId) => call("wa_reorganization_confirm", { ...identity(input), p_code: code, p_operation: operationId ?? null }),
     cancel: (input) => call("wa_reorganization_control", { ...identity(input), p_action: "cancel" }),
     status: (input) => call("wa_reorganization_control", { ...identity(input), p_action: "status" }),
     // No implicit latest-operation reversal; own operation selection + separate confirmation pending.
     restore: async () => ({ status: "blocked" }),
+    prepareRestore: (input, operationId, code) => call("wa_reorganization_restore_prepare", { ...identity(input), p_operation: operationId, p_code: code }),
+    confirmRestore: (input, operationId, code) => call("wa_reorganization_control", { ...identity(input), p_action: `restore:${operationId}:${code}` }),
   };
 }
