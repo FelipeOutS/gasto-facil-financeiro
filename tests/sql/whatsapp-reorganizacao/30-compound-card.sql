@@ -10,6 +10,10 @@ SELECT public.assert_true((SELECT amount_cents=500000 FROM account_opening_balan
 SELECT public.assert_true(NOT EXISTS(SELECT 1 FROM receitas WHERE valor=5000),'compound balance never income');
 SELECT public.assert_true((SELECT status='aberta' AND valor_pago=0 FROM faturas_cartao WHERE id='99999999-0000-0000-0000-000000000006'),'invoice and payments untouched');
 UPDATE faturas_cartao SET status='paga',valor_pago=35 WHERE id='99999999-0000-0000-0000-000000000006';
+SELECT public.assert_true(NOT public.wa_reorganization_card_supported('aaaaaaaa-0000-0000-0000-000000000001',(SELECT to_jsonb(g) FROM gastos g WHERE descricao='Compra isolada')),'paid invoice explicitly unsupported');
+UPDATE faturas_cartao SET status='aberta',valor_pago=10 WHERE id='99999999-0000-0000-0000-000000000006';
+SELECT public.assert_true(NOT public.wa_reorganization_card_supported('aaaaaaaa-0000-0000-0000-000000000001',(SELECT to_jsonb(g) FROM gastos g WHERE descricao='Compra isolada')),'partial payment explicitly unsupported');
+UPDATE faturas_cartao SET status='paga',valor_pago=35 WHERE id='99999999-0000-0000-0000-000000000006';
 SELECT public.wa_reorganization_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='compound-baseline'),'929292');
 SELECT public.assert_true(public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='compound-baseline')||':929292')->>'status'='changed','payment after deletion blocks whole compound restore');
 SELECT public.assert_true((SELECT revoked_at IS NULL FROM account_opening_balances WHERE banco_id='bbbbbbbb-0000-0000-0000-000000000005'),'failed restore does not revoke baseline');

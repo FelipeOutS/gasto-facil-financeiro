@@ -3,7 +3,11 @@ import { parseValor } from "./whatsappParser";
 /** Account baseline, never an income. No persistence or report side effects. */
 export type OpeningBalanceRequest = { accountName: string | null; amountCents: number; effectiveDate: string };
 export function parseOpeningBalance(text: string, date: string): OpeningBalanceRequest | null {
-  const monetary = text.match(/r\$\s*\d[\d.,]*|\d[\d.,]*\s*reais/i);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || new Date(`${date}T12:00:00Z`).toISOString().slice(0,10) !== date) return null;
+  if (/\b(não|nao|exceto|menos)\b|(?:r\$\s*-|-\s*\d)/i.test(text)) return null;
+  const amounts = [...text.matchAll(/r\$\s*\d[\d.,]*|\d[\d.,]*\s*reais/gi)];
+  if (amounts.length !== 1) return null;
+  const monetary = amounts[0];
   const amount = monetary ? parseValor(monetary[0]) : null;
   if (amount === null || amount < 0 || !Number.isSafeInteger(Math.round(amount * 100))) return null;
   const account = /(?:conta\s+(?:(?:do|da|no|na)\s+)?|(?:no|na)\s+)([\p{L}\d][\p{L}\d .-]*?)(?=\s+(?:como|coloque|saldo|e\s|é(?:\s|$))|[,.!?]|$)/iu.exec(text);
