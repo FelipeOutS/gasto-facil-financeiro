@@ -16,7 +16,7 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
  sum(CASE WHEN f.kind='charge' THEN f.amount_cents WHEN f.kind='charge_refund' THEN -f.amount_cents ELSE 0 END)::bigint,
  sum(CASE WHEN f.kind IN('payment','payment_snapshot') THEN f.amount_cents WHEN f.kind IN('accounting_reversal','bank_refund') THEN -f.amount_cents ELSE 0 END)::bigint,
  greatest(0,sum(CASE WHEN f.kind='charge' THEN f.amount_cents WHEN f.kind='charge_refund' THEN -f.amount_cents WHEN f.kind IN('payment','payment_snapshot') THEN -f.amount_cents WHEN f.kind IN('accounting_reversal','bank_refund') THEN f.amount_cents ELSE 0 END))::bigint
- FROM public.financial_card_facts f WHERE f.user_id=p_user AND (auth.uid()=p_user OR current_user=(SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid='public.financial_card_facts'::regclass)) GROUP BY f.cartao_id,f.cycle
+ FROM public.financial_card_facts f WHERE f.user_id=p_user AND auth.uid()=p_user GROUP BY f.cartao_id,f.cycle
 $$;
 REVOKE ALL ON FUNCTION public.financial_invoice_positions(uuid) FROM PUBLIC,anon;
 GRANT EXECUTE ON FUNCTION public.financial_invoice_positions(uuid) TO authenticated,service_role;

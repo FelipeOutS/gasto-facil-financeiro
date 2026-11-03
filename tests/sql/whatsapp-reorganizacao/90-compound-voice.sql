@@ -1,0 +1,12 @@
+-- Exact command semantics: previous months only; paid card facts survive; current balance adjustment atomic.
+INSERT INTO gastos(id,user_id,descricao,valor,data,forma_pagamento) VALUES('dddddddd-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','Mês atual preservado',99,'2027-02-03','pix');
+SELECT public.wa_reorganization_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','exact-voice-compound','{"tables":["gastos","receitas"],"start":"2027-01-01","end":"2027-02-01"}',null,'717171','{"accountName":"Nubank","amountCents":500000,"effectiveDate":"2027-02-03","kind":"current_adjustment"}');
+SELECT public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','717171',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='exact-voice-compound'));
+SELECT public.assert_true((SELECT deleted_at IS NOT NULL FROM gastos WHERE descricao='Compra isolada'),'compound paid-card old month excluded');
+SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE descricao='Mês atual preservado'),'compound preserves current month');
+SELECT public.assert_true((SELECT sum(amount_cents)=500000 FROM financial_cash_facts WHERE banco_id='bbbbbbbb-0000-0000-0000-000000000005'),'compound actual observed Nubank 5000');
+SELECT public.assert_true((SELECT valor_pago=35 FROM faturas_cartao WHERE id='99999999-0000-0000-0000-000000000006'),'compound no bank payment reversal');
+SELECT public.wa_reorganization_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='exact-voice-compound'),'727272');
+SELECT public.wa_reorganization_control('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','restore:'||(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='exact-voice-compound')||':727272');
+SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE descricao='Compra isolada'),'compound restoration returns same purchase');
+SELECT public.assert_true((SELECT sum(amount_cents)=300000 FROM financial_cash_facts WHERE banco_id='bbbbbbbb-0000-0000-0000-000000000005'),'compound restoration compensates own balance delta');
