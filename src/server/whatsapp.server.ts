@@ -166,6 +166,7 @@ import {
 } from "./whatsapp-contas-editar.server";
 import { detectEdicaoAntiga, detectExclusaoAntiga, detectRestauracaoAntiga, handleEdicaoAntiga } from "./whatsapp-editar-antigo.server";
 import { detectLoteMes, handleLoteMes } from "./whatsapp-lote-mes.server";
+import { blockedReorganizationReply } from "./whatsapp-reorganizacao.server";
 import {
   detectSavePixIntent,
   detectQueryPixIntent,
@@ -2982,6 +2983,14 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   }
 
   const recebidaEm = msg.recebida_em ?? new Date().toISOString();
+
+  // Preparation-only guard: a reset+income request must never become a simple income.
+  // Existing explicit single-month flow keeps its own disabled gate.
+  if (!msg.flowReply && !msg.image && !msg.document &&
+      (detectLoteMes(texto) === null || /\b(depois|adicion\w*|cadastr\w*|anteriores|historico|todos os meses)\b/i.test(texto))) {
+    const blocked = blockedReorganizationReply(texto, Boolean(await buscarSessaoAtiva(userId, msg.telefone)));
+    if (blocked) return { status: "consulta", resposta: blocked };
+  }
 
   // A ação rápida usa ID opaco, usuário e telefone resolvidos pelo gate.
   // Também atende as próximas respostas de um fluxo de edição em andamento.
