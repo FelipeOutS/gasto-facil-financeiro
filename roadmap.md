@@ -42,6 +42,8 @@
 - [ ] Investigar recorrência "Cabelo" inexistente (gastos 27/09 e 27/10 preservados) — futura
 
 ## Reorganização financeira por áudio/texto
+- [ ] Pedido 03/11 22:54: concluir vínculos cartão/fatura, saldo nas telas, proteção universal dos escritores e fluxo composto atômico em ambiente isolado; candidatos somente, nenhuma mutação real/publicação.
+- [ ] Pedido 03/11 22:54 Android: executar verificações web disponíveis e especificar instrumentação nativa; bloqueado por ausência do wrapper/aparelho.
 - [x] Continuação 03/11 local: restauração confirmada por lote/código, candidatos de geração offline e baseline, recusa ampliada de vínculos, 164 testes JS/49 SQL e IndexedDB no Chromium; sem dados reais/migração/publicação.
 - [ ] Continuação completa: executor contábil de vínculos, baseline atômico integrado às telas, geração em todos os escritores e hidratações, sessões reais; depende de contratos contábeis e homologação isolada, schemas ainda não autorizados.
 - [ ] Android real: depende de fonte do wrapper e aparelho de homologação; Chromium não equivale a WebView nativa.
