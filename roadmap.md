@@ -42,6 +42,7 @@
 - [ ] Investigar recorrência "Cabelo" inexistente (gastos 27/09 e 27/10 preservados) — futura
 
 ## Reorganização financeira por áudio/texto
+- [ ] Pedido 03/11 23:11: concluir ledger de pagamentos e conciliação de saldo atual, inventário/guards de writers, conversa integrada e homologação executável isolada; nenhuma migração real/publicação.
 - [x] Pedido 03/11 22:54 — núcleo isolado: compras simples não pagas, baseline atômico sem receita, leitura separada nas telas e geração própria na hidratação/reconexão; 193 JS/65 SQL aprovados, sem mutações reais/publicação.
 - [ ] Conclusão integral — bloqueada por contrato contábil de pagamentos/parcelas/recorrências e atribuição dos movimentos às contas; candidato restrito não equivale a reinício financeiro completo.
 - [ ] Pedido 03/11 22:54 Android: executar verificações web disponíveis e especificar instrumentação nativa; bloqueado por ausência do wrapper/aparelho.
