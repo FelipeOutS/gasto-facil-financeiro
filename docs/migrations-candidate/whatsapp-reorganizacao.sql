@@ -140,7 +140,7 @@ BEGIN
  IF p_operation IS NULL THEN RETURN jsonb_build_object('status','wrong_code'); END IF;
  IF NOT public.wa_reorganization_authorized(p_user,p_phone) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  -- Table lock must precede owner advisory lock: INSERT takes its table lock before its trigger.
- LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries,public.cartoes,public.faturas_cartao,public.bancos,public.account_opening_balances IN SHARE ROW EXCLUSIVE MODE;
+ LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries,public.cartoes,public.faturas_cartao,public.bancos,public.account_opening_balances,public.financial_cash_facts,public.financial_card_facts IN SHARE ROW EXCLUSIVE MODE;
  PERFORM pg_advisory_xact_lock(hashtextextended('gi_gastos_soft_delete:'||p_user::text,0));
  SELECT * INTO op FROM public.whatsapp_reorganization_operations WHERE user_id=p_user
  AND phone_hash=encode(sha256(convert_to(regexp_replace(p_phone,'\D','','g'),'UTF8')),'hex')
@@ -159,7 +159,7 @@ BEGIN
  -- Locks then full snapshot comparison protect edits/dependency changes before mutation.
  -- Conservative candidate serialization prevents phantoms and new dependency links.
  -- Broad locks must be load-tested before considering release.
- LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries,public.cartoes,public.faturas_cartao,public.bancos,public.account_opening_balances IN SHARE ROW EXCLUSIVE MODE;
+ LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries,public.cartoes,public.faturas_cartao,public.bancos,public.account_opening_balances,public.financial_cash_facts,public.financial_card_facts IN SHARE ROW EXCLUSIVE MODE;
  PERFORM 1 FROM public.whatsapp_links WHERE user_id=p_user FOR SHARE;
  PERFORM 1 FROM public.gastos WHERE user_id=p_user AND id IN(SELECT (x->'row'->>'id')::uuid FROM jsonb_array_elements(op.snapshot) x WHERE x->>'table'='gastos') ORDER BY id FOR UPDATE;
  PERFORM 1 FROM public.receitas WHERE user_id=p_user AND id IN(SELECT (x->'row'->>'id')::uuid FROM jsonb_array_elements(op.snapshot) x WHERE x->>'table'='receitas') ORDER BY id FOR UPDATE;
@@ -238,7 +238,7 @@ BEGIN
  IF NOT coalesce(public.has_feature_access(p_user,'whatsapp'),false) OR NOT EXISTS(SELECT 1 FROM public.whatsapp_links l WHERE l.user_id=p_user AND l.ativo AND l.opt_in_em IS NOT NULL AND l.revogado_em IS NULL AND regexp_replace(l.telefone,'\D','','g')=regexp_replace(p_phone,'\D','','g')) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  IF p_action='restore' OR (p_action LIKE 'restore:%' AND array_length(string_to_array(p_action,':'),1)<>3) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  IF p_action NOT IN('status','cancel') AND p_action NOT LIKE 'restore:%' AND p_action NOT LIKE 'status:%' OR p_action IS NULL THEN RAISE EXCEPTION 'invalid_action'; END IF;
- IF p_action LIKE 'restore:%' THEN LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries,public.cartoes,public.faturas_cartao,public.bancos,public.account_opening_balances IN SHARE ROW EXCLUSIVE MODE; END IF;
+ IF p_action LIKE 'restore:%' THEN LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries,public.cartoes,public.faturas_cartao,public.bancos,public.account_opening_balances,public.financial_cash_facts,public.financial_card_facts IN SHARE ROW EXCLUSIVE MODE; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('gi_gastos_soft_delete:'||p_user::text,0));
  SELECT * INTO op FROM public.whatsapp_reorganization_operations WHERE user_id=p_user AND phone_hash=encode(sha256(convert_to(regexp_replace(p_phone,'\D','','g'),'UTF8')),'hex')
  AND (position(':' IN p_action)=0 OR id=split_part(p_action,':',2)::uuid) ORDER BY created_at DESC,id DESC LIMIT 1 FOR UPDATE;
@@ -253,7 +253,7 @@ BEGIN
  IF op.restore_attempts>=5 THEN RETURN jsonb_build_object('status','blocked'); END IF;
  IF op.restore_expires_at IS NULL OR clock_timestamp()>=op.restore_expires_at THEN RETURN jsonb_build_object('status','expired'); END IF;
  IF op.status NOT IN('applied','partial') THEN RETURN jsonb_build_object('status','blocked'); END IF;
- LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries,public.cartoes,public.faturas_cartao,public.bancos,public.account_opening_balances IN SHARE ROW EXCLUSIVE MODE;
+ LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries,public.cartoes,public.faturas_cartao,public.bancos,public.account_opening_balances,public.financial_cash_facts,public.financial_card_facts IN SHARE ROW EXCLUSIVE MODE;
  PERFORM 1 FROM public.whatsapp_links WHERE user_id=p_user FOR SHARE;
  IF NOT coalesce(public.has_feature_access(p_user,'whatsapp'),false) OR NOT EXISTS(SELECT 1 FROM public.whatsapp_links l WHERE l.user_id=p_user AND l.ativo AND l.opt_in_em IS NOT NULL AND l.revogado_em IS NULL AND regexp_replace(l.telefone,'\D','','g')=regexp_replace(p_phone,'\D','','g')) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  IF public.wa_reorganization_card_snapshot(p_user,op.snapshot) IS DISTINCT FROM op.card_snapshot THEN RETURN jsonb_build_object('status','changed'); END IF;
