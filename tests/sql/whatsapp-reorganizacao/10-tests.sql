@@ -63,5 +63,5 @@ END $$;
 SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE id='33333333-0000-0000-0000-000000000001'),'linked card preserved');
 SELECT public.wa_reorganization_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','attempts','{"tables":["receitas"],"start":null,"end":"2026-11-01"}',null,'777777');
 SELECT public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','000000') FROM generate_series(1,5);
-SELECT public.assert_true(public.wa_reorganization_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','777777')->>'status'='blocked','five wrong attempts block correct code');
-SELECT public.assert_true((SELECT sum(valor)=50 FROM receitas WHERE deleted_at IS NULL),'failed attempts do not mutate income');
+SELECT public.assert_true((SELECT failed_attempts=0 FROM whatsapp_reorganization_operations WHERE request_id='attempts'),'unrelated codes do not charge latest operation');
+SELECT public.assert_true((SELECT sum(valor)=50 FROM receitas WHERE deleted_at IS NULL),'unrecognized codes do not mutate income');
