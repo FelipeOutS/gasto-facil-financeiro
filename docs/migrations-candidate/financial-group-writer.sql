@@ -14,6 +14,12 @@ GRANT SELECT ON public.financial_group_operations TO authenticated;
 GRANT ALL ON public.financial_group_operations TO service_role;
 ALTER TABLE public.financial_group_operations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY own_group_operations ON public.financial_group_operations FOR SELECT TO authenticated USING(user_id=auth.uid());
+CREATE FUNCTION public.financial_group_journal_guard() RETURNS trigger LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$ BEGIN
+ IF TG_OP<>'INSERT' OR current_user<>(SELECT pg_get_userbyid(relowner) FROM pg_class WHERE oid=TG_RELID) THEN RAISE EXCEPTION 'financial_group_journal_immutable'; END IF;
+ RETURN NEW;
+END $$;
+REVOKE ALL ON FUNCTION public.financial_group_journal_guard() FROM PUBLIC,anon,authenticated,service_role;
+CREATE TRIGGER financial_group_journal_guard BEFORE INSERT OR UPDATE OR DELETE ON public.financial_group_operations FOR EACH ROW EXECUTE FUNCTION public.financial_group_journal_guard();
 CREATE FUNCTION public.financial_group_write(p_owner uuid,p_operation uuid,p_generation bigint,p_kind text,p_rows jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE op public.financial_group_operations%ROWTYPE; item jsonb; row_json jsonb; result jsonb:='[]'; relation_name text; ordinal int:=0; cash_count int:=0;

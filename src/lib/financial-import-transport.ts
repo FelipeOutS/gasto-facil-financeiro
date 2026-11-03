@@ -12,7 +12,8 @@ export async function commitFinancialImport(rows: ImportRow[], read: ()=>Promise
   const before=await read();
   if(before.error) throw new Error(before.error);
   if(before.rows.length) { if(!same(before.rows)) throw new Error("financial_import_manifest_conflict"); return {replay:true}; }
-  const written=await insert();
+  let written: {error?:string};
+  try {written=await insert();} catch(error) {written={error:error instanceof Error?error.message:"financial_import_transport_failed"};}
   if(!written.error) return {replay:false};
   const after=await read();
   if(!after.error && same(after.rows)) return {replay:true};

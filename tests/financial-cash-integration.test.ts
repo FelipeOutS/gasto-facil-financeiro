@@ -6,6 +6,7 @@ import {writeFinancialGroup} from "../src/lib/financial-group-writer";
 const bank="aaaaaaaa-0000-0000-0000-000000000005";
 test("explicit bank + paid instant preserved independently of competence",()=>expect(financialCashColumns({financialBankId:bank,cashEffectiveAt:"2026-11-03T12:00:00-03:00"})).toEqual({financial_bank_id:bank,cash_effective_at:"2026-11-03T15:00:00.000Z"}));
 test("bank alone cannot fabricate receipt",()=>expect(()=>financialCashColumns({financialBankId:bank})).toThrow());
+test("invalid calendar settlement rejected without normalization",()=>expect(()=>financialCashColumns({financialBankId:bank,cashEffectiveAt:"2026-02-30T12:00:00Z"})).toThrow());
 test("credit expense never debits account",()=>expect(()=>financialCashColumns({financialBankId:bank,cashEffectiveAt:"2026-11-03T12:00:00Z"},{credit:true})).toThrow());
 test("recurring expansion never multiplies a received amount",()=>expect(()=>financialCashColumns({financialBankId:bank,cashEffectiveAt:"2026-11-03T12:00:00Z"},{generated:true})).toThrow());
 const raw=[{id:"a",user_id:"A",banco_id:bank,amount_cents:300000,effective_at:"2026-11-01T12:00:00Z",kind:"opening"},{id:"b",user_id:"A",banco_id:bank,amount_cents:200000,effective_at:"2026-11-03T12:00:00Z",kind:"adjustment"},{id:"future",user_id:"A",banco_id:bank,amount_cents:500000,effective_at:"2027-01-01T00:00:00Z",kind:"income_received"}];
