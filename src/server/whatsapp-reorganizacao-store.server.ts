@@ -23,7 +23,7 @@ export function createReorganizationStore(db: ReorganizationRpcClient): Reorgani
       const result = await db.rpc("wa_reorganization_authorized", { p_user: userId, p_phone: phone });
       return !result.error && result.data === true;
     },
-    prepare: (input, scope, income, code) => call("wa_reorganization_prepare", { ...identity(input), p_request: input.externalId, p_scope: scope, p_income: income, p_code: code }),
+    prepare: (input, scope, income, code, balance) => call("wa_reorganization_prepare", { ...identity(input), p_request: input.externalId, p_scope: scope, p_income: income, p_code: code, ...(balance ? { p_balance: balance } : {}) }),
     confirm: (input, code, operationId) => call("wa_reorganization_confirm", { ...identity(input), p_code: code, p_operation: operationId ?? null }),
     cancel: (input) => call("wa_reorganization_control", { ...identity(input), p_action: "cancel" }),
     status: (input) => call("wa_reorganization_control", { ...identity(input), p_action: "status" }),

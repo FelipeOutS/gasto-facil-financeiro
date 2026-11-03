@@ -1,12 +1,13 @@
 import { confirmationCode, operationConfirmation, interpretReorganization, randomConfirmationCode, type FinancialScope, type NewIncome } from "@/lib/whatsapp-reorganizacao";
+import type { OpeningBalanceRequest } from "@/lib/account-opening-balance";
 
 /** Preparation only. This gate cannot be enabled through caller input. */
 export const WHATSAPP_REORGANIZACAO_RELEASE_AUTHORIZED = false;
 export type ReorganizationInput = { userId: string; phone: string; externalId: string; text: string; localDate: string; pendingSession: boolean };
-export type ReorganizationResult = { status: string; expenses?: number; incomes?: number; kept?: number; incomeId?: string | null; operationId?: string; code?: string; expiresAt?: string; totalExpenses?: number; totalIncomes?: number; scope?: FinancialScope; income?: NewIncome | null };
+export type ReorganizationResult = { status: string; expenses?: number; incomes?: number; kept?: number; incomeId?: string | null; operationId?: string; code?: string; expiresAt?: string; totalExpenses?: number; totalIncomes?: number; scope?: FinancialScope; income?: NewIncome | null; openingBalance?: OpeningBalanceRequest | null; balanceId?: string | null };
 export interface ReorganizationStore {
   authorize(userId: string, phone: string): Promise<boolean>;
-  prepare(input: ReorganizationInput, scope: FinancialScope, income: NewIncome | null, code: string): Promise<ReorganizationResult>;
+  prepare(input: ReorganizationInput, scope: FinancialScope, income: NewIncome | null, code: string, balance?: OpeningBalanceRequest): Promise<ReorganizationResult>;
   confirm(input: ReorganizationInput, code: string, operationId?: string): Promise<ReorganizationResult>;
   cancel(input: ReorganizationInput): Promise<ReorganizationResult>;
   status(input: ReorganizationInput): Promise<ReorganizationResult>;
@@ -20,9 +21,9 @@ function response(result: ReorganizationResult): string {
   if (result.status === "restore_preview" && result.operationId && result.code) return `Prévia de restauração do lote ${result.operationId}: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas. Registros alterados ou com novos vínculos serão preservados. A receita criada pela limpeza será desfeita somente se permanecer intacta.\nConfirme com RESTAURAR ${result.operationId} ${result.code}. Válido até ${result.expiresAt}. Nada foi restaurado.`;
   if (result.status === "preview" && result.code && result.expiresAt) {
     const scope = result.scope;
-    return `Prévia de exclusão reversível: ${result.expenses ?? 0} gastos (${money(result.totalExpenses ?? 0)}) e ${result.incomes ?? 0} receitas (${money(result.totalIncomes ?? 0)}).\nPeríodo: ${scope?.start ?? "início do histórico"} até ${scope?.end ? `${scope.end} (não incluído)` : "fim do histórico"}.${result.income ? `\nDepois da limpeza: ${result.income.descricao}, ${money(result.income.valor)}, ${result.income.data}.` : ""}\nOs registros serão preservados para restauração, sem apagamento físico.\nTitular validado pelo número vinculado. Lote: ${result.operationId ?? "não informado"}.\nPara confirmar, envie APAGAR ${result.operationId ? `${result.operationId} ` : ""}${result.code}. Validade: cinco minutos, até ${result.expiresAt}. Ou envie cancelar a limpeza. Nada foi alterado.`;
+    return `Prévia de exclusão reversível: ${result.expenses ?? 0} gastos (${money(result.totalExpenses ?? 0)}) e ${result.incomes ?? 0} receitas (${money(result.totalIncomes ?? 0)}).\nPeríodo: ${scope?.start ?? "início do histórico"} até ${scope?.end ? `${scope.end} (não incluído)` : "fim do histórico"}.${result.income ? `\nDepois da limpeza: ${result.income.descricao}, ${money(result.income.valor)}, ${result.income.data}.` : ""}${result.openingBalance ? `\nSaldo informado: ${result.openingBalance.accountName}, ${money(result.openingBalance.amountCents / 100)}, em ${result.openingBalance.effectiveDate} (fim do dia). Não é receita. Limpeza e saldo serão gravados juntos ou não serão gravados.` : ""}\nOs registros serão preservados para restauração, sem apagamento físico.\nTitular validado pelo número vinculado. Lote: ${result.operationId ?? "não informado"}.\nPara confirmar, envie APAGAR ${result.operationId ? `${result.operationId} ` : ""}${result.code}. Validade: cinco minutos, até ${result.expiresAt}. Ou envie cancelar a limpeza. Nada foi alterado.`;
   }
-  if (result.status === "applied") return `Reorganização concluída: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas excluídos reversivelmente.${result.incomeId ? " A nova receita foi cadastrada na mesma operação." : ""}\nPara solicitar restauração, envie restaurar limpeza ${result.operationId ?? "e o identificador do lote"}. As telas refletirão os dados ao atualizar ou reconectar.`;
+  if (result.status === "applied") return `Reorganização concluída: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas excluídos reversivelmente.${result.incomeId ? " A nova receita foi cadastrada na mesma operação." : ""}${result.balanceId ? " O saldo informado foi registrado na mesma operação, sem criar receita." : ""}\nPara solicitar restauração, envie restaurar limpeza ${result.operationId ?? "e o identificador do lote"}. As telas refletirão os dados ao atualizar ou reconectar.`;
   if (result.status === "replay") return "Essa operação já foi concluída. Nenhum lançamento foi excluído ou cadastrado novamente.";
   if (result.status === "restored" || result.status === "partial") return `Restauração ${result.status === "partial" ? "parcial" : "concluída"}: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas restaurados; ${result.kept ?? 0} registros com alterações posteriores foram preservados.`;
   if (result.status === "cancelled") return "Solicitação cancelada. A limpeza não foi executada.";
@@ -51,7 +52,8 @@ export async function runReorganization(input: ReorganizationInput, store: Reorg
     if (intent.kind === "ignore") return null;
     if (intent.kind === "clarify") return intent.question;
     if (intent.kind === "unsupported_balance") return "Saldo inicial de conta ainda não tem suporte contábil neste fluxo. Não vou transformar esse saldo em receita. Nenhum valor foi cadastrado.";
-    return response(await store.prepare(input, intent.scope, intent.income, randomConfirmationCode()));
+    if (intent.kind === "balance") return response(await store.prepare(input, { tables: [], start: null, end: null }, null, randomConfirmationCode(), intent.balance));
+    return response(await store.prepare(input, intent.scope, intent.income, randomConfirmationCode(), intent.openingBalance));
   } catch {
     return "Não consegui confirmar o resultado. Não repita a operação: envie consultar limpeza para conferir o resultado registrado.";
   }
@@ -63,6 +65,6 @@ export function blockedReorganizationReply(text: string, pendingSession: boolean
   const control = /^(apagar\s+(?:[\da-f-]+\s+)?\d+|restaurar\s+[\da-f-]+\s+\d+|consultar limpeza|restaurar( a)? limpeza(?:\s+[\da-f-]+)?|cancel(?:ar|a)( a)? limpeza)[.!]?$/i.test(text.trim());
   if (intent.kind === "ignore" && !control) return null;
   if (pendingSession) return "Há outra solicitação pendente. Conclua ou cancele essa solicitação antes da limpeza. Nenhum valor deste pedido foi cadastrado.";
-  if (intent.kind === "unsupported_balance") return "Saldo inicial não é receita e ainda não é suportado neste fluxo. Nenhum valor foi cadastrado.";
+  if (intent.kind === "unsupported_balance" || intent.kind === "balance") return "Saldo de conta não é receita. A atualização por este fluxo ainda está bloqueada; nenhum valor foi cadastrado.";
   return unavailable;
 }
