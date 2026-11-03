@@ -37,6 +37,7 @@ export function syncAllIncomesForUser(
               item.local_id,
               actorId,
               signal,
+              item.financial_generation,
             );
             if (signal.aborted) return; // leave the lease recoverable after a timeout
             if (!result.ok) throw new Error(result.error || "Falha ao sincronizar");
