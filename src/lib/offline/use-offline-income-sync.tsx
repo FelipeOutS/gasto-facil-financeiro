@@ -25,6 +25,7 @@ export function syncAllIncomesForUser(
     let synced = 0,
       failed = 0;
     for (const candidate of await listIncomes(actorId, actorId, true)) {
+      if (candidate.technical_error?.includes("financial_generation_stale_review_required")) continue;
       if (typeof navigator !== "undefined" && navigator.onLine === false) break;
       try {
         await withSyncAttempt("gf:income:" + candidate.local_id, async (signal) => {
@@ -37,6 +38,7 @@ export function syncAllIncomesForUser(
               item.local_id,
               actorId,
               signal,
+              item.financial_generation,
             );
             if (signal.aborted) return; // leave the lease recoverable after a timeout
             if (!result.ok) throw new Error(result.error || "Falha ao sincronizar");

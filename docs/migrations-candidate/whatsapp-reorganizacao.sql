@@ -26,6 +26,7 @@ CREATE TABLE public.whatsapp_reorganization_operations (
  status text NOT NULL DEFAULT 'preview' CHECK(status IN('preview','applied','cancelled','changed','expired','restored','partial')),
  deleted_stamp timestamptz, after_snapshot jsonb, income_id uuid,
  income_after jsonb, result jsonb, restore_result jsonb,
+ restore_code_hash text, restore_expires_at timestamptz, restore_attempts int NOT NULL DEFAULT 0,
  created_at timestamptz NOT NULL DEFAULT now(), completed_at timestamptz,
  UNIQUE(user_id,request_id)
 );
@@ -42,6 +43,21 @@ RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=pg_catalog,
  AND l.opt_in_em IS NOT NULL AND l.revogado_em IS NULL
  AND regexp_replace(l.telefone,'\D','','g')=regexp_replace(p_phone,'\D','','g'))
 $$;
+
+-- Known financial reverse edges: never unlink/reconstruct these during generic cleanup.
+CREATE FUNCTION public.wa_reorganization_has_dependency(p_entry uuid,p_table text)
+RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE relation_name text; linked boolean; target_column text;
+BEGIN
+ target_column:=CASE WHEN p_table='gastos' THEN 'gasto_id' ELSE 'receita_id' END;
+ FOREACH relation_name IN ARRAY ARRAY['bens_pagamentos','bens_custos_aquisicao','bens_amortizacoes','contas_a_pagar','contas_a_receber'] LOOP
+ IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name=relation_name AND information_schema.columns.column_name=target_column) THEN
+ EXECUTE format('SELECT EXISTS(SELECT 1 FROM public.%I WHERE %I=$1)',relation_name,target_column) INTO linked USING p_entry;
+ IF linked THEN RETURN true; END IF; END IF;
+ END LOOP;
+ RETURN EXISTS(SELECT 1 FROM public.pluggy_import_entries e WHERE e.entry_id=p_entry);
+END $$;
+REVOKE ALL ON FUNCTION public.wa_reorganization_has_dependency(uuid,text) FROM PUBLIC,anon,authenticated;
 
 -- Full-row snapshot: caller never supplies IDs. Unknown/linked entries block the whole scope.
 CREATE FUNCTION public.wa_reorganization_snapshot(p_user uuid,p_scope jsonb)
@@ -74,7 +90,7 @@ BEGIN
  OR item->'row'->>'forma_pagamento'='credito'
  OR coalesce(item->'row'->>'origem','') IN('pluggy','open_finance','extrato','mercadopago','mercado_pago')
  OR EXISTS(SELECT 1 FROM public.contas_a_pagar c WHERE c.gasto_id=(item->'row'->>'id')::uuid)
- OR EXISTS(SELECT 1 FROM public.pluggy_import_entries e WHERE e.entry_id=(item->'row'->>'id')::uuid)
+ OR public.wa_reorganization_has_dependency((item->'row'->>'id')::uuid,item->>'table')
  ) THEN RAISE EXCEPTION 'linked_scope_blocked'; END IF;
  RETURN rows;
 END $$;
@@ -111,20 +127,22 @@ BEGIN
  RETURN result;
 END $$;
 
-CREATE FUNCTION public.wa_reorganization_confirm(p_user uuid,p_phone text,p_code text)
+CREATE FUNCTION public.wa_reorganization_confirm(p_user uuid,p_phone text,p_code text,p_operation uuid DEFAULT NULL)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE op public.whatsapp_reorganization_operations%ROWTYPE; stamp timestamptz; snap jsonb; after_snap jsonb; ng int; nr int; created_income jsonb;
 BEGIN
+ IF p_operation IS NULL THEN RETURN jsonb_build_object('status','wrong_code'); END IF;
  IF NOT public.wa_reorganization_authorized(p_user,p_phone) THEN RETURN jsonb_build_object('status','blocked'); END IF;
+ -- Table lock must precede owner advisory lock: INSERT takes its table lock before its trigger.
+ LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries IN SHARE ROW EXCLUSIVE MODE;
  PERFORM pg_advisory_xact_lock(hashtextextended('gi_gastos_soft_delete:'||p_user::text,0));
  SELECT * INTO op FROM public.whatsapp_reorganization_operations WHERE user_id=p_user
  AND phone_hash=encode(sha256(convert_to(regexp_replace(p_phone,'\D','','g'),'UTF8')),'hex')
- AND code_hash=encode(sha256(convert_to(p_user::text||encode(sha256(convert_to(regexp_replace(p_phone,'\D','','g'),'UTF8')),'hex')||p_code,'UTF8')),'hex')
+ AND id=p_operation
  ORDER BY created_at DESC,id DESC LIMIT 1 FOR UPDATE;
  IF NOT FOUND THEN
  -- Unrecognized codes cannot charge attempts against an unrelated latest request.
  RETURN jsonb_build_object('status','wrong_code'); END IF;
- IF NOT FOUND THEN RETURN jsonb_build_object('status','blocked'); END IF;
  IF op.status='applied' THEN RETURN op.result||jsonb_build_object('status','replay'); END IF;
  IF op.failed_attempts>=5 THEN RETURN jsonb_build_object('status','blocked'); END IF;
  IF p_code IS NULL OR p_code !~ '^\d{6}$' OR op.code_hash<>encode(sha256(convert_to(p_user::text||op.phone_hash||p_code,'UTF8')),'hex') THEN
@@ -143,6 +161,8 @@ BEGIN
  IF snap<>op.snapshot THEN UPDATE public.whatsapp_reorganization_operations SET status='changed' WHERE id=op.id; RETURN jsonb_build_object('status','changed'); END IF;
  IF NOT public.wa_reorganization_authorized(p_user,p_phone) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  stamp:=clock_timestamp();
+ IF to_regclass('public.financial_write_generations') IS NULL THEN RAISE EXCEPTION 'financial_generation_required'; END IF;
+ PERFORM set_config('gi.reorganization_mutation','on',true);
  PERFORM set_config('gi.gastos_soft_delete','on',true);
  UPDATE public.gastos SET deleted_at=stamp,deleted_by=p_user,deletion_batch_id=op.id,deletion_source='whatsapp_periodo',updated_at=stamp
  WHERE user_id=p_user AND id IN(SELECT (x->'row'->>'id')::uuid FROM jsonb_array_elements(snap) x WHERE x->>'table'='gastos');
@@ -161,6 +181,8 @@ BEGIN
  VALUES(op.income_id,p_user,op.income->>'descricao',(op.income->>'valor')::numeric,(op.income->>'data')::date,op.income->>'tipo',extract(month FROM (op.income->>'data')::date),extract(year FROM (op.income->>'data')::date),'whatsapp');
  SELECT to_jsonb(r) INTO created_income FROM public.receitas r WHERE r.id=op.income_id AND r.user_id=p_user;
  END IF;
+ INSERT INTO public.financial_write_generations(user_id,generation) VALUES(p_user,1) ON CONFLICT(user_id) DO UPDATE SET generation=financial_write_generations.generation+1;
+ PERFORM set_config('gi.reorganization_mutation','off',true);
  op.result:=jsonb_build_object('status','applied','operationId',op.id,'expenses',ng,'incomes',nr,'incomeId',op.income_id);
  UPDATE public.whatsapp_reorganization_operations SET status='applied',deleted_stamp=stamp,after_snapshot=after_snap,
  income_id=op.income_id,income_after=created_income,result=op.result,completed_at=clock_timestamp() WHERE id=op.id;
@@ -169,13 +191,33 @@ BEGIN
  RETURN op.result;
 END $$;
 
+CREATE FUNCTION public.wa_reorganization_restore_prepare(p_user uuid,p_phone text,p_operation uuid,p_code text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE op public.whatsapp_reorganization_operations%ROWTYPE; ph text;
+BEGIN
+ IF p_code IS NULL OR p_code !~ '^\d{6}$' THEN RETURN jsonb_build_object('status','blocked'); END IF;
+ IF NOT coalesce(public.has_feature_access(p_user,'whatsapp'),false) OR NOT EXISTS(SELECT 1 FROM public.whatsapp_links l WHERE l.user_id=p_user AND l.ativo AND l.opt_in_em IS NOT NULL AND l.revogado_em IS NULL AND regexp_replace(l.telefone,'\D','','g')=regexp_replace(p_phone,'\D','','g')) THEN RETURN jsonb_build_object('status','blocked'); END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended('gi_gastos_soft_delete:'||p_user::text,0));
+ ph:=encode(sha256(convert_to(regexp_replace(p_phone,'\D','','g'),'UTF8')),'hex');
+ SELECT * INTO op FROM public.whatsapp_reorganization_operations WHERE id=p_operation AND user_id=p_user AND phone_hash=ph FOR UPDATE;
+ IF NOT FOUND OR op.status NOT IN('applied','partial') THEN RETURN jsonb_build_object('status','blocked'); END IF;
+ UPDATE public.whatsapp_reorganization_operations SET restore_code_hash=encode(sha256(convert_to(op.id::text||p_user::text||ph||p_code,'UTF8')),'hex'),restore_expires_at=clock_timestamp()+interval '5 minutes',restore_attempts=0 WHERE id=op.id RETURNING * INTO op;
+ RETURN jsonb_build_object('status','restore_preview','operationId',op.id,'code',p_code,'expiresAt',op.restore_expires_at,
+ 'expenses',(SELECT count(*) FROM jsonb_array_elements(op.after_snapshot) x WHERE x->>'table'='gastos'),
+ 'incomes',(SELECT count(*) FROM jsonb_array_elements(op.after_snapshot) x WHERE x->>'table'='receitas'));
+END $$;
+REVOKE ALL ON FUNCTION public.wa_reorganization_restore_prepare(uuid,text,uuid,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.wa_reorganization_restore_prepare(uuid,text,uuid,text) TO service_role;
+
 CREATE FUNCTION public.wa_reorganization_control(p_user uuid,p_phone text,p_action text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE op public.whatsapp_reorganization_operations%ROWTYPE; x jsonb; r jsonb; ng int:=0; nr int:=0; kept int:=0;
 BEGIN
  -- Pause must not prevent inspecting or restoring an already completed own operation.
  IF NOT coalesce(public.has_feature_access(p_user,'whatsapp'),false) OR NOT EXISTS(SELECT 1 FROM public.whatsapp_links l WHERE l.user_id=p_user AND l.ativo AND l.opt_in_em IS NOT NULL AND l.revogado_em IS NULL AND regexp_replace(l.telefone,'\D','','g')=regexp_replace(p_phone,'\D','','g')) THEN RETURN jsonb_build_object('status','blocked'); END IF;
- IF p_action NOT IN('status','cancel','restore') AND p_action NOT LIKE 'restore:%' AND p_action NOT LIKE 'status:%' OR p_action IS NULL THEN RAISE EXCEPTION 'invalid_action'; END IF;
+ IF p_action='restore' OR (p_action LIKE 'restore:%' AND array_length(string_to_array(p_action,':'),1)<>3) THEN RETURN jsonb_build_object('status','blocked'); END IF;
+ IF p_action NOT IN('status','cancel') AND p_action NOT LIKE 'restore:%' AND p_action NOT LIKE 'status:%' OR p_action IS NULL THEN RAISE EXCEPTION 'invalid_action'; END IF;
+ IF p_action LIKE 'restore:%' THEN LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries IN SHARE ROW EXCLUSIVE MODE; END IF;
  PERFORM pg_advisory_xact_lock(hashtextextended('gi_gastos_soft_delete:'||p_user::text,0));
  SELECT * INTO op FROM public.whatsapp_reorganization_operations WHERE user_id=p_user AND phone_hash=encode(sha256(convert_to(regexp_replace(p_phone,'\D','','g'),'UTF8')),'hex')
  AND (position(':' IN p_action)=0 OR id=split_part(p_action,':',2)::uuid) ORDER BY created_at DESC,id DESC LIMIT 1 FOR UPDATE;
@@ -184,16 +226,21 @@ BEGIN
  IF p_action='cancel' THEN
  IF op.status<>'preview' THEN RETURN coalesce(op.result,jsonb_build_object('status',op.status)); END IF;
  UPDATE public.whatsapp_reorganization_operations SET status='cancelled' WHERE id=op.id; RETURN jsonb_build_object('status','cancelled'); END IF;
+ IF split_part(p_action,':',3) !~ '^\d{6}$' OR op.restore_code_hash IS DISTINCT FROM encode(sha256(convert_to(op.id::text||p_user::text||op.phone_hash||split_part(p_action,':',3),'UTF8')),'hex') THEN
+ UPDATE public.whatsapp_reorganization_operations SET restore_attempts=least(restore_attempts+1,5) WHERE id=op.id; RETURN jsonb_build_object('status','wrong_code'); END IF;
  IF op.status='restored' THEN RETURN op.restore_result||jsonb_build_object('status','replay'); END IF;
+ IF op.restore_attempts>=5 THEN RETURN jsonb_build_object('status','blocked'); END IF;
+ IF op.restore_expires_at IS NULL OR clock_timestamp()>=op.restore_expires_at THEN RETURN jsonb_build_object('status','expired'); END IF;
  IF op.status NOT IN('applied','partial') THEN RETURN jsonb_build_object('status','blocked'); END IF;
  LOCK TABLE public.gastos,public.receitas,public.contas_a_pagar,public.pluggy_import_entries IN SHARE ROW EXCLUSIVE MODE;
  PERFORM 1 FROM public.whatsapp_links WHERE user_id=p_user FOR SHARE;
  IF NOT coalesce(public.has_feature_access(p_user,'whatsapp'),false) OR NOT EXISTS(SELECT 1 FROM public.whatsapp_links l WHERE l.user_id=p_user AND l.ativo AND l.opt_in_em IS NOT NULL AND l.revogado_em IS NULL AND regexp_replace(l.telefone,'\D','','g')=regexp_replace(p_phone,'\D','','g')) THEN RETURN jsonb_build_object('status','blocked'); END IF;
+ PERFORM set_config('gi.reorganization_mutation','on',true);
  -- Full after snapshots preserve edits. Only own exact deletion stamp may be reversed.
  FOR x IN SELECT value FROM jsonb_array_elements(op.after_snapshot) LOOP
  r:=NULL;
  IF EXISTS(SELECT 1 FROM public.contas_a_pagar c WHERE c.gasto_id=(x->'row'->>'id')::uuid)
- OR EXISTS(SELECT 1 FROM public.pluggy_import_entries e WHERE e.entry_id=(x->'row'->>'id')::uuid) THEN kept:=kept+1; CONTINUE; END IF;
+ OR public.wa_reorganization_has_dependency((x->'row'->>'id')::uuid,x->>'table') THEN kept:=kept+1; CONTINUE; END IF;
  IF x->>'table'='gastos' THEN
  SELECT to_jsonb(g) INTO r FROM public.gastos g WHERE g.user_id=p_user AND g.id=(x->'row'->>'id')::uuid FOR UPDATE;
  IF r IS DISTINCT FROM x->'row' OR (r->>'deleted_at')::timestamptz IS DISTINCT FROM op.deleted_stamp THEN kept:=kept+1; CONTINUE; END IF;
@@ -206,13 +253,16 @@ BEGIN
  UPDATE public.receitas SET deleted_at=NULL,deleted_source=NULL,deleted_reason=NULL,updated_at=clock_timestamp() WHERE id=(r->>'id')::uuid AND user_id=p_user; nr:=nr+1;
  END IF;
  END LOOP;
- IF op.income_id IS NOT NULL AND kept=0 THEN
+ IF op.income_id IS NOT NULL THEN
  SELECT to_jsonb(t) INTO r FROM public.receitas t WHERE t.id=op.income_id AND t.user_id=p_user FOR UPDATE;
- IF r=op.income_after AND NOT EXISTS(SELECT 1 FROM public.pluggy_import_entries e WHERE e.entry_id=op.income_id) THEN UPDATE public.receitas SET deleted_at=clock_timestamp(),deleted_source='whatsapp',deleted_reason='reorganizacao_desfeita:'||op.id,updated_at=clock_timestamp() WHERE id=op.income_id AND user_id=p_user;
+ IF r->>'deleted_reason'='reorganizacao_desfeita:'||op.id THEN NULL;
+ ELSIF r=op.income_after AND NOT public.wa_reorganization_has_dependency(op.income_id,'receitas') AND r->>'recorrencia_id' IS NULL AND r->>'import_batch_id' IS NULL THEN UPDATE public.receitas SET deleted_at=clock_timestamp(),deleted_source='whatsapp',deleted_reason='reorganizacao_desfeita:'||op.id,updated_at=clock_timestamp() WHERE id=op.income_id AND user_id=p_user;
  ELSE kept:=kept+1; END IF;
  END IF;
+ PERFORM set_config('gi.reorganization_mutation','off',true);
  op.restore_result:=jsonb_build_object('status',CASE WHEN kept>0 THEN 'partial' ELSE 'restored' END,'operationId',op.id,'expenses',ng,'incomes',nr,'kept',kept);
  UPDATE public.whatsapp_reorganization_operations SET status=CASE WHEN kept>0 THEN 'partial' ELSE 'restored' END,restore_result=op.restore_result,
+ restore_expires_at=NULL,
  after_snapshot=CASE WHEN kept>0 THEN (SELECT coalesce(jsonb_agg(s),'[]') FROM jsonb_array_elements(op.after_snapshot) s WHERE
  (s->>'table'='gastos' AND EXISTS(SELECT 1 FROM gastos g WHERE g.user_id=p_user AND g.id=(s->'row'->>'id')::uuid AND g.deleted_at=op.deleted_stamp)) OR
  (s->>'table'='receitas' AND EXISTS(SELECT 1 FROM receitas r WHERE r.user_id=p_user AND r.id=(s->'row'->>'id')::uuid AND r.deleted_at=op.deleted_stamp))) ELSE after_snapshot END WHERE id=op.id;
@@ -221,6 +271,6 @@ BEGIN
  RETURN op.restore_result;
 END $$;
 
-REVOKE ALL ON FUNCTION public.wa_reorganization_authorized(uuid,text),public.wa_reorganization_snapshot(uuid,jsonb),public.wa_reorganization_prepare(uuid,text,text,jsonb,jsonb,text),public.wa_reorganization_confirm(uuid,text,text),public.wa_reorganization_control(uuid,text,text) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.wa_reorganization_authorized(uuid,text),public.wa_reorganization_prepare(uuid,text,text,jsonb,jsonb,text),public.wa_reorganization_confirm(uuid,text,text),public.wa_reorganization_control(uuid,text,text) TO service_role;
+REVOKE ALL ON FUNCTION public.wa_reorganization_authorized(uuid,text),public.wa_reorganization_snapshot(uuid,jsonb),public.wa_reorganization_prepare(uuid,text,text,jsonb,jsonb,text),public.wa_reorganization_confirm(uuid,text,text,uuid),public.wa_reorganization_control(uuid,text,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.wa_reorganization_authorized(uuid,text),public.wa_reorganization_prepare(uuid,text,text,jsonb,jsonb,text),public.wa_reorganization_confirm(uuid,text,text,uuid),public.wa_reorganization_control(uuid,text,text) TO service_role;
 COMMIT;

@@ -1,4 +1,4 @@
-import { confirmationCode, interpretReorganization, randomConfirmationCode, type FinancialScope, type NewIncome } from "@/lib/whatsapp-reorganizacao";
+import { confirmationCode, operationConfirmation, interpretReorganization, randomConfirmationCode, type FinancialScope, type NewIncome } from "@/lib/whatsapp-reorganizacao";
 
 /** Preparation only. This gate cannot be enabled through caller input. */
 export const WHATSAPP_REORGANIZACAO_RELEASE_AUTHORIZED = false;
@@ -7,21 +7,24 @@ export type ReorganizationResult = { status: string; expenses?: number; incomes?
 export interface ReorganizationStore {
   authorize(userId: string, phone: string): Promise<boolean>;
   prepare(input: ReorganizationInput, scope: FinancialScope, income: NewIncome | null, code: string): Promise<ReorganizationResult>;
-  confirm(input: ReorganizationInput, code: string): Promise<ReorganizationResult>;
+  confirm(input: ReorganizationInput, code: string, operationId?: string): Promise<ReorganizationResult>;
   cancel(input: ReorganizationInput): Promise<ReorganizationResult>;
   status(input: ReorganizationInput): Promise<ReorganizationResult>;
   restore(input: ReorganizationInput): Promise<ReorganizationResult>;
+  prepareRestore?(input: ReorganizationInput, operationId: string, code: string): Promise<ReorganizationResult>;
+  confirmRestore?(input: ReorganizationInput, operationId: string, code: string): Promise<ReorganizationResult>;
 }
 const unavailable = "A reorganização financeira em massa ainda está bloqueada. Não executei limpeza nem cadastrei valores deste pedido.";
 const money = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 function response(result: ReorganizationResult): string {
+  if (result.status === "restore_preview" && result.operationId && result.code) return `Prévia de restauração do lote ${result.operationId}: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas. Registros alterados ou com novos vínculos serão preservados. A receita criada pela limpeza será desfeita somente se permanecer intacta.\nConfirme com RESTAURAR ${result.operationId} ${result.code}. Válido até ${result.expiresAt}. Nada foi restaurado.`;
   if (result.status === "preview" && result.code && result.expiresAt) {
     const scope = result.scope;
-    return `Prévia de exclusão reversível: ${result.expenses ?? 0} gastos (${money(result.totalExpenses ?? 0)}) e ${result.incomes ?? 0} receitas (${money(result.totalIncomes ?? 0)}).\nPeríodo: ${scope?.start ?? "início do histórico"} até ${scope?.end ? `${scope.end} (não incluído)` : "fim do histórico"}.${result.income ? `\nDepois da limpeza: ${result.income.descricao}, ${money(result.income.valor)}, ${result.income.data}.` : ""}\nOs registros serão preservados para restauração, sem apagamento físico.\nPara confirmar, envie APAGAR ${result.code}. Validade: cinco minutos, até ${result.expiresAt}. Ou envie cancelar a limpeza. Nada foi alterado.`;
+    return `Prévia de exclusão reversível: ${result.expenses ?? 0} gastos (${money(result.totalExpenses ?? 0)}) e ${result.incomes ?? 0} receitas (${money(result.totalIncomes ?? 0)}).\nPeríodo: ${scope?.start ?? "início do histórico"} até ${scope?.end ? `${scope.end} (não incluído)` : "fim do histórico"}.${result.income ? `\nDepois da limpeza: ${result.income.descricao}, ${money(result.income.valor)}, ${result.income.data}.` : ""}\nOs registros serão preservados para restauração, sem apagamento físico.\nTitular validado pelo número vinculado. Lote: ${result.operationId ?? "não informado"}.\nPara confirmar, envie APAGAR ${result.operationId ? `${result.operationId} ` : ""}${result.code}. Validade: cinco minutos, até ${result.expiresAt}. Ou envie cancelar a limpeza. Nada foi alterado.`;
   }
-  if (result.status === "applied") return `Reorganização concluída: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas excluídos reversivelmente.${result.incomeId ? " A nova receita foi cadastrada na mesma operação." : ""}\nPara solicitar restauração, envie restaurar a limpeza. As telas refletirão os dados ao atualizar ou reconectar.`;
+  if (result.status === "applied") return `Reorganização concluída: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas excluídos reversivelmente.${result.incomeId ? " A nova receita foi cadastrada na mesma operação." : ""}\nPara solicitar restauração, envie restaurar limpeza ${result.operationId ?? "e o identificador do lote"}. As telas refletirão os dados ao atualizar ou reconectar.`;
   if (result.status === "replay") return "Essa operação já foi concluída. Nenhum lançamento foi excluído ou cadastrado novamente.";
-  if (result.status === "restored") return `Restauração concluída: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas restaurados; ${result.kept ?? 0} registros com alterações posteriores foram preservados.`;
+  if (result.status === "restored" || result.status === "partial") return `Restauração ${result.status === "partial" ? "parcial" : "concluída"}: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas restaurados; ${result.kept ?? 0} registros com alterações posteriores foram preservados.`;
   if (result.status === "cancelled") return "Solicitação cancelada. A limpeza não foi executada.";
   if (result.status === "changed") return "Os registros mudaram desde a prévia. A operação não foi executada; solicite uma nova prévia e confirmação.";
   if (result.status === "expired") return "O código expirou. A operação não foi executada; solicite uma nova prévia.";
@@ -36,10 +39,14 @@ export async function runReorganization(input: ReorganizationInput, store: Reorg
     if (!await store.authorize(input.userId, input.phone)) return "Não foi possível validar seu vínculo e sua autorização. A operação não foi executada.";
     if (input.pendingSession) return "Há outra solicitação pendente. Conclua ou cancele essa solicitação antes de iniciar uma limpeza; nenhum valor deste pedido foi cadastrado.";
     const code = confirmationCode(input.text);
-    if (code) return response(await store.confirm(input, code));
+    if (code) return response(await store.confirm(input, code, operationConfirmation(input.text, "APAGAR")?.operationId));
+    const restoreConfirmation = operationConfirmation(input.text, "RESTAURAR");
+    if (restoreConfirmation) return store.confirmRestore ? response(await store.confirmRestore(input, restoreConfirmation.operationId, restoreConfirmation.code)) : unavailable;
+    const restoreRequest = /^restaurar(?: a)? limpeza\s+([\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12})$/i.exec(input.text.trim());
+    if (restoreRequest) return store.prepareRestore ? response(await store.prepareRestore(input, restoreRequest[1], randomConfirmationCode())) : unavailable;
     if (/^(cancelar|cancela)( a)? limpeza[.!]?$/i.test(input.text.trim())) return response(await store.cancel(input));
     if (/^consultar limpeza[.!]?$/i.test(input.text.trim())) return response(await store.status(input));
-    if (/^restaurar( a)? limpeza[.!]?$/i.test(input.text.trim())) return "A restauração precisa de prévia própria e confirmação exclusiva, pois também pode desfazer a nova receita. Esse passo ainda está bloqueado; nenhum registro foi restaurado.";
+    if (/^restaurar( a)? limpeza[.!]?$/i.test(input.text.trim())) return "Informe restaurar limpeza e o identificador exato do lote. Vou preparar uma prévia e um código exclusivo; nenhum registro foi restaurado.";
     const intent = interpretReorganization(input.text, input.localDate);
     if (intent.kind === "ignore") return null;
     if (intent.kind === "clarify") return intent.question;
@@ -53,7 +60,7 @@ export async function runReorganization(input: ReorganizationInput, store: Reorg
 /** Intercepts destructive/compound requests, without database calls while locked. */
 export function blockedReorganizationReply(text: string, pendingSession: boolean): string | null {
   const intent = interpretReorganization(text, "2000-01-01");
-  const control = /^(apagar\s+\d+|consultar limpeza|restaurar( a)? limpeza|cancel(?:ar|a)( a)? limpeza)[.!]?$/i.test(text.trim());
+  const control = /^(apagar\s+(?:[\da-f-]+\s+)?\d+|restaurar\s+[\da-f-]+\s+\d+|consultar limpeza|restaurar( a)? limpeza(?:\s+[\da-f-]+)?|cancel(?:ar|a)( a)? limpeza)[.!]?$/i.test(text.trim());
   if (intent.kind === "ignore" && !control) return null;
   if (pendingSession) return "Há outra solicitação pendente. Conclua ou cancele essa solicitação antes da limpeza. Nenhum valor deste pedido foi cadastrado.";
   if (intent.kind === "unsupported_balance") return "Saldo inicial não é receita e ainda não é suportado neste fluxo. Nenhum valor foi cadastrado.";

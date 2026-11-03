@@ -2388,6 +2388,7 @@ export async function addGastoAwait(
   offlineClientId?: string,
   actorId = userId,
   signal = new AbortController().signal,
+  financialGeneration?: number | null,
 ): Promise<{ ok: boolean; error?: string; duplicate?: boolean }> {
   const generation = userSessionGeneration;
   const authError = await authorizeOfflineWrite(userId, actorId, signal) ?? await validateOwnerReferences(userId, input, signal);
@@ -2398,12 +2399,13 @@ export async function addGastoAwait(
   if (!validateFinancialAmount(input.valor).ok) return { ok: false, error: "Valor inválido." };
   const built = buildGastosFromInput(input, userId, key => categoryMap.get(key) ?? (categories?.some(row => row.id === key) ? key : null));
   const rows = built.map((b, index) => {
-    const row = b.row as GastoInsert & { offline_client_id?: string | null };
+    const row = b.row as GastoInsert & { offline_client_id?: string | null; offline_generation?: number };
     if (offlineClientId) row.offline_client_id = offlineRowKey(offlineClientId, index);
+    if (offlineClientId && financialGeneration !== undefined && financialGeneration !== null) row.offline_generation = financialGeneration;
     return row;
   });
   const insert = async () => {
-    const { error } = await supabase.from("gastos").insert(rows).abortSignal(signal);
+    const { error } = await supabase.from("gastos").insert(rows as GastoInsert[]).abortSignal(signal);
     return { error: error?.message, code: error?.code };
   };
   const result = offlineClientId ? await persistOfflineRows(rows, async () => {
@@ -3000,6 +3002,7 @@ export async function addReceitaAwait(
   offlineClientId?: string,
   actorId = userId,
   signal = new AbortController().signal,
+  financialGeneration?: number | null,
 ): Promise<{ ok: boolean; error?: string; duplicate?: boolean }> {
   const generation = userSessionGeneration;
   const authError =
@@ -3015,7 +3018,7 @@ export async function addReceitaAwait(
   const baseDate = new Date(input.data + "T00:00:00");
   const id = crypto.randomUUID();
   const clienteId = input.clienteId ?? null;
-  const row: ReceitaInsert & { offline_client_id?: string | null } = {
+  const row: ReceitaInsert & { offline_client_id?: string | null; offline_generation?: number } = {
     id,
     user_id: userId,
     descricao: input.descricao,
@@ -3028,9 +3031,10 @@ export async function addReceitaAwait(
     ...(clienteId ? { cliente_id: clienteId } : {}),
   } as ReceitaInsert & { offline_client_id?: string | null };
   if (offlineClientId) row.offline_client_id = offlineClientId;
+  if (offlineClientId && financialGeneration !== undefined && financialGeneration !== null) row.offline_generation = financialGeneration;
 
   const insert = async () => {
-    const { error } = await supabase.from("receitas").insert(row).abortSignal(signal);
+    const { error } = await supabase.from("receitas").insert(row as ReceitaInsert).abortSignal(signal);
     return { error: error?.message, code: error?.code };
   };
   let confirmedRows: (ReceitaRow & { deleted_at?: string | null })[] = [];

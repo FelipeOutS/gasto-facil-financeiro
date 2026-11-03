@@ -26,3 +26,35 @@ Uma execução conjunta apresentou três falhas por colisão de mocks globais (q
 
 ## Próxima autorização
 Antes de qualquer alteração no banco real, apresentar revisão completa do candidato, pré-requisitos F2/F4 e plano de rollout. Ativação/publicação e teste financeiro real continuam exigindo autorizações separadas. Nenhum prazo de recuperação definitivo foi prometido. Consumo real de créditos não confirmado.
+
+## Continuação implementada em 03/11/2026 (não liberada)
+### Implementação concreta
+- Restauração conversacional no contrato injetado: pedido com ID do lote gera prévia/código; RESTAURAR + ID + código chama o controle seguro. Restauração sem ID/código é rejeitada também pelo SQL candidato. Validade cinco minutos, cinco tentativas por operação, replay sem repetição. APAGAR no SQL também exige ID da operação. A conversa de produção permanece interceptada e sem escritor.
+- Reversão da receita composta avalia seu próprio snapshot, independentemente de conflitos em outros registros; reversão parcial informa quantidades. Helper candidato detecta vínculos reversos com bens e contas, além de Pluggy; cartões/faturas/parcelas/recorrências continuam recusados, nunca desvinculados ou reconstruídos por heurística.
+- Filas de gastos/receitas persistem versão financeira imutável e a repassam aos writers existentes. SQL candidato financial-offline-generation.sql bloqueia inserts/updates de operações offline de versões anteriores e restauração por cliente; controle efetivo de identidade impede bypass por GUC. Incremento acontece na transação de limpeza. Erro específico mantém pendência local e impede retry automático contínuo. Cache monotônico invalida snapshot quando recebe versão nova.
+- Saldo inicial: parser e cálculo puro em centavos separados de receitas, contrato de baseline no fim do dia informado. SQL candidato account-opening-balances.sql valida titular da conta, valor, idempotência e recusa substituição silenciosa. Helper não é executável nem por service_role; sem persistência real ou ligação aos indicadores.
+- Locks da aplicação/restauração adquirem tabelas antes do advisory lock para reduzir inversão com trigger de INSERT; isso não substitui testes de carga/deadlock.
+### Arquivos alterados/criados nesta continuação
+- src/lib/account-opening-balance.ts; src/lib/whatsapp-reorganizacao.ts.
+- src/server/whatsapp-reorganizacao.server.ts; src/server/whatsapp-reorganizacao-store.server.ts.
+- src/lib/offline/financial-generation.ts; offline-expense-queue.ts; offline-income-queue.ts; use-offline-sync.tsx; use-offline-income-sync.tsx; offline-error-messages.ts (os cinco últimos no mesmo diretório).
+- src/lib/store.ts (campo candidato opcional de versão, sem mudar o schema gerado).
+- docs/migrations-candidate/whatsapp-reorganizacao.sql; financial-offline-generation.sql; account-opening-balances.sql.
+- tests/whatsapp-reorganizacao-safety.test.ts; tests/offline-financial-generation.test.ts; tests/sql/whatsapp-reorganizacao/00-stub.sql; 10-tests.sql; 20-balance.sql; scripts/test-whatsapp-reorganizacao-sql.sh.
+- AGENTS.md; roadmap.md; este relatório.
+### Resultados finais
+- 164 testes JS em 14 arquivos, executados separadamente: 0 falhas finais. Incluem áudio/lote, pipeline bloqueado, saldo 5000 distinto de receita, confirmação, idempotência, isolamento offline, leitores F3 e atualização do Dashboard.
+- 49 verificações SQL aprovadas em PostgreSQL descartável, incluindo duas conexões (uma aplicação e um replay), código obrigatório por lote, tentativas, bloqueio de versões offline antigas, conta compartilhada sem bypass, baseline 5000 sem receita, vínculos com bens. Execuções intermediárias falharam por assinatura de RPC de teste e variável SQL ambígua; corrigidas e reexecutadas com sucesso.
+- Navegador Chromium: filas reais IndexedDB persistiram após reload, versões não foram reetiquetadas, outro titular não leu a fila; nenhuma chamada de sincronização financeira. Nenhum erro de página capturado. Isso não é teste no Android real nem homologação autenticada da operação financeira.
+- Compilação automática final OK. Erro intermediário de tipos do campo de schema candidato corrigido sem editar tipos gerados.
+### Pronto para homologação isolada
+Contratos de prévia/confirmação/restauração; rejeição offline pelo trigger candidato; baseline candidato separado; regressões de áudio e soft-delete. Homologação precisa backend descartável com schemas aprovados, sem usar dados reais.
+### Bloqueios remanescentes e ação exata
+1. Aplicação dos candidatos não autorizada/executada. Revisar F2/F4 e três candidatos, grants/guards e dependências no schema real antes de autorizar migração; não ligar limpeza mensal.
+2. Geração ainda não é carregada do servidor em cada hidratação/reconexão; cache não cria autoridade. Clientes sem versão serão bloqueados após a primeira limpeza. Falta integrar leitura autorizada para contas próprias/compartilhadas, atualização de caches e todos os escritores NÃO offline (importações, recorrências, OCR, filas WhatsApp). A barreira entregue cobre writes offline versionados, não todo o sistema.
+3. Vínculos com cartões/faturas são preservados por recusa, não por limpeza/restauração do grafo. Falta executor contábil transacional específico, snapshots de dependências, política de pagamentos, importações e recorrências. Helper dinâmico de dependências requer revisão de locks contra criação concorrente de vínculos. Não anunciar reset completo.
+4. Baseline não está ligado a banco escolhido na conversa, confirmação/limpeza atômicas ou telas de saldo. Falta atribuição de movimentações a contas e data/hora de corte; o cálculo puro usa somente movimentos após o fim do dia e não substitui o Dashboard mensal. Comando final composto continua bloqueado sem cadastrar receita nem saldo.
+5. Restauração permanece apenas no contrato injetado e candidatos; produção não tem sessão/executor conectado. Faltam histórico/seleção de operação, prévia detalhada de conflitos, reconciliação da resposta WhatsApp, limites cumulativos de renovação de códigos, teste de mudanças de plano/vínculo concorrentes e carga/deadlocks. Não prometer prazo definitivo de recuperação.
+6. Android: fonte nativa/Gradle/Kotlin e aparelho não disponíveis. Verificação de IndexedDB no Chromium não prova Keystore, WebView real, reinício do app ou bridge biométrica. Necessário wrapper Android e aparelho de homologação.
+7. Skills: diretório de skills ativas não disponível no ambiente; nenhuma skill ativa pôde ser aplicada. Auditoria independente e testes usados, sem afirmar execução de skill inexistente.
+8. Liberação/publicação e teste real exigem autorização separada após homologação completa; nenhuma migração, exclusão real, publicação, envio Meta ou alteração de configuração foi realizada. Créditos desta execução não confirmados.
