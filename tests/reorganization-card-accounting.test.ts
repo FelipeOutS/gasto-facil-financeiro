@@ -1,0 +1,11 @@
+import { expect, test } from "bun:test";
+import { previewCardRemoval } from "../src/lib/reorganization-card-accounting";
+const card={id:'N',userId:'A',closingDay:5,dueDay:10,limit:1000};
+const purchase={id:'g1',userId:'A',cartaoId:'N',valor:35,data:'2026-10-16',fatura_competencia:'2026-11',deletedAt:null};
+const invoice={userId:'A',cartaoId:'N',month:10,year:2026,status:'aberta',paidAmount:0,paidDate:null};
+test('open bill removes purchase reversibly in derived total and releases only estimated usage',()=>expect(previewCardRemoval('A',card,'2026-11',[purchase],[invoice],['g1'])).toEqual({beforeCents:3500,afterCents:0,availableCents:100000,removedCents:3500}));
+test('paid invoice is refused without changing payment',()=>expect(()=>previewCardRemoval('A',card,'2026-11',[purchase],[{...invoice,status:'paga',paidAmount:35}],['g1'])).toThrow('paid_or_partial'));
+test('partially paid invoice is refused even when status says open',()=>expect(()=>previewCardRemoval('A',card,'2026-11',[purchase],[{...invoice,paidAmount:10}],['g1'])).toThrow('paid_or_partial'));
+test('reopened invoice with surviving payment evidence is refused',()=>expect(()=>previewCardRemoval('A',card,'2026-11',[purchase],[{...invoice,paidDate:'2026-11-10'}],['g1'])).toThrow('paid_or_partial'));
+test('restored purchase counted exactly once in original bill',()=>expect(previewCardRemoval('A',card,'2026-11',[{...purchase,deletedAt:null}],[invoice],['g1']).beforeCents).toBe(3500));
+test('foreign purchase cannot be included',()=>expect(()=>previewCardRemoval('A',card,'2026-11',[{...purchase,userId:'B'}],[invoice],['g1'])).toThrow('invalid_purchase_scope'));
