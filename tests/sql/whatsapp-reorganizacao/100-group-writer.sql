@@ -1,5 +1,6 @@
 -- Fictitious isolated fixtures; no credentials or production calls.
 CREATE FUNCTION public.can_create_in_account(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT $1=auth.uid() $$;
+CREATE FUNCTION public.has_active_plan_access(uuid) RETURNS boolean LANGUAGE sql STABLE AS $$ SELECT $1='aaaaaaaa-0000-0000-0000-000000000001'::uuid $$;
 CREATE OR REPLACE FUNCTION public.has_feature_access(uuid,text) RETURNS boolean LANGUAGE sql AS $$ SELECT $1='aaaaaaaa-0000-0000-0000-000000000001'::uuid $$;
 CREATE TABLE public.categorias(id uuid PRIMARY KEY,user_id uuid NOT NULL);
 GRANT SELECT ON public.categorias TO authenticated;
@@ -31,3 +32,12 @@ SELECT public.assert_true((SELECT count(*)=1 FROM financial_group_operations),'o
 SELECT set_config('request.jwt.claim.sub','',false);
 DO $$ BEGIN PERFORM public.financial_group_write('aaaaaaaa-0000-0000-0000-000000000001','eeeeeeee-0000-0000-0000-000000000004',0,'pdf','[]'); RAISE EXCEPTION 'expected_failure'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'financial_group_unauthorized' THEN RAISE; END IF; END $$;
 SELECT public.assert_true((SELECT count(*)=1 FROM financial_group_operations),'no caller JWT is denied even privileged call');
+SELECT set_config('request.jwt.claim.sub','aaaaaaaa-0000-0000-0000-000000000001',false);
+SET ROLE authenticated;
+SELECT public.financial_group_write(user_id,id,generation,kind,payload) FROM public.financial_group_operations;
+RESET ROLE;
+SELECT public.assert_true((SELECT count(*)=1 FROM financial_group_operations),'authenticated own replay respects RLS and safe RPC');
+SET ROLE service_role;
+DO $$ BEGIN PERFORM public.financial_group_write('aaaaaaaa-0000-0000-0000-000000000001','eeeeeeee-0000-0000-0000-000000000001',8,'csv','[]'); RAISE EXCEPTION 'expected_failure'; EXCEPTION WHEN insufficient_privilege THEN NULL; END $$;
+RESET ROLE;
+SELECT public.assert_true((SELECT count(*)=1 FROM financial_group_operations),'service role denied candidate ordinary writer');

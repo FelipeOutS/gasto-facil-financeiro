@@ -3,7 +3,11 @@ export type ImportRow = Record<string,unknown>;
 export async function commitFinancialImport(rows: ImportRow[], read: ()=>Promise<{rows:ImportRow[];error?:string}>, insert: ()=>Promise<{error?:string}>) {
   const same = (actual: ImportRow[]) => rows.length===actual.length && rows.every(row=>{
     const found=actual.find(saved=>saved.id===row.id);
-    return found && Object.entries(row).every(([key,value])=>JSON.stringify(found[key]??null)===JSON.stringify(value??null));
+    return found && Object.entries(row).every(([key,value])=> {
+      const saved=found[key];
+      if(typeof value==="number") return Number(saved)===value;
+      return JSON.stringify(saved??null)===JSON.stringify(value??null);
+    });
   });
   const before=await read();
   if(before.error) throw new Error(before.error);

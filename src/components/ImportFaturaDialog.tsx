@@ -576,6 +576,7 @@ export function ImportFaturaDialog({
       console.error(err);
       toast.error(t("errorSave"));
     } finally {
+      importSavingRef.current=false;
       setSaving(false);
     }
   }

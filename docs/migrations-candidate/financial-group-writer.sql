@@ -20,7 +20,8 @@ DECLARE op public.financial_group_operations%ROWTYPE; item jsonb; row_json jsonb
 BEGIN
  IF auth.uid() IS NULL OR auth.uid()<>p_owner OR NOT coalesce(public.can_create_in_account(p_owner),false) THEN RAISE EXCEPTION 'financial_group_unauthorized'; END IF;
  IF NOT coalesce((SELECT enabled FROM public.financial_group_policy WHERE id),false) THEN RAISE EXCEPTION 'financial_group_release_blocked'; END IF;
- IF NOT coalesce(public.has_feature_access(p_owner,'gastos_basico'),false) OR NOT coalesce(public.has_feature_access(p_owner,'receitas_basico'),false) THEN RAISE EXCEPTION 'financial_group_feature_blocked'; END IF;
+ -- Paid-only candidate; never expands basic/free quotas through a SECURITY DEFINER path.
+ IF NOT coalesce(public.has_active_plan_access(p_owner),false) THEN RAISE EXCEPTION 'financial_group_feature_blocked'; END IF;
  IF p_kind NOT IN('manual','installments','recurrence','csv','pdf','image') OR p_operation IS NULL OR p_generation IS NULL OR p_generation<0
  OR jsonb_typeof(p_rows) IS DISTINCT FROM 'array' OR jsonb_array_length(p_rows) NOT BETWEEN 1 AND 500 THEN RAISE EXCEPTION 'invalid_financial_group'; END IF;
  -- Match reset lock ordering; no transaction-local reorganization bypass for ordinary creation.
@@ -39,6 +40,9 @@ BEGIN
  OR (row_json->>'valor')::numeric<=0 OR (row_json->>'valor')::numeric>=1e12 OR round((row_json->>'valor')::numeric,2)<>(row_json->>'valor')::numeric
  OR row_json ?| ARRAY['deleted_at','deleted_by','deleted_source','deleted_reason','deletion_batch_id','deletion_source','offline_client_id','offline_generation'] THEN RAISE EXCEPTION 'invalid_financial_group_row'; END IF;
  IF row_json->>'bem_id' IS NOT NULL OR row_json->>'origem' IN('pluggy','open_finance','mercadopago','mercado_pago') THEN RAISE EXCEPTION 'financial_group_linked_blocked'; END IF;
+ -- Only writable financial fields; never accept confirmation/audit/owner-control columns by schema existence alone.
+ IF EXISTS(SELECT 1 FROM jsonb_object_keys(row_json) key WHERE key NOT IN('id','user_id','descricao','valor','data','mes','ano','estabelecimento','categoria_id','forma_pagamento','observacao','imagem_url','tipo_gasto','parcela_atual','total_parcelas','grupo_parcelamento_id','recorrencia_id','recorrente','essencial','gasto_fixo','cartao_id','invoice_month','fatura_competencia','horario','origem','import_batch_id','id_operacao_banco','fornecedor_id','cliente_id','financial_bank_id','cash_effective_at')) THEN RAISE EXCEPTION 'financial_group_forbidden_column'; END IF;
+ IF row_json->>'cliente_id' IS NOT NULL OR row_json->>'fornecedor_id' IS NOT NULL THEN RAISE EXCEPTION 'financial_group_reference_adapter_pending'; END IF;
  IF row_json->>'cash_effective_at' IS NOT NULL THEN cash_count:=cash_count+1; END IF;
  -- Payload source-key duplicate proof across tombstones; never use active-only/UI heuristics.
  IF row_json->>'id_operacao_banco' IS NOT NULL THEN
@@ -56,7 +60,7 @@ BEGIN
  EXECUTE (SELECT format('INSERT INTO public.%I (%s) SELECT %s FROM jsonb_populate_record(NULL::public.%I,$1) RETURNING to_jsonb(%I.*)',relation_name,string_agg(format('%I',key),',' ORDER BY key),string_agg(format('%I',key),',' ORDER BY key),relation_name,relation_name) FROM jsonb_object_keys(row_json) key) INTO row_json USING row_json;
  result:=result||jsonb_build_array(jsonb_build_object('table',relation_name,'row',row_json));
  END LOOP;
- IF p_kind IN('installments','recurrence') AND cash_count>0 THEN RAISE EXCEPTION 'financial_group_settlements_require_single_occurrence'; END IF;
+ IF cash_count>0 AND (p_kind IN('installments','recurrence') OR EXISTS(SELECT 1 FROM jsonb_array_elements(p_rows) e WHERE e->'row'->>'grupo_parcelamento_id' IS NOT NULL OR e->'row'->>'recorrencia_id' IS NOT NULL OR coalesce((e->'row'->>'total_parcelas')::int,1)>1)) THEN RAISE EXCEPTION 'financial_group_settlements_require_single_occurrence'; END IF;
  INSERT INTO public.financial_group_operations(id,user_id,generation,kind,payload,after_rows) VALUES(p_operation,p_owner,p_generation,p_kind,p_rows,result);
  RETURN jsonb_build_object('status','committed','operationId',p_operation,'rows',result);
 END $$;
