@@ -1,4 +1,6 @@
 import { gruposParcelas } from "@/lib/parcelamento";
+import { FinancialCashField } from "@/components/FinancialCashField";
+import type { FinancialCashInput } from "@/lib/financial-cash-input";
 import { FaturaCompetenciaField } from "@/components/FaturaCompetenciaField";
 import { isYm } from "@/lib/fatura-competencia";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -77,6 +79,7 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
     initial?.formaPagamento ?? "credito",
   );
   const [cartaoId, setCartaoId] = useState<string | undefined>(initial?.cartaoId);
+  const [cash,setCash]=useState<FinancialCashInput>({financialBankId:initial?.financialBankId,cashEffectiveAt:initial?.cashEffectiveAt});
   const [observacao, setObservacao] = useState(initial?.observacao ?? "");
   const [tipoGasto, setTipoGasto] = useState<TipoGasto>(initial?.tipoGasto ?? "unico");
   const [parcelas, setParcelas] = useState<number>(initial?.totalParcelas ?? 2);
@@ -141,6 +144,7 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
         setSaving(true);
         try {
           await onSubmit({
+            ...cash,
             valor,
             data,
             estabelecimento: estabelecimento.trim(),
@@ -257,6 +261,7 @@ export function GastoForm({ initial, submitLabel, onSubmit }: GastoFormProps) {
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-3">
+        <FinancialCashField value={cash} onChange={setCash} kind="expense" disabled={formaPagamento==="credito"||tipoGasto!=="unico"}/>
         <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
           <CalendarDays className="h-3.5 w-3.5" />
           {t("form.mesRefLabel")}

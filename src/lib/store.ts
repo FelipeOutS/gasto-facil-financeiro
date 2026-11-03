@@ -2,6 +2,7 @@ import { calcMetaProgresso } from "./metas-progresso";
 import { refreshFinancialGeneration } from "./offline/financial-generation-reader";
 import { financialCashColumns, type FinancialCashInput } from "./financial-cash-input";
 import { FINANCIAL_GROUP_WRITER_AUTHORIZED, writeFinancialGroup, type FinancialGroupRequest } from "./financial-group-writer";
+import { commitFinancialImport } from "./financial-import-transport";
 import {
   addMonthsYm,
   cicloParaCompetencia,
@@ -2494,6 +2495,7 @@ export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
   return created;
 }
 
+const pendingInvoiceImports = new Map<string,{ownerId:string;fingerprint:string;built:{row:GastoInsert;client:Gasto}[];request?:FinancialGroupRequest}>();
 /** Awaited invoice importer: one INSERT is atomic, response loss rereads exact IDs.
  * Candidate mode additionally requires durable generation + operation context.
  */
@@ -2508,25 +2510,34 @@ export async function addGastosBulkAwait(inputs: NovoGastoInput[], operationId: 
     const refError = await validateOwnerReferences(ownerId,input,signal);
     if (refError) throw new Error(refError);
   }
-  const built = inputs.flatMap(input => buildGastosFromInput(input,ownerId));
+  const fingerprint=JSON.stringify(inputs);
+  const cached=pendingInvoiceImports.get(operationId);
+  if(cached && (cached.ownerId!==ownerId || cached.fingerprint!==fingerprint)) throw new Error("A prévia mudou; revise a importação antes de continuar.");
+  const built = cached?.built ?? inputs.flatMap(input => buildGastosFromInput(input,ownerId));
+  const manifest=cached ?? {ownerId,fingerprint,built,request:pending};
+  pendingInvoiceImports.set(operationId,manifest);
   if (!built.length) return {gastos:[]};
   if (FINANCIAL_GROUP_WRITER_AUTHORIZED) {
-    const version = pending?.generation ?? await refreshFinancialGeneration(ownerId);
+    const version = manifest.request?.generation ?? await refreshFinancialGeneration(ownerId);
     if (version === null) throw new Error("Versão financeira indisponível; importação preservada para revisão.");
     const kind = inputs[0]?.origem?.includes("csv") ? "csv" : inputs[0]?.origem?.includes("pdf") ? "pdf" : "image";
-    const request = pending ?? {ownerId,operationId,generation:version,kind,rows:built.map(b=>({table:"gastos" as const,row:b.row as Record<string,unknown>}))};
+    const request = manifest.request ?? {ownerId,operationId,generation:version,kind,rows:built.map(b=>({table:"gastos" as const,row:b.row as Record<string,unknown>}))};
+    manifest.request=request;
     if (request.ownerId !== ownerId || request.operationId !== operationId) throw new Error("A sessão da importação mudou.");
     const outcome = await writeFinancialGroup(sbAny,request);
     if (activeUserId === ownerId && session === userSessionGeneration) await refreshGastos();
     return {gastos:outcome.rows.map(item=>rowToGasto(item.row,new Map([...categoriaKeyToUuid].map(([key,id])=>[id,key])))),request};
   }
-  // Legacy schema still enforces RLS/quota. No optimistic success; retries use the same row IDs supplied by the dialog.
-  const rows = built.map((b,index)=>({...b.row,id:inputs[index]?.idOperacaoBanco && /^[0-9a-f-]{36}$/i.test(inputs[index].idOperacaoBanco ?? "") ? inputs[index].idOperacaoBanco : b.row.id}));
+  // Legacy schema still enforces RLS/quota; generation fencing remains the SQL authority.
+  const rows = built.map(b=>b.row);
   const ids = rows.map(row=>row.id).filter((id):id is string=>typeof id === "string");
-  const {error} = await supabase.from("gastos").insert(rows);
-  if (error) throw new Error(error.message);
+  await commitFinancialImport(rows as Record<string,unknown>[],async()=>{
+    // soft-delete-exceção: exact committed import manifest must include tombstones; never resurrect.
+    const {data,error}=await supabase.from("gastos").select("*").eq("user_id",ownerId).in("id",ids);
+    return {rows:(data??[]) as Record<string,unknown>[],error:error?.message};
+  },async()=>{const {error}=await supabase.from("gastos").insert(rows);return{error:error?.message};});
   if (activeUserId === ownerId && session === userSessionGeneration) await refreshGastos();
-  return {gastos:memGastos.filter(row=>ids.includes(row.id))};
+  return {gastos:activeUserId===ownerId && session===userSessionGeneration ? memGastos.filter(row=>ids.includes(row.id)) : []};
 }
 
 export function updateGasto(id: string, patch: Partial<Gasto>) {
