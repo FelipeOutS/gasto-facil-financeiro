@@ -4,12 +4,16 @@ import type { ReorganizationInput, ReorganizationResult, ReorganizationStore } f
 export interface ReorganizationRpcClient {
   rpc(name: string, args: Record<string, unknown>): PromiseLike<{ data: unknown; error: { message: string } | null }>;
 }
-export function createReorganizationStore(db: ReorganizationRpcClient): ReorganizationStore {
+/** partialScope: linked rows stay out of the batch and are reported (candidate whatsapp-reorganizacao-partial-scope.sql). */
+export function createReorganizationStore(db: ReorganizationRpcClient, opts: { partialScope?: boolean } = {}): ReorganizationStore {
+  const v2 = opts.partialScope !== false ? "_v2" : "";
   const call = async (name: string, args: Record<string, unknown>): Promise<ReorganizationResult> => {
     const result = await db.rpc(name, args);
     if (result.error) throw new Error(result.error.message);
     if (!result.data || typeof result.data !== "object" || !("status" in result.data) || typeof result.data.status !== "string") throw new Error("invalid_reorganization_result");
     if (["preview", "applied", "restored", "partial"].includes(result.data.status)) {
+      const leftOut = Reflect.get(result.data, "leftOut");
+      if (leftOut !== undefined && !Array.isArray(leftOut)) throw new Error("invalid_reorganization_left_out");
       for (const field of ["expenses", "incomes"]) {
         const value = Reflect.get(result.data, field);
         if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) throw new Error("invalid_reorganization_counts");
@@ -23,8 +27,8 @@ export function createReorganizationStore(db: ReorganizationRpcClient): Reorgani
       const result = await db.rpc("wa_reorganization_authorized", { p_user: userId, p_phone: phone });
       return !result.error && result.data === true;
     },
-    prepare: (input, scope, income, code, balance) => call("wa_reorganization_prepare", { ...identity(input), p_request: input.externalId, p_scope: scope, p_income: income, p_code: code, ...(balance ? { p_balance: balance } : {}) }),
-    confirm: (input, code, operationId) => call("wa_reorganization_confirm", { ...identity(input), p_code: code, p_operation: operationId ?? null }),
+    prepare: (input, scope, income, code, balance) => call(`wa_reorganization_prepare${v2}`, { ...identity(input), p_request: input.externalId, p_scope: scope, p_income: income, p_code: code, ...(balance ? { p_balance: balance } : {}) }),
+    confirm: (input, code, operationId) => call(`wa_reorganization_confirm${v2}`, { ...identity(input), p_code: code, p_operation: operationId ?? null }),
     cancel: (input) => call("wa_reorganization_control", { ...identity(input), p_action: "cancel" }),
     status: (input) => call("wa_reorganization_control", { ...identity(input), p_action: "status" }),
     // No implicit latest-operation reversal; own operation selection + separate confirmation pending.
