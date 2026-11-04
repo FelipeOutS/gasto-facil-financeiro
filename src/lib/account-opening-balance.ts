@@ -13,7 +13,7 @@ export function parseOpeningBalance(text: string, date: string): OpeningBalanceR
   const clause = text.split(/\be ajuste\b/iu).at(-1) ?? text;
   const accountPattern = /(?:conta\s+(?:(?:do|da|no|na)\s+)?|saldo\s+(?:do|da)\s+|(?:no|na)\s+)([\p{L}\d][\p{L}\d .-]*?)(?=\s+(?:para|como|coloque|saldo|e\s|é(?:\s|$))|[,.!?]|$)/iu;
   const account = accountPattern.exec(clause);
-  const current = /(?:atualmente\s+tenho|saldo\s+atual|ajust\w*\s+(?:meu\s+)?saldo)/iu.test(text);
+  const current = /(?:atualmente\s+tenho|saldo\s+atual|(?:ajust|atualiz|corrig)\w*\s+(?:(?:o\s+)?meu\s+|o\s+)?saldo)/iu.test(text);
   return { accountName: account?.[1]?.trim().replace(/^(?:do|da|no|na)\s+/iu, "") ?? null, amountCents: Math.round(amount * 100), effectiveDate: date, ...(current ? { kind: "current_adjustment" as const } : {}) };
 }
 export type BalanceAccount = { id: string; userId: string; name: string };
