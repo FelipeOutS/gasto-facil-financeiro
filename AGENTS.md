@@ -25,3 +25,4 @@
 - Invoice CSV/PDF/image confirmations share an awaited atomic insert and exact manifest reread on transport failure; retained row IDs prevent retry duplication, while tombstone reads never republish hidden rows.
 - Bank cash inputs are paired bank UUID/settlement instants, never replicated onto generated series; balance reads require complete owner-scoped facts and fail closed for unrepresented historical baselines because metadata is not a cash ledger.
 - WhatsApp reorganization uses partial scope (candidate `whatsapp-reorganizacao-partial-scope.sql`, RPCs `*_v2`): linked rows stay out untouched and are listed with count/value in preview and result, because a partial cleanup must never be reported as complete nor block eligible rows.
+- WhatsApp media fetches use manual redirect mode and reject non-2xx without following Location; Workers reject redirect:error, and automatic redirects could leak bearer credentials.

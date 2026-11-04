@@ -32,7 +32,7 @@ test.each([
   expect(result).toEqual({ ok: false, reason: "invalid" });
   expect(calls).toBe(1);
 });
-test("valid media uses redirect:error for lookup and bytes", async () => {
+test("valid media uses Worker-compatible manual redirect rejection for lookup and bytes", async () => {
   const redirects: unknown[] = [];
   const fetchImpl = (async (_url: unknown, init: RequestInit) => {
     redirects.push(init.redirect);
@@ -48,7 +48,22 @@ test("valid media uses redirect:error for lookup and bytes", async () => {
       )
     ).ok,
   ).toBe(true);
-  expect(redirects).toEqual(["error", "error"]);
+  expect(redirects).toEqual(["manual", "manual"]);
+});
+test.each([0, 1])("media never follows redirect at step %s or forwards credentials", async (step) => {
+  let calls = 0;
+  const fetchImpl = (async (_url: unknown, init: RequestInit) => {
+    expect(init.redirect).toBe("manual");
+    const current = calls++;
+    if (current === step) return new Response(null, { status: 302, headers: { location: "https://attacker.test/file" } });
+    return Response.json({ url: "https://lookaside.fbsbx.com/file" });
+  }) as typeof fetch;
+  const result = await downloadWhatsappMediaBounded(
+    { lookupUrl: "https://graph.facebook.com/v25.0/id", token: "fixture", maxBytes: 100 },
+    { fetchImpl },
+  );
+  expect(result).toEqual({ ok: false, reason: "http_error" });
+  expect(calls).toBe(step + 1);
 });
 test("old/invalid reminders blocked and exact 24h boundary explicit", () => {
   const now = new Date("2026-10-25T12:00:00Z");

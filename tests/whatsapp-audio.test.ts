@@ -26,6 +26,7 @@ const ORIGINAL_ENV: Record<string, string | undefined> = {
   WHATSAPP_PHONE_NUMBER_ID: process.env.WHATSAPP_PHONE_NUMBER_ID,
   WHATSAPP_CANARY_ENABLED: process.env.WHATSAPP_CANARY_ENABLED,
   WHATSAPP_AUDIO_ENABLED: process.env.WHATSAPP_AUDIO_ENABLED,
+  WHATSAPP_GRAPH_VERSION: process.env.WHATSAPP_GRAPH_VERSION,
 };
 
 function setBaseEnv() {
@@ -35,6 +36,7 @@ function setBaseEnv() {
   process.env.WHATSAPP_ACCESS_TOKEN = ACCESS_TOKEN;
   process.env.WHATSAPP_PHONE_NUMBER_ID = "999999999";
   process.env.WHATSAPP_CANARY_ENABLED = "false";
+  process.env.WHATSAPP_GRAPH_VERSION = "v25.0";
 }
 
 // ---------------- estado mutável dos mocks ----------------
@@ -186,6 +188,7 @@ mock.module("@/server/whatsapp.server", () => ({
   },
   sendWhatsAppReply: async (telefone: string, texto: string) => {
     fakeState.calls.sendReply.push({ telefone, texto });
+    return { sent: true, status: 200 };
   },
   // WA-B6 — stub seguro; nunca chama rede real.
   sendWhatsAppInteractiveCtaUrl: async () => ({ ok: true, status: 200 }),
@@ -417,6 +420,7 @@ test("MIME declarado inválido → não baixa nem transcreve", async () => {
   expect(fakeState.calls.downloadFetch.length).toBe(0);
   expect(fakeState.calls.transcribe).toBe(0);
   expect(fakeState.calls.processarMensagemWhatsApp).toBe(0);
+  expect(fakeState.calls.sendReply.length).toBe(1);
 });
 
 test("bytes mágicos incompatíveis com MIME declarado → não chama transcrição", async () => {
@@ -427,6 +431,27 @@ test("bytes mágicos incompatíveis com MIME declarado → não chama transcriç
   expect(fakeState.calls.downloadFetch.length).toBeGreaterThan(0);
   expect(fakeState.calls.transcribe).toBe(0);
   expect(fakeState.calls.processarMensagemWhatsApp).toBe(0);
+  expect(fakeState.calls.sendReply.length).toBe(1);
+});
+
+test("download falha → resposta enviada sem transcrição nem operação financeira", async () => {
+  globalThis.fetch = (async () => { throw new TypeError("network"); }) as typeof fetch;
+  await POST({ request: signedPostRequest(metaAudioPayload()) });
+  expect(fakeState.calls.transcribe).toBe(0);
+  expect(fakeState.calls.processarMensagemWhatsApp).toBe(0);
+  expect(fakeState.calls.sendReply.length).toBe(1);
+});
+
+test.each(["GI, você consegue entender esse áudio?", "Lançar gasto de dois reais."])("áudio %s usa o processamento compartilhado e envia resposta sem confirmação automática", async (text) => {
+  fakeState.transcribeResult = { ok: true, text, language: "pt", reason: undefined };
+  fakeState.processOutcome = { status: "aguardando_confirmacao", resposta: "Confirme seu pedido", gastoId: undefined };
+  await POST({ request: signedPostRequest(metaAudioPayload()) });
+  expect(fakeState.calls.transcribe).toBe(1);
+  expect(fakeState.calls.processarMensagemWhatsApp).toBe(1);
+  expect(fakeState.calls.processArgs[0].source).toBe("audio");
+  expect(fakeState.calls.processArgs[0].external_id).toBe("wamid.audio-1");
+  if (text.includes("dois reais")) expect(fakeState.calls.processArgs[0].texto).toContain("R$ 2,00");
+  expect(fakeState.calls.sendReply.length).toBe(1);
 });
 
 test("áudio acima do limite → não chama transcrição", async () => {
