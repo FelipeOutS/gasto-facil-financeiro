@@ -22,3 +22,10 @@
 
 ## Permanece bloqueado
 Período/mês, meses anteriores, reorganização completa, conciliação/saldo, comandos combinados, cartões/faturas/parcelas/recorrências/importadores: dependem dos writers vinculados e do baseline contábil ainda não implementados.
+
+## Atualização — escopo parcial (04/11/2026)
+- Nova candidata `docs/migrations-candidate/whatsapp-reorganizacao-partial-scope.sql` (aplicar após `whatsapp-reorganizacao.sql` e candidatos financeiros; só aditiva: 1 coluna + funções).
+- Vinculados (parcelas, recorrências, bens, importados, cartão sem suporte, contas a pagar/receber) ficam DE FORA, intactos, listados com contagem e valor na prévia e no resultado ("aplicada parcialmente").
+- "ajuste o saldo do Nubank para R$ X" agora é ajuste de saldo atual (antes caía como saldo inicial).
+- Testes: SQL descartável 126 PASS; suíte completa 309 arquivos, 4.501 pass, 0 fail.
+- Ordem de instalação em produção do comando completo: F2 → offline-generation → account-opening-balances → financial-fact-ledger → reorganization-card-accounting → whatsapp-reorganizacao → financial-card-visibility → universal/linked fences → fact-boundaries → cash-attribution → group-writer → partial-scope. Depois: policy `release_enabled` e constante `WHATSAPP_REORGANIZACAO_RELEASE_AUTHORIZED`, ambas com autorização.
