@@ -48,6 +48,8 @@ mock.module("@tanstack/react-router", () => ({
   createFileRoute: () => (options: any) => ({ ...options, useSearch: () => ({}) }),
   useRouterState: ({ select }: any) => select({ location: { pathname } }),
   Link: ({ children }: any) => <span>{children}</span>,
+  isRedirect: () => false,
+  isNotFound: () => false,
 }));
 mock.module("react-i18next", () => ({ useTranslation: () => ({ t }) }));
 mock.module("@/i18n", () => ({ default: { t } }));
