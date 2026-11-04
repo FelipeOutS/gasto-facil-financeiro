@@ -49,6 +49,8 @@ mock.module("@tanstack/react-router", () => ({
   useRouterState: ({ select }: any) => select({ location: { pathname } }),
   Link: ({ children }: any) => <span>{children}</span>,
   isRedirect: () => false,
+  useRouter: () => ({ invalidate: async () => {}, navigate }),
+  useLocation: () => ({ pathname }),
   isNotFound: () => false,
 }));
 mock.module("react-i18next", () => ({ useTranslation: () => ({ t }) }));
