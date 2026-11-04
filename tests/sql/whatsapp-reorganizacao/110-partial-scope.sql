@@ -1,6 +1,6 @@
 -- Escopo parcial explícito: vinculados ficam de fora, intactos e listados; elegíveis atômicos.
 UPDATE public.whatsapp_reorganization_policy SET release_enabled=true;
-SET gi.test_marker='partial';
+SELECT set_config('gi.reorganization_mutation','on',false); -- fixture insert only
 INSERT INTO gastos(id,user_id,descricao,valor,data,forma_pagamento) VALUES
  ('eeeeeeee-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','Livre antigo',150,'2031-03-10','pix');
 INSERT INTO gastos(id,user_id,descricao,valor,data,forma_pagamento,total_parcelas) VALUES
@@ -10,6 +10,7 @@ INSERT INTO gastos(id,user_id,descricao,valor,data,forma_pagamento,recorrencia_i
 INSERT INTO gastos(id,user_id,descricao,valor,data,forma_pagamento) VALUES
  ('eeeeeeee-0000-0000-0000-000000000004','aaaaaaaa-0000-0000-0000-000000000001','Mês atual',70,'2031-04-02','pix'),
  ('eeeeeeee-0000-0000-0000-000000000005','cccccccc-0000-0000-0000-000000000003','Outro usuário',999,'2031-03-10','pix');
+SELECT set_config('gi.reorganization_mutation','off',false);
 SELECT public.assert_true(public.wa_reorganization_prepare_v2('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','partial-1','{"tables":["gastos"],"start":"2031-03-01","end":"2031-04-01"}',null,'515151')->>'status'='preview','partial preview instead of refusal');
 SELECT public.assert_true((SELECT jsonb_array_length(snapshot)=1 FROM whatsapp_reorganization_operations WHERE request_id='partial-1'),'only free entry eligible');
 SELECT public.assert_true((SELECT left_out @> '[{"motivo":"parcelado","n":1,"total":300},{"motivo":"recorrente","n":1,"total":40}]' FROM whatsapp_reorganization_operations WHERE request_id='partial-1'),'left out listed with value');
