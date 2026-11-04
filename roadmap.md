@@ -1,6 +1,6 @@
 # Roadmap — WhatsApp por áudio
 
-- [~] Corrigir silêncio nos áudios reais de 04/11 — auditar download, transcrição e entrega; validar sem operações financeiras.
+- [~] Áudios reais de 04/11 — causa reproduzida e download corrigido; 131 testes e transcrição OGG real no serviço passaram. Falta novo áudio não financeiro após publicação para comprovar entrega.
 
 1. [ ] Exclusão/restauração individual — homologar no Draft 2 (F2 + v2, R$ 150 fictício), aplicar no banco real (autorizado), ligar flag, publicar.
 2. [~] Exclusão/restauração em massa (código + SQL candidato prontos e testados; falta homologar no Draft 2) por período ("meses anteriores, manter o atual") — RPC transacional `wa_lote_mes_*`, prévia com totais, confirmação reforçada, restauração só do próprio lote.
