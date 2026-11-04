@@ -104,6 +104,7 @@ mock.module("@/server/whatsapp-notifications.server", () => ({
 }));
 
 mock.module("@/server/whatsapp-notification-gates.server", () => ({
+  getUserTimezone: async () => "America/Sao_Paulo",
   isChannelOptedIn: async () =>
     mockState.optedIn ? { ok: true as const } : { ok: false as const, reason: "channel_not_optedin" as const },
   canDispatch: async () => {

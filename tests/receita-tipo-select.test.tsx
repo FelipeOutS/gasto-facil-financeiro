@@ -21,6 +21,7 @@ mock.module("@/lib/clientes", () => ({ useClientes: () => ({ ativos: [] }) }));
 mock.module("@/lib/store", () => ({
   useStore: (selector: () => unknown) => selector(),
   getReceitas: () => [],
+  getBancos: () => [],
   addReceita,
   updateReceita,
 }));

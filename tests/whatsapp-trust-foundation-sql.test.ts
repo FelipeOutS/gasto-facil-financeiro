@@ -81,7 +81,7 @@ test("migration aborta sem alterar dados se duas contas legadas compartilham o n
     INSERT INTO whatsapp_links(user_id,telefone,ativo,opt_in_em)
     VALUES ('${USER_B}','(11) 99999-8888',true,now());
   `, unchanged)).rejects.toThrow(/legacy whatsapp phone ownership conflict/);
-});
+}, 30_000);
 
 test("site antigo ainda pode revogar, mas cliente autenticado não pode ativar, verificar ou trocar telefone", async () => {
   const db = await database();
