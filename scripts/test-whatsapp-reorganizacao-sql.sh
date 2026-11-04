@@ -45,4 +45,3 @@ if grep -q '"applied"' "$D/r1" "$D/r2" && grep -q '"replay"' "$D/r1" "$D/r2"; th
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/100-group-writer.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/whatsapp-reorganizacao-partial-scope.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/110-partial-scope.sql"
-"${P[@]}" -c "SELECT status,restore_result FROM whatsapp_reorganization_operations WHERE request_id='partial-1'"
