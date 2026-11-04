@@ -14,7 +14,7 @@ SELECT set_config('gi.reorganization_mutation','off',false);
 SELECT public.assert_true(public.wa_reorganization_prepare_v2('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','partial-1','{"tables":["gastos"],"start":"2031-03-01","end":"2031-04-01"}',null,'918273')->>'status'='preview','partial preview instead of refusal');
 SELECT public.assert_true((SELECT jsonb_array_length(snapshot)=1 FROM whatsapp_reorganization_operations WHERE request_id='partial-1'),'only free entry eligible');
 SELECT public.assert_true((SELECT left_out @> '[{"motivo":"parcelado","n":1,"total":300},{"motivo":"recorrente","n":1,"total":40}]' FROM whatsapp_reorganization_operations WHERE request_id='partial-1'),'left out listed with value');
-SELECT public.assert_true((SELECT count(*)=4 FROM gastos WHERE id::text LIKE 'eeeeeeee%' AND deleted_at IS NULL),'preview writes nothing');
+SELECT public.assert_true((SELECT count(*)=5 FROM gastos WHERE id::text LIKE 'eeeeeeee%' AND deleted_at IS NULL),'preview writes nothing');
 SELECT public.assert_true(public.wa_reorganization_confirm_v2('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','918273',(SELECT id FROM whatsapp_reorganization_operations WHERE request_id='partial-1'))->'leftOut' @> '[{"motivo":"parcelado"}]','applied result reports left out');
 SELECT public.assert_true((SELECT deleted_at IS NOT NULL FROM gastos WHERE id='eeeeeeee-0000-0000-0000-000000000001'),'eligible deleted reversibly');
 SELECT public.assert_true((SELECT count(*)=4 FROM gastos WHERE id::text LIKE 'eeeeeeee%' AND id<>'eeeeeeee-0000-0000-0000-000000000001' AND deleted_at IS NULL),'left out, current month and other user intact');
