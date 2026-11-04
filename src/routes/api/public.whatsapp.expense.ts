@@ -455,6 +455,15 @@ async function downloadWhatsappMedia(
   return { buffer: r.buffer, declaredMime: r.declaredMime };
 }
 
+async function replyAudioMediaFailure(phone: string): Promise<void> {
+  try {
+    const result = await sendWhatsAppReply(phone, "Não consegui baixar ou validar seu áudio. Nenhum lançamento foi feito por essa mensagem. Você pode enviar novamente ou escrever o pedido.");
+    if (!result.sent) console.error({ event: "wa_audio_media_reply_failed", httpStatus: result.status ?? null, reason: result.reason ?? "send_failed" });
+  } catch (err) {
+    console.error({ event: "wa_audio_media_reply_failed", errorName: err instanceof Error ? err.name : "unknown" });
+  }
+}
+
 const MAX_RAW_BODY = 64 * 1024; // 64KB
 
 export const Route = createFileRoute("/api/public/whatsapp/expense")({
@@ -965,6 +974,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                   audioBytesBucket: null,
                 });
                 results.push({ status: "audio_tipo_invalido" });
+                await replyAudioMediaFailure(msg.telefone);
                 continue;
               }
               // (d) download da mídia, com limite duro de bytes do áudio.
@@ -982,6 +992,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                   audioBytesBucket: null,
                 });
                 results.push({ status: "audio_indisponivel" });
+                await replyAudioMediaFailure(msg.telefone);
                 continue;
               }
               // (e) validação real: tamanho + bytes mágicos + mime.
@@ -1002,6 +1013,7 @@ export const Route = createFileRoute("/api/public/whatsapp/expense")({
                   audioBytesBucket: bucketForBytes(dl.buffer.byteLength),
                 });
                 results.push({ status: "audio_invalido" });
+                await replyAudioMediaFailure(msg.telefone);
                 continue;
               }
               const bytesBucket: AudioBytesBucket = validated.bytesBucket;
