@@ -6063,9 +6063,13 @@ async function sendWhatsAppRaw(
 ): Promise<{ sent: boolean; reason?: string; status?: number; providerMessageId?: string | null }> {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  if (!token || !phoneId) return { sent: false, reason: "not_configured" };
+  if (!token || !phoneId) {
+    console.error({ event: "wa_send_not_configured", tokenSet: !!token, phoneIdSet: !!phoneId });
+    return { sent: false, reason: "not_configured" };
+  }
   const built = buildWhatsAppGraphUrl({ kind: "messages", phoneNumberId: phoneId });
   if (!built.ok) {
+    console.error({ event: "wa_send_config_error", reason: built.reason, configReason: built.configReason ?? null });
     // META-GRAPH-UPGRADE-01 — fail-closed: sem versão autorizada,
     // nenhuma mensagem sai. Não expor conteúdo do erro.
     return { sent: false, reason: "configuration_error" };
