@@ -24,7 +24,12 @@ export function interpretReorganization(text: string, localDate: string): Reorga
   const t = normalizeReorganization(text);
   const hasBalance = /\bsaldo(?: (?:inicial|atual))?\b|\batualmente tenho\b/.test(t);
   const balance = hasBalance ? parseOpeningBalance(text, localDate) : null;
-  const verb = /\b(apag\w*|exclu\w*|limp\w*|zer\w*|reinici\w*|comec\w*)\b/.test(t);
+  // Listing/restoring already-deleted entries ("mostrar meus gastos excluídos") is not a reset:
+  // participles/past tense only count as a deletion verb when no read/restore verb leads the request.
+  const readOrRestore = /^(?:quero |queria |pode |por favor )?(mostr\w*|list\w*|ver|veja|consult\w*|restaur\w*|recuper\w*|desfaz\w*)\b/.test(t)
+    && !/\b(e depois|depois|adicion\w*|cadastr\w*|coloc\w*|ajust\w*|saldo)\b/.test(t);
+  const verbText = readOrRestore ? t.replace(/\b(excluid[oa]s?|apagad[oa]s?|removid[oa]s?|deletad[oa]s?|apaguei|exclui|removi|exclusao|exclusoes)\b/g, " ") : t;
+  const verb = /\b(apag\w*|exclu\w*|limp\w*|zer\w*|reinici\w*|comec\w*)\b/.test(verbText);
   const bulk = /\b(todos?|todas?|tudo|inteir\w*|historico|financas|despesas|gastos|receitas|meses|em massa)\b/.test(t);
   if (hasBalance && (!balance || !balance.accountName)) return { kind: "unsupported_balance", balance };
   if (!verb || !bulk) return balance ? { kind: "balance", balance } : { kind: "ignore" };
