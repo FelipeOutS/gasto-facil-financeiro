@@ -14,14 +14,15 @@ const base = (over: Partial<ReorganizationStore> = {}): ReorganizationStore => (
 });
 
 test("prévia do comando completo mostra excluídos, os que ficam de fora com valores, e o ajuste do Nubank", async () => {
-  const r = String(await runReorganization(input, base()));
+  const r = String(await runReorganization(input, base())).replace(/\u00a0/g, " ");
   expect(r).toContain("10 gastos (R$ 1.500,00) e 2 receitas (R$ 3.000,00)");
   expect(r).toContain("até 2026-11-01 (não incluído)");
   expect(r).toContain("limpeza parcial");
   expect(r).toContain("2 gasto(s) parcelados: R$ 600,00");
   expect(r).toContain("1 gasto(s) de cartão/fatura: R$ 89,90");
   expect(r).toContain("Nubank, R$ 5.000,00");
-  expect(r).toContain("ajuste R$ 1.800,00");
+  expect(r).toContain("Conciliação atual: saldo contábil R$ 3.200,00, ajuste R$ 1.800,00");
+  expect(r).not.toContain("Saldo inicial histórico");
   expect(r).toContain("Nada foi alterado");
 });
 
@@ -43,4 +44,10 @@ test("store usa as RPCs de escopo parcial e rejeita leftOut malformado", async (
   const store = createReorganizationStore({ rpc: async (name) => { calls.push(name); return { data: { status: "preview", expenses: 1, incomes: 0, leftOut: "x" }, error: null }; } });
   await expect(store.prepare(input, { tables: ["gastos"], start: null, end: "2026-11-01" }, null, "123456")).rejects.toThrow("invalid_reorganization_left_out");
   expect(calls).toEqual(["wa_reorganization_prepare_v2"]);
+});
+
+test("'ajuste o saldo do Nubank' é ajuste do saldo atual, nunca saldo inicial nem receita", async () => {
+  const { interpretReorganization } = await import("../src/lib/whatsapp-reorganizacao");
+  expect(interpretReorganization(input.text, "2026-11-03")).toEqual({ kind: "request", scope: { tables: ["gastos", "receitas"], start: null, end: "2026-11-01" }, income: null,
+    openingBalance: { accountName: "Nubank", amountCents: 500000, effectiveDate: "2026-11-03", kind: "current_adjustment" } });
 });
