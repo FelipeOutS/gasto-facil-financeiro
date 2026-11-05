@@ -33,6 +33,7 @@ function norm(s: string): string {
   return (s ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
+    // faixa de diacríticos combinantes (U+0300–U+036F)
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
