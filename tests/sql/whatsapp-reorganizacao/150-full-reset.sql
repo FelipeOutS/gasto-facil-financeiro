@@ -108,9 +108,6 @@ DO $$ BEGIN
  EXCEPTION WHEN others THEN IF SQLERRM<>'reimport_blocked_reorganized_entry' THEN RAISE; END IF; END;
  RAISE NOTICE 'PASS: full: reimport of zeroed entry refused';
 END $$;
-SELECT set_config('gi.reorganization_mutation','on',false);
-INSERT INTO receitas(id,user_id,descricao,valor,data,import_batch_id) VALUES ('f1000000-0000-0000-0000-0000000000a1','aaaaaaaa-0000-0000-0000-000000000001','Sem id banco',75,'2030-01-08','f7000000-0000-0000-0000-000000000009');
-SELECT set_config('gi.reorganization_mutation','off',false);
 DO $$ BEGIN
  BEGIN DELETE FROM gastos WHERE id='f0000000-0000-0000-0000-000000000007'; RAISE EXCEPTION 'should fail';
  EXCEPTION WHEN others THEN IF SQLERRM NOT LIKE 'financial_%' THEN RAISE; END IF; END;
@@ -152,6 +149,7 @@ DELETE FROM bens_pagamentos;
 SELECT set_config('gi.gastos_soft_delete','on',false);
 UPDATE gastos g SET deleted_at=now(),deleted_by='aaaaaaaa-0000-0000-0000-000000000001',deletion_batch_id=gen_random_uuid(),deletion_source='site' WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL AND (id='f0000000-0000-0000-0000-000000000009' OR bem_id IS NOT NULL);
 SELECT set_config('gi.gastos_soft_delete','off',false);
+INSERT INTO receitas(id,user_id,descricao,valor,data,import_batch_id) VALUES ('f1000000-0000-0000-0000-0000000000a1','aaaaaaaa-0000-0000-0000-000000000001','Sem id banco',75,'2030-01-08','f7000000-0000-0000-0000-000000000009');
 SELECT set_config('gi.reorganization_mutation','off',false);
 SELECT public.wa_full_reset_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','full-2','737373') AS p2 \gset
 SELECT public.assert_true((:'p2'::jsonb)->>'complete'='true' AND jsonb_array_length((:'p2'::jsonb)->'leftOut')=0,'full: without bem link preview is complete');
@@ -159,6 +157,14 @@ SELECT public.assert_true(public.wa_full_reset_confirm('aaaaaaaa-0000-0000-0000-
 SELECT public.assert_true(public.wa_full_reset_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','737373',NULL)->>'complete'='true','full: complete reset applied by voice code (no id)');
 SELECT public.assert_true((SELECT count(*)=0 FROM gastos WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL)
  AND (SELECT count(*)=0 FROM receitas WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL),'full: nothing active left');
+DO $$ BEGIN
+ BEGIN
+  PERFORM set_config('gi.reorganization_mutation','on',true);
+  INSERT INTO receitas(id,user_id,descricao,valor,data,import_batch_id) VALUES (gen_random_uuid(),'aaaaaaaa-0000-0000-0000-000000000001','  SEM ID BANCO ',75.00,'2030-01-08',gen_random_uuid());
+  RAISE EXCEPTION 'should fail';
+ EXCEPTION WHEN others THEN IF SQLERRM<>'reimport_blocked_reorganized_entry' THEN RAISE; END IF; END;
+ RAISE NOTICE 'PASS: full: reimport without bank id refused by exact signature';
+END $$;
 SELECT public.wa_full_reset_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',((:'p2'::jsonb)->>'operationId')::uuid,'848484');
 SELECT public.assert_true(public.wa_full_reset_restore_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',NULL,'848484')->>'status'='restored','full: complete reset restored by voice code (no id)');
 
