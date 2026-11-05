@@ -15,6 +15,7 @@ import { buildFinanceSnapshot, type FinanceRows } from "./finance-snapshot";
 import { ultimosMesesCompletos } from "./capacidade-compra";
 import type { ShoppingQuotaStore } from "./shopping-quota";
 import { dbClaimFollowup, SHOPPING_FOLLOWUP_KIND, type FollowupClaim } from "./shopping-followup-claim.server";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 export { SHOPPING_FOLLOWUP_KIND, type FollowupClaim };
 
 /**
@@ -60,8 +61,8 @@ export async function loadFinanceReadOnly(userId: string, hoje: string) {
     supabaseAdmin.from("gastos")
       .select("id,user_id,data,valor,gasto_fixo,recorrencia_id,total_parcelas,parcela_atual,grupo_parcelamento_id,cartao_id")
       .eq("user_id", userId).is("deleted_at", null).or(`data.gte.${inicio},total_parcelas.gt.1`).limit(LIM),
-    supabaseAdmin.from("recorrencias").select("id,user_id,valor,status,frequencia").eq("user_id", userId).limit(LIM),
-    supabaseAdmin.from("contas_a_pagar").select("id,user_id,nome,valor,status,gasto_id,recorrencia_id,data_vencimento")
+    supabaseAdmin.from("recorrencias").select("id,user_id,valor,status,frequencia").filter(...REORG_ATIVO_FILTER).eq("user_id", userId).limit(LIM),
+    supabaseAdmin.from("contas_a_pagar").select("id,user_id,nome,valor,status,gasto_id,recorrencia_id,data_vencimento").filter(...REORG_ATIVO_FILTER)
       // histórico dos 3 meses (fixos pagos) + qualquer conta não paga (vencidas antigas)
       .eq("user_id", userId).or(`data_vencimento.gte.${inicio},status.neq.pago`).limit(LIM),
     supabaseAdmin.from("cartoes").select("id,user_id,nome,banco").eq("user_id", userId).limit(LIM),

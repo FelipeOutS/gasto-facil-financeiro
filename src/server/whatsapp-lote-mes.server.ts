@@ -20,6 +20,7 @@
  */
 import { supabaseAdmin as _supabaseAdmin } from "@/integrations/supabase/client.server";
 import { toGraphInteractive } from "./whatsapp-interactive.server";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = any;
@@ -164,7 +165,7 @@ async function calcularPrevia(db: Db, userId: string, t: Tbl, ano: number, mes: 
   if (rows.length > LOTE_MES_MAX * 2) return "muitos";
   let pagos = new Set<string>();
   if (t === "gastos" && rows.length) {
-    const { data: cp, error: e2 } = await db.from("contas_a_pagar").select("gasto_id").eq("user_id", userId).in("gasto_id", rows.map((r) => String(r.id)));
+    const { data: cp, error: e2 } = await db.from("contas_a_pagar").select("gasto_id").filter(...REORG_ATIVO_FILTER).eq("user_id", userId).in("gasto_id", rows.map((r) => String(r.id)));
     if (e2) throw new Error("lote_preview_links_failed");
     pagos = new Set((Array.isArray(cp) ? cp : []).map((c: { gasto_id: string }) => String(c.gasto_id)));
   }

@@ -41,6 +41,7 @@ import {
 } from "./contas-vencimento.server";
 import { nowInAppTz } from "./cartao-fatura.server";
 import type { CategoriaPickerState, CategoriaPickerRow } from "./whatsapp-comprovantes.server";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 
 // Live-binding para permitir mock.module() em testes (padrão WA-C3/WA-F3).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -573,7 +574,7 @@ async function buscarContaPorId(
     .from("contas_a_pagar")
     .select(
       "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia,recorrencia_id",
-    )
+    ).filter(...REORG_ATIVO_FILTER)
     .eq("user_id", userId)
     .eq("id", contaId)
     .maybeSingle();
@@ -597,7 +598,7 @@ async function getRecorrenciaIdDaConta(contaId: string, userId: string): Promise
   // função venha a ser invocada em outro contexto.
   const { data } = await supabaseAdmin
     .from("contas_a_pagar")
-    .select("recorrencia_id")
+    .select("recorrencia_id").filter(...REORG_ATIVO_FILTER)
     .eq("id", contaId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -743,7 +744,7 @@ async function applyUpdate(
   if (sess.recurrenceScope !== "future_pending") {
     const q = supabaseAdmin
       .from("contas_a_pagar")
-      .update(payload)
+      .update(payload).filter(...REORG_ATIVO_FILTER)
       .eq("id", sess.contaId)
       .eq("user_id", userId)
       .eq("status", "pendente")
@@ -782,7 +783,7 @@ async function applyUpdate(
   // Nome/cancelamento aplicam a todas; vencimento/valor/categoria também.
   const q = supabaseAdmin
     .from("contas_a_pagar")
-    .update(payload)
+    .update(payload).filter(...REORG_ATIVO_FILTER)
     .eq("user_id", userId)
     .eq("recorrencia_id", sess.recorrenciaId)
     .eq("status", "pendente")

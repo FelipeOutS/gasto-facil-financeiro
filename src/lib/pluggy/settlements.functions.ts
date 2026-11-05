@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { PLUGGY_SETTLEMENTS_AUTHORIZED, confirmedBillPayment, type BankBill } from "./settlements";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 const kind = z.enum(["advance_link", "receivable_return", "refund", "bill_payment"]);
 const selection = z.object({
   accountId: z.string().min(1).max(200),
@@ -163,7 +164,7 @@ export const pluggySettlements = createServerFn({ method: "POST" })
           .limit(100);
         const receivables = await db
           .from("contas_a_receber")
-          .select("id,titulo,valor_restante")
+          .select("id,titulo,valor_restante").filter(...REORG_ATIVO_FILTER)
           .eq("user_id", user)
           .neq("status", "cancelado")
           .order("data_prevista", { ascending: false })
@@ -227,7 +228,7 @@ export const pluggySettlements = createServerFn({ method: "POST" })
         sourceExpected = { previous: previous.updated_at, next: next[0].updated_at };
         const invoice = await db
           .from("faturas_cartao")
-          .select("updated_at")
+          .select("updated_at").filter(...REORG_ATIVO_FILTER)
           .eq("user_id", user)
           .eq("cartao_id", data.targetId)
           .eq("ano", Number(previous.due_date.slice(0, 4)))

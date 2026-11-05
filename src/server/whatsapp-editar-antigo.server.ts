@@ -27,6 +27,7 @@ import { validateFinancialAmount } from "@/lib/financial-limits";
 import { parseData, parseValor } from "@/lib/whatsappParser";
 import { toGraphInteractive } from "./whatsapp-interactive.server";
 import { detectMesNoTexto } from "./whatsapp-mes-nomeado";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Db = any;
@@ -271,7 +272,7 @@ async function deleteBlock(db: Db, userId: string, t: Tbl, r: Row): Promise<stri
     if (r.bem_id) return `Pagamentos ligados a bens e financiamentos seguem regras próprias. ${site}`;
     if (r.cartao_id || r.forma_pagamento === "credito") return `Gastos no cartão de crédito afetam a fatura e o limite. ${site}`;
     if (r.import_batch_id) return `Lançamentos importados de extrato seguem a importação. ${site}`;
-    const { data, error } = await db.from("contas_a_pagar").select("id").eq("user_id", userId).eq("gasto_id", String(r.id)).limit(1);
+    const { data, error } = await db.from("contas_a_pagar").select("id").filter(...REORG_ATIVO_FILTER).eq("user_id", userId).eq("gasto_id", String(r.id)).limit(1);
     if (error) throw new Error("delete_old_link_read_failed");
     if (Array.isArray(data) && data.length > 0) return `Esse gasto é o pagamento de uma conta a pagar. ${site}`;
     return null;

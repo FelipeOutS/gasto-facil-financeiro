@@ -22,6 +22,7 @@ import {
 } from "@/lib/agenda/datetime";
 import { nextOccurrence, type RecurrenceFreq } from "@/lib/agenda/recurrence";
 import type { Database } from "@/integrations/supabase/types";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 
 export type AgendaRow = Database["public"]["Tables"]["agenda_items"]["Row"];
 export type AgendaKind = "lembrete" | "compromisso";
@@ -352,7 +353,7 @@ export async function resolveFinancialSource(item: AgendaRow, deps?: AgendaDeps)
   if (item.source_type === "conta_a_pagar") {
     const { data } = await db
       .from("contas_a_pagar")
-      .select("id, nome, valor, data_vencimento, status")
+      .select("id, nome, valor, data_vencimento, status").filter(...REORG_ATIVO_FILTER)
       .eq("id", item.source_id)
       .eq("user_id", item.user_id)
       .maybeSingle();
@@ -383,7 +384,7 @@ export async function resolveFinancialSource(item: AgendaRow, deps?: AgendaDeps)
   }
   const { data } = await db
     .from("recorrencias")
-    .select("id, nome, valor, proxima_cobranca, status")
+    .select("id, nome, valor, proxima_cobranca, status").filter(...REORG_ATIVO_FILTER)
     .eq("id", item.source_id)
     .eq("user_id", item.user_id)
     .maybeSingle();

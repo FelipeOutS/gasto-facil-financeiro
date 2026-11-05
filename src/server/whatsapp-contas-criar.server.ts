@@ -34,6 +34,7 @@ import {
   assertFinancialActionQuotaForWhatsApp,
   financialQuotaBlockedReply,
 } from "@/server/whatsapp-financial-quota-gate.server";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 
 // Live-binding para permitir mock.module() em testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1240,7 +1241,7 @@ export async function persistir(args: {
   const ids = rows.map((r) => r.id as string);
   const { data: readback, error: readErr } = await supabaseAdmin
     .from("contas_a_pagar")
-    .select("id")
+    .select("id").filter(...REORG_ATIVO_FILTER)
     .eq("user_id", userId)
     .in("id", ids);
   const got: Array<{ id: string }> = Array.isArray(readback) ? readback : [];

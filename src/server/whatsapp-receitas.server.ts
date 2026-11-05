@@ -25,6 +25,7 @@ import {
   assertFinancialActionQuotaForWhatsApp,
   financialQuotaBlockedReply,
 } from "@/server/whatsapp-financial-quota-gate.server";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const supabaseAdmin = _supabaseAdmin as any;
@@ -451,7 +452,7 @@ export async function persistirReceita(
         .maybeSingle(),
       supabaseAdmin
         .from("recorrencias")
-        .select("id, frequencia, proxima_cobranca, status, user_id")
+        .select("id, frequencia, proxima_cobranca, status, user_id").filter(...REORG_ATIVO_FILTER)
         .eq("id", recorrenciaId)
         .eq("user_id", userId)
         .maybeSingle(),

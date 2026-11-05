@@ -19,6 +19,7 @@
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { nowInAppTz } from "./cartao-fatura.server";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 
 export type ContaVencimentoRow = {
   id: string;
@@ -121,7 +122,7 @@ export async function getVencimentosPorPeriodo(
     .from("contas_a_pagar")
     .select(
       "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia",
-    )
+    ).filter(...REORG_ATIVO_FILTER)
     .eq("user_id", userId)
     .eq("status", "pendente")
     .gte("data_vencimento", startISO)
@@ -149,7 +150,7 @@ export async function getVencimentosComStatusAnterior(
     .from("contas_a_pagar")
     .select(
       "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia",
-    )
+    ).filter(...REORG_ATIVO_FILTER)
     .eq("user_id", userId)
     .eq("status", "pendente")
     .lt("data_vencimento", referenceISO);
@@ -191,7 +192,7 @@ export async function findVencimentoByTerm(
     .from("contas_a_pagar")
     .select(
       "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia",
-    )
+    ).filter(...REORG_ATIVO_FILTER)
     .eq("user_id", userId)
     .eq("status", "pendente");
   if (error || !Array.isArray(data)) return [];

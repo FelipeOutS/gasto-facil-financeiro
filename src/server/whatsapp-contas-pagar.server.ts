@@ -39,6 +39,7 @@ import {
   assertFinancialActionQuotaForWhatsApp,
   financialQuotaBlockedReply,
 } from "@/server/whatsapp-financial-quota-gate.server";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 
 // Live-binding para permitir mock.module() em testes (mesmo padrão WA-F3/WA-C2).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -450,7 +451,7 @@ async function buscarContaPorId(
     .from("contas_a_pagar")
     .select(
       "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia",
-    )
+    ).filter(...REORG_ATIVO_FILTER)
     .eq("user_id", userId)
     .eq("id", contaId)
     .eq("status", "pendente")
@@ -907,7 +908,7 @@ export async function persistirBaixa(args: {
   // gasto existe antes de finalizar a sessão.
   const { data: readback, error: readbackErr } = await supabaseAdmin
     .from("contas_a_pagar")
-    .select("id, nome, valor, data_pagamento, status, gasto_id")
+    .select("id, nome, valor, data_pagamento, status, gasto_id").filter(...REORG_ATIVO_FILTER)
     .eq("id", session.contaId)
     .eq("user_id", userId)
     .maybeSingle();

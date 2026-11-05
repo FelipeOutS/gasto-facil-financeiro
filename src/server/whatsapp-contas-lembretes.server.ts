@@ -27,6 +27,7 @@ import {
   cancelByEntity,
   type NotificationRow,
 } from "./whatsapp-notifications.server";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 
 export type LembreteContaType =
   | "conta_vencendo_hoje"
@@ -162,7 +163,7 @@ async function fetchContas(userId: string, deps?: LembretesDeps): Promise<ContaP
   const c = client(deps);
   const { data, error } = await c
     .from("contas_a_pagar")
-    .select("id,nome,valor,data_vencimento,status,recorrente")
+    .select("id,nome,valor,data_vencimento,status,recorrente").filter(...REORG_ATIVO_FILTER)
     .eq("user_id", userId)
     .eq("status", "pendente");
   if (error || !Array.isArray(data)) return [];
@@ -334,7 +335,7 @@ export async function revalidateContaForDispatch(
   const c = client(deps);
   const { data, error } = await c
     .from("contas_a_pagar")
-    .select("id, status, data_vencimento, valor, user_id")
+    .select("id, status, data_vencimento, valor, user_id").filter(...REORG_ATIVO_FILTER)
     .eq("id", contaId)
     .eq("user_id", n.user_id)
     .maybeSingle();

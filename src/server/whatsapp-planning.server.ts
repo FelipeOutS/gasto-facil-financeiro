@@ -4,6 +4,7 @@ import { calcMetaProgresso } from "@/lib/metas-progresso";
 import { validarDiaCartao, validarLimiteCartao, validarNomeCartao } from "@/lib/cartao-validacao";
 import { findCartoesDoUsuarioByTerm, getFaturaAtualPorCartao, loadCartoesDoUsuario } from "./cartao-fatura.server";
 import { toGraphInteractive } from "./whatsapp-interactive.server";
+import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = _admin as any;
@@ -253,7 +254,7 @@ async function recurrenceSummary(userId: string, text: string): Promise<Reply | 
   const t = norm(text);
   if (!(/\b(?:assinatura|assinaturas|recorrencia|recorrencias)\b/.test(t) && /\b(?:quanto|mais cara|renova|mensal|total)\b/.test(t))
     && !/^o que renova (?:esse|este) mes$/.test(t)) return null;
-  const { data,error } = await db.from("recorrencias").select("nome,valor,frequencia,proxima_cobranca,tipo_recorrencia,moeda")
+  const { data,error } = await db.from("recorrencias").select("nome,valor,frequencia,proxima_cobranca,tipo_recorrencia,moeda").filter(...REORG_ATIVO_FILTER)
     .eq("user_id",userId).eq("status","ativa");
   if (error) return { resposta:"Não consegui consultar as recorrências agora." };
   const rows = (data ?? []) as Array<{nome:string;valor:number;frequencia:string;proxima_cobranca:string|null;tipo_recorrencia:string;moeda:string}>;
@@ -332,7 +333,7 @@ export async function handlePlanning(args:{userId:string;phone:string;externalId
       const name=genericCancel[1].trim();
       const recs=await findEntities(args.userId,"recurrence_cancel",name);
       if(recs.length) {
-        const {data:accounts,error}=await db.from("contas_a_pagar").select("nome")
+        const {data:accounts,error}=await db.from("contas_a_pagar").select("nome").filter(...REORG_ATIVO_FILTER)
           .eq("user_id",args.userId).limit(100);
         if(error) return {resposta:"Não consegui identificar com segurança. Diga “cancela assinatura Nome” ou “cancela conta Nome”."};
         if((accounts??[]).some((a:{nome:string})=>norm(a.nome).includes(norm(name))))
