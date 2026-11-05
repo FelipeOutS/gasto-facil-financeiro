@@ -4,7 +4,9 @@ UPDATE public.whatsapp_reorganization_policy SET release_enabled=true;
 
 -- Escopo total: elegíveis = livre antigo (01) + mês atual (04); parcelado (02) e recorrente (03) ficam de fora.
 SELECT public.assert_true(public.wa_reorganization_prepare_v2('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','total-1','{"tables":["gastos","receitas"],"start":null,"end":null}',null,'918276')->>'status'='preview','total scope preview');
-SELECT public.assert_true((SELECT jsonb_array_length(snapshot)=2 FROM whatsapp_reorganization_operations WHERE request_id='total-1'),'total scope includes current month row');
+SELECT public.assert_true((SELECT snapshot @> '[{"table":"gastos","row":{"id":"5a5a5a5a-0000-0000-0000-000000000004"}}]' FROM whatsapp_reorganization_operations WHERE request_id='total-1'),'total scope includes current month row');
+SELECT public.assert_true((SELECT snapshot @> '[{"table":"gastos","row":{"id":"5a5a5a5a-0000-0000-0000-000000000001"}}]' FROM whatsapp_reorganization_operations WHERE request_id='total-1'),'total scope includes free old row');
+SELECT public.assert_true((SELECT NOT snapshot @> '[{"row":{"id":"5a5a5a5a-0000-0000-0000-000000000002"}}]' AND NOT snapshot @> '[{"row":{"id":"5a5a5a5a-0000-0000-0000-000000000003"}}]' FROM whatsapp_reorganization_operations WHERE request_id='total-1'),'linked rows stay out of total snapshot');
 SELECT public.assert_true((SELECT left_out @> '[{"motivo":"parcelado","n":1,"total":300},{"motivo":"recorrente","n":1,"total":40}]' FROM whatsapp_reorganization_operations WHERE request_id='total-1'),'total scope lists linked rows as left out');
 SELECT public.assert_true((SELECT count(*)=5 FROM gastos WHERE id::text LIKE '5a5a5a5a%' AND deleted_at IS NULL),'total preview writes nothing');
 
