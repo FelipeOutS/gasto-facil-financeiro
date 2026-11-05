@@ -32,6 +32,20 @@ DO $$ DECLARE t text; BEGIN
  END LOOP;
 END $$;
 
+-- Unicidade só entre registros ativos: depois de zerar, nova fatura do mesmo
+-- cartão/mês e nova recorrência detectada podem ser criadas normalmente.
+DO $$ BEGIN
+ IF to_regclass('public.faturas_cartao') IS NOT NULL THEN
+  ALTER TABLE public.faturas_cartao DROP CONSTRAINT IF EXISTS faturas_cartao_unique;
+  DROP INDEX IF EXISTS public.faturas_cartao_unique;
+  CREATE UNIQUE INDEX faturas_cartao_unique ON public.faturas_cartao(user_id,cartao_id,mes,ano) WHERE reorg_archived_at IS NULL;
+ END IF;
+ IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='recorrencias' AND column_name='detection_key') THEN
+  DROP INDEX IF EXISTS public.idx_recorrencias_detection_key;
+  CREATE UNIQUE INDEX idx_recorrencias_detection_key ON public.recorrencias(user_id,detection_key) WHERE detection_key IS NOT NULL AND reorg_archived_at IS NULL;
+ END IF;
+END $$;
+
 CREATE TABLE public.whatsapp_reorganization_full_operations (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  user_id uuid NOT NULL,
@@ -288,7 +302,7 @@ END $$;
 
 CREATE FUNCTION public.wa_full_reset_restore_confirm(p_user uuid,p_phone text,p_operation uuid,p_code text)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE op public.whatsapp_reorganization_full_operations%ROWTYPE; ph text; t text; cols text; n int; total int:=0; conflicts int:=0; expected int;
+DECLARE op public.whatsapp_reorganization_full_operations%ROWTYPE; ph text; t text; cols text; n int; total int:=0; conflicts int:=0; expected int; superseded uuid[]:='{}'; dups int:=0;
 BEGIN
  ph:=encode(sha256(convert_to(regexp_replace(coalesce(p_phone,''),'\D','','g'),'UTF8')),'hex');
  IF p_operation IS NULL THEN
@@ -324,24 +338,39 @@ BEGIN
   END IF;
  END LOOP;
  IF conflicts>0 THEN RETURN jsonb_build_object('status','changed','conflicts',conflicts); END IF;
+ -- Movimentações feitas depois da limpeza nunca são apagadas nem duplicadas:
+-- fatura do mesmo cartão/mês ou recorrência com a mesma chave criada depois
+-- prevalece; a antiga continua arquivada e é informada como "mantida a atual".
+ SELECT coalesce(array_agg(j.row_id),'{}') INTO superseded FROM public.whatsapp_reorganization_full_journal j
+  WHERE j.operation_id=op.id AND (
+   (j.table_name='faturas_cartao' AND EXISTS(SELECT 1 FROM public.faturas_cartao f WHERE f.user_id=p_user AND f.reorg_archived_at IS NULL AND f.id<>j.row_id
+     AND f.cartao_id::text=j.before_row->>'cartao_id' AND f.mes::text=j.before_row->>'mes' AND f.ano::text=j.before_row->>'ano'))
+   OR (j.table_name='recorrencias' AND j.before_row->>'detection_key' IS NOT NULL AND EXISTS(SELECT 1 FROM public.recorrencias r WHERE r.user_id=p_user AND r.reorg_archived_at IS NULL AND r.id<>j.row_id
+     AND to_jsonb(r)->>'detection_key'=j.before_row->>'detection_key')));
+ -- Lançamento igual digitado de novo depois da limpeza: não é fundido, só sinalizado.
+ SELECT count(*) INTO dups FROM public.whatsapp_reorganization_full_journal j
+  WHERE j.operation_id=op.id AND j.table_name IN('gastos','receitas') AND EXISTS(
+   SELECT 1 FROM (SELECT 'gastos' tn,to_jsonb(g) r FROM public.gastos g WHERE g.user_id=p_user AND g.deleted_at IS NULL
+                  UNION ALL SELECT 'receitas',to_jsonb(x) FROM public.receitas x WHERE x.user_id=p_user AND x.deleted_at IS NULL) a
+   WHERE a.tn=j.table_name AND (a.r->>'id')::uuid<>j.row_id AND public.financial_import_signature(a.tn,a.r)=public.financial_import_signature(j.table_name,j.before_row));
  PERFORM set_config('gi.reorganization_mutation','on',true);
  PERFORM set_config('gi.gastos_soft_delete','on',true);
  FOREACH t IN ARRAY ARRAY['gastos','receitas','faturas_cartao','contas_a_pagar','contas_a_receber','transferencias_internas','recorrencias'] LOOP
   IF to_regclass('public.'||t) IS NOT NULL THEN
    SELECT string_agg(quote_ident(c.column_name),',' ORDER BY c.ordinal_position) INTO cols FROM information_schema.columns c
     WHERE c.table_schema='public' AND c.table_name=t AND c.column_name<>'id' AND c.is_generated='NEVER' AND c.is_updatable='YES';
-   EXECUTE format('UPDATE public.%I x SET (%s)=(SELECT %s FROM jsonb_populate_record(NULL::public.%I,j.before_row)) FROM public.whatsapp_reorganization_full_journal j WHERE j.operation_id=$1 AND j.table_name=%L AND x.id=j.row_id AND x.user_id=$2',
-    t,cols,cols,t,t) USING op.id,p_user;
+   EXECUTE format('UPDATE public.%I x SET (%s)=(SELECT %s FROM jsonb_populate_record(NULL::public.%I,j.before_row)) FROM public.whatsapp_reorganization_full_journal j WHERE j.operation_id=$1 AND j.table_name=%L AND x.id=j.row_id AND x.user_id=$2 AND NOT (x.id=ANY($3))',
+    t,cols,cols,t,t) USING op.id,p_user,superseded;
    GET DIAGNOSTICS n=ROW_COUNT; total:=total+n;
   END IF;
  END LOOP;
  PERFORM set_config('gi.gastos_soft_delete','off',true);
- SELECT count(*) INTO expected FROM public.whatsapp_reorganization_full_journal WHERE operation_id=op.id;
+ SELECT count(*)-cardinality(superseded) INTO expected FROM public.whatsapp_reorganization_full_journal WHERE operation_id=op.id;
  IF total<>expected THEN RAISE EXCEPTION 'restore_row_count_mismatch'; END IF;
  DELETE FROM public.financial_import_tombstones WHERE user_id=p_user AND batch_id=op.id;
  INSERT INTO public.financial_write_generations(user_id,generation) VALUES(p_user,1) ON CONFLICT(user_id) DO UPDATE SET generation=financial_write_generations.generation+1;
  PERFORM set_config('gi.reorganization_mutation','off',true);
- op.restore_result:=op.summary||jsonb_build_object('status','restored','mode','full','operationId',op.id,'kept',0);
+ op.restore_result:=op.summary||jsonb_build_object('status','restored','mode','full','operationId',op.id,'kept',0,'supersededByNewer',cardinality(superseded),'possibleDuplicates',dups);
  UPDATE public.whatsapp_reorganization_full_operations SET status='restored',restore_result=op.restore_result,restored_at=clock_timestamp() WHERE id=op.id;
  IF to_regclass('public.audit_logs') IS NOT NULL THEN
   INSERT INTO public.audit_logs(actor_user_id,target_user_id,action,entity_type,entity_id,metadata) VALUES(p_user,p_user,'whatsapp_full_reset_restore','financial_operation',op.id::text,op.restore_result);
