@@ -2992,7 +2992,7 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   // Existing explicit single-month flow keeps its own disabled gate.
   if (!msg.flowReply && !msg.image && !msg.document &&
       (detectLoteMes(texto) === null || /\b(depois|adicion\w*|cadastr\w*|anteriores|historico|todos os meses)\b/i.test(texto))) {
-    const blocked = await dispatchReorganization({userId,phone:msg.telefone,externalId:msg.external_id ?? "",text:texto,localDate:new Intl.DateTimeFormat('en-CA',{timeZone:await getUserTimezone(userId),year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(recebidaEm)),pendingSession:Boolean(await buscarSessaoAtiva(userId,msg.telefone))},async()=>createReorganizationStore(supabaseAdmin,{partialScope:true,fullReset:true}));
+    const blocked = await dispatchReorganization({userId,phone:msg.telefone,externalId:msg.external_id ?? "",text:texto,localDate:new Intl.DateTimeFormat('en-CA',{timeZone:await getUserTimezone(userId),year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(recebidaEm)),pendingSession:Boolean(await buscarSessaoAtiva(userId,msg.telefone))},async()=>createReorganizationStore(supabaseAdmin,{partialScope:true,fullReset:true}),async()=>{const d=await import("./whatsapp-reorganizacao-diagnostico.server");return d.buildReorganizationDiagnostic(d.supabaseDiagReader(supabaseAdmin,userId));});
     if (blocked) return { status: "consulta", resposta: blocked };
   }
 

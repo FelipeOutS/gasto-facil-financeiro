@@ -287,6 +287,9 @@ function PrivacyPage() {
             </p>
           </div>
         )}
+        <p className="text-xs text-muted-foreground">
+          Esta exclusão é permanente. "Zerar histórico reversivelmente por WhatsApp" é outra função, que oculta lançamentos e permite restaurar; ela ainda não está disponível.
+        </p>
 
         <div className="space-y-4 rounded-xl border p-4 bg-muted/30">
           <div className="flex items-center space-x-2 text-brand">
