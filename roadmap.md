@@ -14,5 +14,6 @@ Bloqueios externos: instruções no chat do Draft 2; app Meta de teste com crede
 
 ## Limpeza total por áudio (owner-only)
 - [x] Trava por conta (lista vazia por padrão) + ciclo zerar→restaurar testado em banco temporário (161 PASS)
-- [ ] Incluir cartão/fatura/parcelas/recorrências/importações (precisa contrato contábil por módulo)
+- [x] Incluir cartão/fatura/parcelas/recorrências/importações/contas no zerar tudo (banco temporário: 211 PASS + conversa por voz)
+- [ ] Antes de liberar: leituras do servidor (WhatsApp/alertas) devem ignorar contas/faturas arquivadas; escritores do site após a limpeza (cerca de gerações)
 - [ ] Itens 4 e 5 (banco real + publicação) — aguardando autorização
