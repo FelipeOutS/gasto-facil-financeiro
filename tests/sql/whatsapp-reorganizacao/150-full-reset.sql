@@ -57,6 +57,7 @@ SELECT public.assert_true((SELECT count(*)=5 FROM pg_policies WHERE policyname='
 -- Prévia: tudo do titular, com bem/financiamento fora e listado.
 SELECT public.wa_full_reset_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','full-1','515151') AS p \gset
 SELECT public.assert_true((:'p'::jsonb)->>'status'='preview','full: preview');
+\echo :p
 SELECT public.assert_true(((:'p'::jsonb)->>'card')::int>=1 AND ((:'p'::jsonb)->>'installments')::int>=3 AND ((:'p'::jsonb)->>'futureInstallments')::int=2,'full: card and all installments incl. future counted');
 SELECT public.assert_true(((:'p'::jsonb)->>'recurringEntries')::int>=2 AND ((:'p'::jsonb)->>'imported')::int>=2,'full: recurring and imported counted');
 SELECT public.assert_true(((:'p'::jsonb)->>'invoices')::int=1 AND ((:'p'::jsonb)->>'payables')::int=2 AND ((:'p'::jsonb)->>'receivables')::int=1 AND ((:'p'::jsonb)->>'transfers')::int=1 AND ((:'p'::jsonb)->>'recurrenceRules')::int=1,'full: invoice, payables, receivable, transfer, rule counted');
