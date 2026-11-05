@@ -25,3 +25,9 @@ export function reorgAtivoFilter(deployed: boolean): readonly [string, string, s
 }
 
 export const REORG_ATIVO_FILTER = reorgAtivoFilter(REORG_ARCHIVE_SCHEMA_DEPLOYED);
+
+/** Envolve `client.from(tabela).select|update(...)`; sem efeito até a coluna existir. */
+export function reorgAtivos<Q>(query: Q, deployed: boolean = REORG_ARCHIVE_SCHEMA_DEPLOYED): Q {
+  if (!deployed) return query;
+  return (query as unknown as { is: (c: string, v: null) => Q }).is("reorg_archived_at", null);
+}

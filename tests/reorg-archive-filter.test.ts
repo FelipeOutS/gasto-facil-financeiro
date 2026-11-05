@@ -5,6 +5,7 @@ import {
   REORG_ARCHIVE_SCHEMA_DEPLOYED,
   REORG_ARCHIVED_TABLES,
   reorgAtivoFilter,
+  reorgAtivos,
 } from "@/server/reorg-archive-filter";
 
 function walk(dir: string): string[] {
@@ -18,13 +19,13 @@ describe("registros arquivados pela limpeza total", () => {
   it("toda leitura/atualização do servidor nas tabelas arquivadas aplica o filtro", () => {
     const files = [...walk("src/server"), "src/lib/pluggy/settlements.functions.ts"];
     const tables = REORG_ARCHIVED_TABLES.join("|");
-    const re = new RegExp(`\\.from\\("(${tables})"\\)\\s*\\.(select|update)\\(`, "g");
+    const re = new RegExp(`([\\w.$]+)\\s*\\.from\\("(${tables})"\\)\\s*\\.(select|update)\\(`, "g");
     const faltando: string[] = [];
     for (const f of files) {
       const src = readFileSync(f, "utf8");
       for (const m of src.matchAll(re)) {
-        const trecho = src.slice(m.index!, m.index! + 600);
-        if (!trecho.includes(".filter(...REORG_ATIVO_FILTER)")) faltando.push(`${f}:${m[1]}`);
+        const antes = src.slice(Math.max(0, m.index! - 12), m.index!);
+        if (!antes.endsWith("reorgAtivos(")) faltando.push(`${f}:${m[2]}`);
       }
     }
     expect(faltando).toEqual([]);
@@ -34,5 +35,11 @@ describe("registros arquivados pela limpeza total", () => {
     expect(reorgAtivoFilter(true)).toEqual(["reorg_archived_at", "is", "null"]);
     expect(reorgAtivoFilter(false)).toEqual(["id", "not.is", "null"]);
     expect(REORG_ARCHIVE_SCHEMA_DEPLOYED).toBe(false);
+    const calls: unknown[] = [];
+    const q = { is: (c: string, v: null) => (calls.push([c, v]), q) };
+    expect(reorgAtivos(q, false)).toBe(q);
+    expect(calls).toEqual([]);
+    reorgAtivos(q, true);
+    expect(calls).toEqual([["reorg_archived_at", null]]);
   });
 });
