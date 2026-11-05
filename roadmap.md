@@ -11,3 +11,8 @@
 6. [ ] Homologação com áudio real (app Meta de teste) e publicação de cada etapa.
 
 Bloqueios externos: instruções no chat do Draft 2; app Meta de teste com credenciais próprias.
+
+## Limpeza total por áudio (owner-only)
+- [x] Trava por conta (lista vazia por padrão) + ciclo zerar→restaurar testado em banco temporário (161 PASS)
+- [ ] Incluir cartão/fatura/parcelas/recorrências/importações (precisa contrato contábil por módulo)
+- [ ] Itens 4 e 5 (banco real + publicação) — aguardando autorização
