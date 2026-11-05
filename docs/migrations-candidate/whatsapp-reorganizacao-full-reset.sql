@@ -190,7 +190,13 @@ CREATE FUNCTION public.wa_full_reset_confirm(p_user uuid,p_phone text,p_code tex
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE op public.whatsapp_reorganization_full_operations%ROWTYPE; rows jsonb; eligible jsonb; stamp timestamptz; t text; n int; total int:=0; ph text;
 BEGIN
- IF p_operation IS NULL THEN RETURN jsonb_build_object('status','not_found'); END IF;
+ ph:=encode(sha256(convert_to(regexp_replace(coalesce(p_phone,''),'\D','','g'),'UTF8')),'hex');
+ -- Voz/texto sem identificador: só a prévia pendente deste titular+número cujo código confere.
+ IF p_operation IS NULL THEN
+  SELECT o.id INTO p_operation FROM public.whatsapp_reorganization_full_operations o WHERE o.user_id=p_user AND o.phone_hash=ph AND o.status='preview'
+   AND p_code ~ '^\d{6}$' AND o.code_hash=encode(sha256(convert_to(p_user::text||ph||p_code,'UTF8')),'hex') ORDER BY o.created_at DESC LIMIT 1;
+  IF p_operation IS NULL THEN RETURN jsonb_build_object('status','not_found'); END IF;
+ END IF;
  IF NOT EXISTS(SELECT 1 FROM public.whatsapp_reorganization_full_operations WHERE id=p_operation AND user_id=p_user) THEN RETURN jsonb_build_object('status','not_found'); END IF;
  IF NOT public.wa_reorganization_authorized(p_user,p_phone) THEN RETURN jsonb_build_object('status','blocked'); END IF;
  LOCK TABLE public.gastos,public.receitas IN SHARE ROW EXCLUSIVE MODE;
@@ -275,6 +281,12 @@ CREATE FUNCTION public.wa_full_reset_restore_confirm(p_user uuid,p_phone text,p_
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE op public.whatsapp_reorganization_full_operations%ROWTYPE; ph text; t text; cols text; n int; total int:=0; conflicts int:=0; expected int;
 BEGIN
+ ph:=encode(sha256(convert_to(regexp_replace(coalesce(p_phone,''),'\D','','g'),'UTF8')),'hex');
+ IF p_operation IS NULL THEN
+  SELECT o.id INTO p_operation FROM public.whatsapp_reorganization_full_operations o WHERE o.user_id=p_user AND o.phone_hash=ph AND o.status='applied'
+   AND p_code ~ '^\d{6}$' AND o.restore_code_hash=encode(sha256(convert_to(o.id::text||p_user::text||ph||p_code,'UTF8')),'hex') ORDER BY o.completed_at DESC LIMIT 1;
+  IF p_operation IS NULL THEN RETURN jsonb_build_object('status','not_found'); END IF;
+ END IF;
  IF NOT EXISTS(SELECT 1 FROM public.whatsapp_reorganization_full_operations WHERE id=p_operation AND user_id=p_user) THEN RETURN jsonb_build_object('status','not_found'); END IF;
  -- Restauração não exige release ativo (pausar não pode impedir desfazer), mas exige titular e vínculo.
  IF NOT EXISTS(SELECT 1 FROM public.whatsapp_reorganization_allowlist a WHERE a.user_id=p_user)

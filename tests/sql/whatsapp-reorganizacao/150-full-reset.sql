@@ -152,11 +152,12 @@ SELECT set_config('gi.gastos_soft_delete','off',false);
 SELECT set_config('gi.reorganization_mutation','off',false);
 SELECT public.wa_full_reset_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','full-2','737373') AS p2 \gset
 SELECT public.assert_true((:'p2'::jsonb)->>'complete'='true' AND jsonb_array_length((:'p2'::jsonb)->'leftOut')=0,'full: without bem link preview is complete');
-SELECT public.assert_true(public.wa_full_reset_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','737373',((:'p2'::jsonb)->>'operationId')::uuid)->>'complete'='true','full: complete reset applied');
+SELECT public.assert_true(public.wa_full_reset_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','111222',NULL)->>'status'='not_found','full: voice code without matching preview falls through');
+SELECT public.assert_true(public.wa_full_reset_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','737373',NULL)->>'complete'='true','full: complete reset applied by voice code (no id)');
 SELECT public.assert_true((SELECT count(*)=0 FROM gastos WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL)
  AND (SELECT count(*)=0 FROM receitas WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL),'full: nothing active left');
 SELECT public.wa_full_reset_restore_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',((:'p2'::jsonb)->>'operationId')::uuid,'848484');
-SELECT public.assert_true(public.wa_full_reset_restore_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',((:'p2'::jsonb)->>'operationId')::uuid,'848484')->>'status'='restored','full: complete reset restored');
+SELECT public.assert_true(public.wa_full_reset_restore_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',NULL,'848484')->>'status'='restored','full: complete reset restored by voice code (no id)');
 
 DELETE FROM public.whatsapp_reorganization_allowlist;
 UPDATE public.whatsapp_reorganization_policy SET release_enabled=false;
