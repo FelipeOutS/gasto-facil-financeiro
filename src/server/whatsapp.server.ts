@@ -73,6 +73,7 @@ import {
 } from "./whatsapp-consultas.server";
 
 import { detectConsultaShape } from "./whatsapp-query-guard.server";
+import { evaluateIntentGate, intentGateMsgs } from "./whatsapp-intent-gate.server";
 import { isListarCartoesIntent } from "./whatsapp-listar-cartoes";
 import {
   recordContas as shortRecordContas,
@@ -1547,6 +1548,7 @@ type WhatsAppAuditRoute =
   | "consulta_handler"
   | "conversational_handler"
   | "reset_handler"
+  | "intent_gate"
   | "fatura_escolha";
 
 export function logWhatsAppInboundReceived(args: {
@@ -5729,6 +5731,35 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   // Mantemos o handler legado disponível apenas como fallback explícito
   // se a state machine não foi acionada (defensivo — não deve ocorrer).
   void handlePagarPessoaIntent;
+
+  // ---- WA-INTENT-GATE: portão de intenção antes do parser genérico ----
+  // Sem sessão ativa e sem SINAL FINANCEIRO claro (valor, dígito, verbo de
+  // lançamento ou comando explícito de registro), a mensagem NÃO vira gasto:
+  // perguntas sobre o assistente recebem confirmação de entendimento e
+  // mensagens ambíguas recebem pedido de esclarecimento. A ausência de
+  // valor monetário nunca classifica a mensagem como despesa incompleta.
+  // Áudio e texto passam pelo mesmo portão (o áudio já chega transcrito).
+  if (!sessao && decisao === "outro") {
+    const gate = evaluateIntentGate(texto);
+    if (gate.kind !== "pass") {
+      const resposta =
+        gate.kind === "capability"
+          ? intentGateMsgs.capability(msg.source)
+          : intentGateMsgs.clarify();
+      logWaRouteDecision(msg, "intent_gate", gate.kind);
+      await gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        resposta,
+      );
+      return { status: "consulta", resposta };
+    }
+  }
 
   if (msg.source === "audio") {
     // Transcrição de voz: valor sem "R$"/"reais" só conta na posição de
