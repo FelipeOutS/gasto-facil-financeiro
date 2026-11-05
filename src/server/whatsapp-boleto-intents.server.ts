@@ -33,7 +33,7 @@ import {
   assertFinancialActionQuotaForWhatsApp,
   financialQuotaBlockedReply,
 } from "@/server/whatsapp-financial-quota-gate.server";
-import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 
 // Live-binding para permitir mock.module() em testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -670,9 +670,9 @@ async function findDuplicateBoleto(
   codigoBarras: string,
 ): Promise<{ id: string; nome: string | null } | null> {
   // Match exato por codigo_boleto + pendente, isolado por user_id (RLS reforça).
-  const { data } = await supabaseAdmin
+  const { data } = await reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
-    .select("id, nome, status, codigo_boleto").filter(...REORG_ATIVO_FILTER)
+    .select("id, nome, status, codigo_boleto"))
     .eq("user_id", userId)
     .eq("codigo_boleto", codigoBarras)
     .eq("status", "pendente")
@@ -806,9 +806,9 @@ export async function persistir(args: {
   }
 
   // Readback obrigatório.
-  const { data: readback } = await supabaseAdmin
+  const { data: readback } = await reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
-    .select("id").filter(...REORG_ATIVO_FILTER)
+    .select("id"))
     .eq("user_id", userId)
     .eq("id", id)
     .maybeSingle();

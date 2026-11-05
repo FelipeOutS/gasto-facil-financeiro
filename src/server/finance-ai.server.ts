@@ -7,7 +7,7 @@
  */
 
 export type ForecastStatus = "positivo" | "negativo" | "atencao" | "neutro";
-import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 
 export type MonthAggregate = {
   mes: number;
@@ -109,14 +109,14 @@ export async function agregarMes(
         .is("deleted_at", null)
         .gte("data", from)
         .lt("data", toExclusive),
-      supabase
+      reorgAtivos(supabase
         .from("contas_a_pagar")
-        .select("nome, valor, status, data_vencimento").filter(...REORG_ATIVO_FILTER)
+        .select("nome, valor, status, data_vencimento"))
         .gte("data_vencimento", from)
         .lt("data_vencimento", toExclusive),
-      supabase
+      reorgAtivos(supabase
         .from("contas_a_receber")
-        .select("titulo, valor_total, valor_restante, status, data_prevista").filter(...REORG_ATIVO_FILTER)
+        .select("titulo, valor_total, valor_restante, status, data_prevista"))
         .gte("data_prevista", from)
         .lt("data_prevista", toExclusive),
       supabase.from("cartoes").select("id, nome, banco"),

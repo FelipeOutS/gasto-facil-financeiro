@@ -4,7 +4,7 @@
  * contas_a_receber, transferencias_internas e recorrencias. O site já os
  * esconde por RLS restritiva, mas o servidor (service role) ignora RLS: toda
  * leitura/atualização dessas tabelas no servidor encadeia
- * `.filter(...REORG_ATIVO_FILTER)`. Garantido por tests/reorg-archive-filter.test.ts.
+ * ``. Garantido por tests/reorg-archive-filter.test.ts.
  *
  * Enquanto a coluna não existir no banco real, o filtro é um no-op seguro
  * (`id IS NOT NULL`). Ligar REORG_ARCHIVE_SCHEMA_DEPLOYED somente junto com a

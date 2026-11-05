@@ -22,7 +22,7 @@ import {
 } from "@/lib/agenda/datetime";
 import { nextOccurrence, type RecurrenceFreq } from "@/lib/agenda/recurrence";
 import type { Database } from "@/integrations/supabase/types";
-import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 
 export type AgendaRow = Database["public"]["Tables"]["agenda_items"]["Row"];
 export type AgendaKind = "lembrete" | "compromisso";
@@ -351,9 +351,9 @@ export async function resolveFinancialSource(item: AgendaRow, deps?: AgendaDeps)
   const db = c(deps);
   const tz = item.timezone || DEFAULT_TZ;
   if (item.source_type === "conta_a_pagar") {
-    const { data } = await db
+    const { data } = await reorgAtivos(db
       .from("contas_a_pagar")
-      .select("id, nome, valor, data_vencimento, status").filter(...REORG_ATIVO_FILTER)
+      .select("id, nome, valor, data_vencimento, status"))
       .eq("id", item.source_id)
       .eq("user_id", item.user_id)
       .maybeSingle();
@@ -382,9 +382,9 @@ export async function resolveFinancialSource(item: AgendaRow, deps?: AgendaDeps)
     const due = { y: fatura.vencimento.getFullYear(), m: fatura.vencimento.getMonth() + 1, d: fatura.vencimento.getDate() };
     return { ok: true, nome: data.nome, valor: Number(fatura.total ?? 0), dueIso: ymdToIso(due), label: "Fatura" };
   }
-  const { data } = await db
+  const { data } = await reorgAtivos(db
     .from("recorrencias")
-    .select("id, nome, valor, proxima_cobranca, status").filter(...REORG_ATIVO_FILTER)
+    .select("id, nome, valor, proxima_cobranca, status"))
     .eq("id", item.source_id)
     .eq("user_id", item.user_id)
     .maybeSingle();

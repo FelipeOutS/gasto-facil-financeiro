@@ -39,7 +39,7 @@ import {
   assertFinancialActionQuotaForWhatsApp,
   financialQuotaBlockedReply,
 } from "@/server/whatsapp-financial-quota-gate.server";
-import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 
 // Live-binding para permitir mock.module() em testes (mesmo padrão WA-F3/WA-C2).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -447,11 +447,11 @@ async function buscarContaPorId(
   userId: string,
   contaId: string,
 ): Promise<ContaVencimentoRow | null> {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
     .select(
       "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia",
-    ).filter(...REORG_ATIVO_FILTER)
+    ))
     .eq("user_id", userId)
     .eq("id", contaId)
     .eq("status", "pendente")
@@ -906,9 +906,9 @@ export async function persistirBaixa(args: {
 
   // Readback obrigatório: confirmar que conta.gasto_id foi gravado e que o
   // gasto existe antes de finalizar a sessão.
-  const { data: readback, error: readbackErr } = await supabaseAdmin
+  const { data: readback, error: readbackErr } = await reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
-    .select("id, nome, valor, data_pagamento, status, gasto_id").filter(...REORG_ATIVO_FILTER)
+    .select("id, nome, valor, data_pagamento, status, gasto_id"))
     .eq("id", session.contaId)
     .eq("user_id", userId)
     .maybeSingle();

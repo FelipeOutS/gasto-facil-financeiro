@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { PLUGGY_SETTLEMENTS_AUTHORIZED, confirmedBillPayment, type BankBill } from "./settlements";
-import { REORG_ATIVO_FILTER } from "@/server/reorg-archive-filter";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 const kind = z.enum(["advance_link", "receivable_return", "refund", "bill_payment"]);
 const selection = z.object({
   accountId: z.string().min(1).max(200),
@@ -162,9 +162,9 @@ export const pluggySettlements = createServerFn({ method: "POST" })
           .eq("user_id", user)
           .order("due_date", { ascending: false })
           .limit(100);
-        const receivables = await db
+        const receivables = await reorgAtivos(db
           .from("contas_a_receber")
-          .select("id,titulo,valor_restante").filter(...REORG_ATIVO_FILTER)
+          .select("id,titulo,valor_restante"))
           .eq("user_id", user)
           .neq("status", "cancelado")
           .order("data_prevista", { ascending: false })
@@ -226,9 +226,9 @@ export const pluggySettlements = createServerFn({ method: "POST" })
         if (!match) throw Error("pluggy_pagamento_requer_revisao");
         amount = match.amount;
         sourceExpected = { previous: previous.updated_at, next: next[0].updated_at };
-        const invoice = await db
+        const invoice = await reorgAtivos(db
           .from("faturas_cartao")
-          .select("updated_at").filter(...REORG_ATIVO_FILTER)
+          .select("updated_at"))
           .eq("user_id", user)
           .eq("cartao_id", data.targetId)
           .eq("ano", Number(previous.due_date.slice(0, 4)))
