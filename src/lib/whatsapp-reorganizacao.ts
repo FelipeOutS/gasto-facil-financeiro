@@ -108,6 +108,26 @@ export function confirmationCode(text: string): string | null {
   const match = /^APAGAR\s+(?:[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}\s+)?(\d{6})$/i.exec(text.trim());
   return match?.[1] ?? null;
 }
+
+/**
+ * Confirmação por voz: "apagar zero zero quatro oito dois um".
+ * Exige EXATAMENTE seis dígitos falados após "apagar" — frases aproximadas
+ * ("apagar quatro oito dois um") nunca confirmam. O código continua sendo
+ * o mesmo da prévia (por operação, com expiração), então a confirmação
+ * falada permanece explícita e vinculada à prévia apresentada.
+ */
+const SPOKEN_DIGITS: Record<string, string> = {
+  zero: "0", um: "1", uma: "1", dois: "2", duas: "2", tres: "3",
+  quatro: "4", cinco: "5", seis: "6", sete: "7", oito: "8", nove: "9",
+};
+export function spokenConfirmationCode(text: string): string | null {
+  const t = normalizeReorganization(text).replace(/[.,!?;:]+/g, " ").replace(/\s+/g, " ").trim();
+  const m = /^apagar(?:\s+(?:o\s+)?(?:codigo|numero))?\s+([a-z]+(?:\s+[a-z]+){5})$/.exec(t);
+  if (!m) return null;
+  const digits = m[1].split(" ").map((w) => SPOKEN_DIGITS[w]);
+  if (digits.some((d) => d === undefined)) return null;
+  return digits.join("");
+}
 export function operationConfirmation(text: string, action: "APAGAR" | "RESTAURAR"): { operationId: string; code: string } | null {
   const m = new RegExp(`^${action}\\s+([\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12})\\s+(\\d{6})$`, "i").exec(text.trim());
   return m ? { operationId: m[1], code: m[2] } : null;
