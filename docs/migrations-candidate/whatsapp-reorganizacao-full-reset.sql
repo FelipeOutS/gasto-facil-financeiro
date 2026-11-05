@@ -90,7 +90,7 @@ CREATE TRIGGER wa_full_journal_immutable BEFORE UPDATE OR DELETE ON public.whats
 
 -- Reimportação de lançamento zerado é recusada (o import inteiro falha) até a restauração.
 CREATE FUNCTION public.financial_import_signature(p_table text,p_row jsonb) RETURNS text LANGUAGE sql IMMUTABLE AS $$
- SELECT 'sig:'||p_table||':'||(p_row->>'data')||':'||((p_row->>'valor')::numeric)::text||':'||lower(btrim(coalesce(p_row->>'descricao','')))
+ SELECT 'sig:'||p_table||':'||(p_row->>'data')||':'||round((p_row->>'valor')::numeric,2)::text||':'||lower(btrim(coalesce(p_row->>'descricao','')))
 $$;
 CREATE FUNCTION public.tg_financial_import_tombstone() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
 DECLARE j jsonb:=to_jsonb(NEW); k text:=nullif(lower(btrim(j->>'id_operacao_banco')),''); sig text;
