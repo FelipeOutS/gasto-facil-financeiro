@@ -96,7 +96,7 @@ SELECT public.assert_true((SELECT status='ativa' FROM recorrencias WHERE id='f80
 SELECT public.assert_true((SELECT ca FROM full_before)=(SELECT md5(string_agg(t::text,'|' ORDER BY t.id)) FROM cartoes t)
  AND (SELECT ba FROM full_before)=(SELECT md5(coalesce(string_agg(t::text,'|' ORDER BY t.id),'')) FROM bancos t)
  AND (SELECT outros FROM full_before)=(SELECT md5(string_agg(t::text,'|' ORDER BY t.id)) FROM gastos t WHERE user_id<>'aaaaaaaa-0000-0000-0000-000000000001'),'full: cards, banks and other users untouched');
-SELECT public.assert_true((SELECT count(*)=3 FROM financial_import_tombstones WHERE batch_id=((:'a'::jsonb)->>'operationId')::uuid),'full: import keys tombstoned');
+SELECT public.assert_true((SELECT count(*) FILTER (WHERE operation_key NOT LIKE 'sig:%')=3 FROM financial_import_tombstones WHERE batch_id=((:'a'::jsonb)->>'operationId')::uuid),'full: import keys tombstoned');
 SELECT public.assert_true(public.wa_full_reset_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','515151',((:'a'::jsonb)->>'operationId')::uuid)->>'status'='replay','full: duplicate confirmation is replay');
 SELECT public.assert_true((SELECT count(*)=1 FROM audit_logs WHERE action='whatsapp_full_reset' AND entity_id=(:'a'::jsonb)->>'operationId'),'full: audited once');
 
@@ -108,6 +108,9 @@ DO $$ BEGIN
  EXCEPTION WHEN others THEN IF SQLERRM<>'reimport_blocked_reorganized_entry' THEN RAISE; END IF; END;
  RAISE NOTICE 'PASS: full: reimport of zeroed entry refused';
 END $$;
+SELECT set_config('gi.reorganization_mutation','on',false);
+INSERT INTO receitas(id,user_id,descricao,valor,data,import_batch_id) VALUES ('f1000000-0000-0000-0000-0000000000a1','aaaaaaaa-0000-0000-0000-000000000001','Sem id banco',75,'2030-01-08','f7000000-0000-0000-0000-000000000009');
+SELECT set_config('gi.reorganization_mutation','off',false);
 DO $$ BEGIN
  BEGIN DELETE FROM gastos WHERE id='f0000000-0000-0000-0000-000000000007'; RAISE EXCEPTION 'should fail';
  EXCEPTION WHEN others THEN IF SQLERRM NOT LIKE 'financial_%' THEN RAISE; END IF; END;

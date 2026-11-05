@@ -89,10 +89,15 @@ CREATE TRIGGER wa_full_journal_immutable BEFORE UPDATE OR DELETE ON public.whats
  FOR EACH ROW EXECUTE FUNCTION public.tg_wa_full_journal_immutable();
 
 -- Reimportação de lançamento zerado é recusada (o import inteiro falha) até a restauração.
+CREATE FUNCTION public.financial_import_signature(p_table text,p_row jsonb) RETURNS text LANGUAGE sql IMMUTABLE AS $$
+ SELECT 'sig:'||p_table||':'||(p_row->>'data')||':'||((p_row->>'valor')::numeric)::text||':'||lower(btrim(coalesce(p_row->>'descricao','')))
+$$;
 CREATE FUNCTION public.tg_financial_import_tombstone() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
-DECLARE k text:=nullif(lower(btrim(to_jsonb(NEW)->>'id_operacao_banco')),'');
+DECLARE j jsonb:=to_jsonb(NEW); k text:=nullif(lower(btrim(j->>'id_operacao_banco')),''); sig text;
 BEGIN
- IF k IS NOT NULL AND EXISTS(SELECT 1 FROM public.financial_import_tombstones t WHERE t.user_id=NEW.user_id AND t.operation_key=k) THEN
+ -- Sem identificador bancário, importados usam a mesma assinatura exata da deduplicação do extrato.
+ IF j->>'import_batch_id' IS NOT NULL THEN sig:=public.financial_import_signature(TG_TABLE_NAME,j); END IF;
+ IF EXISTS(SELECT 1 FROM public.financial_import_tombstones t WHERE t.user_id=NEW.user_id AND (t.operation_key=k OR t.operation_key=sig)) THEN
   RAISE EXCEPTION 'reimport_blocked_reorganized_entry'; END IF;
  RETURN NEW;
 END $$;
@@ -251,6 +256,10 @@ BEGIN
   SELECT DISTINCT p_user,lower(btrim(e->'row'->>'id_operacao_banco')),op.id FROM jsonb_array_elements(eligible) e
   WHERE e->>'table' IN('gastos','receitas','transferencias_internas') AND nullif(btrim(e->'row'->>'id_operacao_banco'),'') IS NOT NULL
   ON CONFLICT DO NOTHING;
+ INSERT INTO public.financial_import_tombstones(user_id,operation_key,batch_id)
+  SELECT DISTINCT p_user,public.financial_import_signature(e->>'table',e->'row'),op.id FROM jsonb_array_elements(eligible) e
+  WHERE e->>'table' IN('gastos','receitas','transferencias_internas') AND e->'row'->>'import_batch_id' IS NOT NULL AND nullif(btrim(e->'row'->>'id_operacao_banco'),'') IS NULL
+  ON CONFLICT DO NOTHING;
  INSERT INTO public.financial_write_generations(user_id,generation) VALUES(p_user,1) ON CONFLICT(user_id) DO UPDATE SET generation=financial_write_generations.generation+1;
  PERFORM set_config('gi.reorganization_mutation','off',true);
  op.result:=op.summary||jsonb_build_object('status','applied','mode','full','operationId',op.id,'leftOut',op.left_out,'complete',jsonb_array_length(op.left_out)=0);
@@ -348,7 +357,7 @@ BEGIN
   ORDER BY o.completed_at DESC LIMIT 1);
 END $$;
 
-REVOKE ALL ON FUNCTION public.wa_full_reset_bem_linked(jsonb),public.wa_full_reset_rows(uuid),public.wa_full_reset_summary(jsonb),
+REVOKE ALL ON FUNCTION public.financial_import_signature(text,jsonb),public.wa_full_reset_bem_linked(jsonb),public.wa_full_reset_rows(uuid),public.wa_full_reset_summary(jsonb),
  public.wa_full_reset_prepare(uuid,text,text,text),public.wa_full_reset_confirm(uuid,text,text,uuid),
  public.wa_full_reset_restore_prepare(uuid,text,uuid,text),public.wa_full_reset_restore_confirm(uuid,text,uuid,text),
  public.wa_full_reset_last_applied(uuid,text),public.tg_wa_full_journal_immutable() FROM PUBLIC,anon,authenticated;
