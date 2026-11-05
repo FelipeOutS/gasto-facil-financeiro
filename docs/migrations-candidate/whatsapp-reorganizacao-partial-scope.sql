@@ -101,6 +101,20 @@ BEGIN
  RETURN res;
 END $$;
 
-REVOKE ALL ON FUNCTION public.wa_reorganization_left_out_reason(uuid,jsonb),public.wa_reorganization_scope_rows(uuid,jsonb),public.wa_reorganization_snapshot(uuid,jsonb),public.wa_reorganization_left_out(uuid,jsonb),public.wa_reorganization_prepare_v2(uuid,text,text,jsonb,jsonb,text,jsonb),public.wa_reorganization_confirm_v2(uuid,text,text,uuid) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.wa_reorganization_prepare_v2(uuid,text,text,jsonb,jsonb,text,jsonb),public.wa_reorganization_confirm_v2(uuid,text,text,uuid) TO service_role;
+-- Restauração por voz: devolve o ID da limpeza aplicada mais recente do
+-- titular ("restaurar última limpeza"). NÃO restaura nada — a restauração
+-- segue o fluxo normal de prévia + código exclusivo (restore_prepare/control).
+CREATE OR REPLACE FUNCTION public.wa_reorganization_last_applied(p_user uuid,p_phone text)
+RETURNS uuid LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE op uuid;
+BEGIN
+ IF NOT public.wa_reorganization_authorized(p_user,p_phone) THEN RETURN NULL; END IF;
+ SELECT o.id INTO op FROM public.whatsapp_reorganization_operations o
+  WHERE o.user_id=p_user AND o.status='applied'
+  ORDER BY o.completed_at DESC NULLS LAST, o.created_at DESC LIMIT 1;
+ RETURN op;
+END $$;
+
+REVOKE ALL ON FUNCTION public.wa_reorganization_left_out_reason(uuid,jsonb),public.wa_reorganization_scope_rows(uuid,jsonb),public.wa_reorganization_snapshot(uuid,jsonb),public.wa_reorganization_left_out(uuid,jsonb),public.wa_reorganization_prepare_v2(uuid,text,text,jsonb,jsonb,text,jsonb),public.wa_reorganization_confirm_v2(uuid,text,text,uuid),public.wa_reorganization_last_applied(uuid,text) FROM PUBLIC,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.wa_reorganization_prepare_v2(uuid,text,text,jsonb,jsonb,text,jsonb),public.wa_reorganization_confirm_v2(uuid,text,text,uuid),public.wa_reorganization_last_applied(uuid,text) TO service_role;
 COMMIT;
