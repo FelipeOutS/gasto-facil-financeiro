@@ -1,0 +1,38 @@
+-- Stub mínimo para banco descartável (nunca rodar em produção).
+DO $$ BEGIN CREATE ROLE anon; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE ROLE authenticated; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE ROLE service_role; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+CREATE SCHEMA IF NOT EXISTS auth;
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
+$$ SELECT nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+GRANT USAGE ON SCHEMA auth, public TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION auth.uid() TO anon, authenticated, service_role;
+CREATE TABLE audit_logs(id uuid PRIMARY KEY DEFAULT gen_random_uuid(), actor_user_id uuid, target_user_id uuid, action text NOT NULL, entity_type text, metadata jsonb, created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE bens(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE recorrencias(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE cartoes(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE gastos(id uuid PRIMARY KEY, user_id uuid, cartao_id uuid, bem_id uuid REFERENCES bens(id) ON DELETE SET NULL, recorrencia_id uuid, deleted_at timestamptz);
+CREATE TABLE receitas(id uuid PRIMARY KEY, user_id uuid, recorrencia_id uuid);
+CREATE TABLE bens_pagamentos(id uuid PRIMARY KEY, user_id uuid, gasto_id uuid REFERENCES gastos(id) ON DELETE SET NULL);
+CREATE TABLE bens_amortizacoes(id uuid PRIMARY KEY, user_id uuid, gasto_id uuid REFERENCES gastos(id) ON DELETE SET NULL);
+CREATE TABLE bens_custos_aquisicao(id uuid PRIMARY KEY, user_id uuid, gasto_id uuid REFERENCES gastos(id) ON DELETE SET NULL);
+CREATE TABLE contas_a_pagar(id uuid PRIMARY KEY, user_id uuid, status text);
+CREATE TABLE contas_a_receber(id uuid PRIMARY KEY, user_id uuid, status text);
+CREATE TABLE limites(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE metas_financeiras(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE movimentacoes_meta(id uuid PRIMARY KEY, user_id uuid, meta_id uuid REFERENCES metas_financeiras(id) ON DELETE CASCADE);
+CREATE TABLE dinheiro_guardado(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE investimentos_ativos(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE investimentos_atualizacoes(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE investimentos_movimentacoes(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE investimentos_rendimentos(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE faturas_cartao(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE mercado_orcamentos(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE mercado_precos_usuario(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE mercado_listas(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE mercado_historico_compras(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE mercado_mercados_salvos(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE imported_transactions(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE investimentos_importacoes(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE extratos_importados(id uuid PRIMARY KEY, user_id uuid);
+CREATE TABLE pluggy_import_entries(id uuid PRIMARY KEY, user_id uuid, batch_id uuid REFERENCES extratos_importados(id) ON DELETE RESTRICT, entry_table text, entry_id uuid);
