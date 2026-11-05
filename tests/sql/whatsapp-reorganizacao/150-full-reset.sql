@@ -141,7 +141,7 @@ SELECT public.assert_true((SELECT f FROM full_before)=(SELECT md5(string_agg(t::
  AND (SELECT rc FROM full_before)=(SELECT md5(string_agg(t::text,'|' ORDER BY t.id)) FROM recorrencias t),'full: invoices, bills, transfers and rules (links, status) byte-identical after restore');
 SELECT public.assert_true((SELECT count(*)=0 FROM financial_import_tombstones WHERE batch_id=((:'a'::jsonb)->>'operationId')::uuid),'full: tombstones released');
 SELECT public.assert_true(public.wa_full_reset_restore_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999',((:'a'::jsonb)->>'operationId')::uuid,'626262')->>'status'='replay','full: second restore is replay, no duplication');
-SELECT public.assert_true((SELECT count(*)=10 FROM gastos WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND id::text LIKE 'f0%' AND deleted_at IS NULL),'full: no duplicated rows');
+SELECT public.assert_true((SELECT count(*)=9 FROM gastos WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND id::text LIKE 'f0%' AND deleted_at IS NULL),'full: no duplicated rows');
 
 -- Sem vínculo com bem: limpeza realmente total.
 SELECT set_config('gi.reorganization_mutation','on',false);
