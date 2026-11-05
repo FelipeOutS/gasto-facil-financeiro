@@ -35,7 +35,7 @@ describe("trava somente prévia da limpeza por WhatsApp", () => {
     expect(s.prepare).toHaveBeenCalledTimes(1);
     expect(r).toContain("15 gastos");
   });
-  it.each(["APAGAR op 123456", "apagar um dois três quatro cinco seis", "123456", "RESTAURAR op 123456", "restaurar última limpeza"])(
+  it.each(["APAGAR 123456", "APAGAR 3f1c2a4e-1111-2222-3333-444455556666 123456", "apagar um dois três quatro cinco seis", "RESTAURAR 3f1c2a4e-1111-2222-3333-444455556666 123456", "restaurar última limpeza"])(
     "não executa nem restaura com '%s'", async (text) => {
       const s = store();
       const r = await runReorganization({ ...base, text }, s, { previewOnly: true });
