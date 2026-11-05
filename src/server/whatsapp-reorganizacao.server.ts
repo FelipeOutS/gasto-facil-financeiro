@@ -62,12 +62,21 @@ export async function runReorganization(input: ReorganizationInput, store: Reorg
   try {
     if (!await store.authorize(input.userId, input.phone)) return "Não foi possível validar seu vínculo e sua autorização. A operação não foi executada.";
     if (input.pendingSession) return "Há outra solicitação pendente. Conclua ou cancele essa solicitação antes de iniciar uma limpeza; nenhum valor deste pedido foi cadastrado.";
-    const code = confirmationCode(input.text);
+    const code = confirmationCode(input.text) ?? spokenConfirmationCode(input.text);
     if (code) return response(await store.confirm(input, code, operationConfirmation(input.text, "APAGAR")?.operationId));
     const restoreConfirmation = operationConfirmation(input.text, "RESTAURAR");
     if (restoreConfirmation) return store.confirmRestore ? response(await store.confirmRestore(input, restoreConfirmation.operationId, restoreConfirmation.code)) : unavailable;
     const restoreRequest = /^restaurar(?: a)? limpeza\s+([\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12})$/i.exec(input.text.trim());
     if (restoreRequest) return store.prepareRestore ? response(await store.prepareRestore(input, restoreRequest[1], randomConfirmationCode())) : unavailable;
+    // Restauração por voz: "restaurar última limpeza" resolve o lote aplicado
+    // mais recente do titular e segue o MESMO fluxo de prévia + código novo.
+    // Nunca restaura direto; sem suporte do store, falha fechada.
+    if (/^restaurar\s+(?:a\s+)?(?:minha\s+)?(?:ultima|última)\s+limpeza[.!]?$/i.test(input.text.trim())) {
+      if (!store.prepareRestore || !store.resolveLastApplied) return unavailable;
+      const lastOp = await store.resolveLastApplied(input);
+      if (!lastOp) return "Não encontrei uma limpeza concluída para restaurar. Se tiver o identificador do lote, envie restaurar limpeza e o identificador. Nada foi restaurado.";
+      return response(await store.prepareRestore(input, lastOp, randomConfirmationCode()));
+    }
     if (/^(cancelar|cancela)( a)? limpeza[.!]?$/i.test(input.text.trim())) return response(await store.cancel(input));
     if (/^consultar limpeza[.!]?$/i.test(input.text.trim())) return response(await store.status(input));
     if (/^restaurar( a)? limpeza[.!]?$/i.test(input.text.trim())) return "Informe restaurar limpeza e o identificador exato do lote. Vou preparar uma prévia e um código exclusivo; nenhum registro foi restaurado.";
@@ -85,7 +94,9 @@ export async function runReorganization(input: ReorganizationInput, store: Reorg
 /** Intercepts destructive/compound requests, without database calls while locked. */
 export function blockedReorganizationReply(text: string, pendingSession: boolean): string | null {
   const intent = interpretReorganization(text, "2000-01-01");
-  const control = /^(apagar\s+(?:[\da-f-]+\s+)?\d+|restaurar\s+[\da-f-]+\s+\d+|consultar limpeza|restaurar( a)? limpeza(?:\s+[\da-f-]+)?|cancel(?:ar|a)( a)? limpeza)[.!]?$/i.test(text.trim());
+  const control =
+    /^(apagar\s+(?:[\da-f-]+\s+)?\d+|restaurar\s+[\da-f-]+\s+\d+|consultar limpeza|restaurar( a)? limpeza(?:\s+[\da-f-]+)?|restaurar\s+(?:a\s+)?(?:minha\s+)?(?:ultima|última)\s+limpeza|cancel(?:ar|a)( a)? limpeza)[.!]?$/i.test(text.trim()) ||
+    spokenConfirmationCode(text) !== null;
   if (intent.kind === "ignore" && !control) return null;
   if (pendingSession) return "Há outra solicitação pendente. Conclua ou cancele essa solicitação antes da limpeza. Nenhum valor deste pedido foi cadastrado.";
   if (intent.kind === "unsupported_balance" || intent.kind === "balance") return "Saldo de conta não é receita. A atualização por este fluxo ainda está bloqueada; nenhum valor foi cadastrado.";
