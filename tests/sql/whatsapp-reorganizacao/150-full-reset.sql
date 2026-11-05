@@ -34,7 +34,7 @@ INSERT INTO transferencias_internas(id,user_id,descricao,valor,data,id_operacao_
 INSERT INTO recorrencias(id,user_id,nome,valor,status,proxima_cobranca) VALUES
  ('f8000000-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','Assinatura',40,'ativa','2030-02-08'),
  ('f8000000-0000-0000-0000-000000000003','cccccccc-0000-0000-0000-000000000003','De outro',10,'ativa','2030-02-08');
-INSERT INTO bens_pagamentos(id,user_id,gasto_id) VALUES ('f6000000-0000-0000-0000-000000000001','aaaaaaaa-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000009');
+INSERT INTO bens_pagamentos(id,gasto_id) VALUES ('f6000000-0000-0000-0000-000000000001','f0000000-0000-0000-0000-000000000009');
 SELECT set_config('gi.reorganization_mutation','off',false);
 
 CREATE TEMP TABLE full_before AS SELECT
