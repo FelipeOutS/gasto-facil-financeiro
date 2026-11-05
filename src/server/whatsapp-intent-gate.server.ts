@@ -32,8 +32,7 @@ export type IntentGateDecision =
 function norm(s: string): string {
   return (s ?? "")
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    // faixa de diacríticos combinantes (U+0300–U+036F)
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/\s+/g, " ")
     .trim();
