@@ -22,7 +22,7 @@ DO $$ BEGIN
  BEGIN UPDATE whatsapp_reorganization_full_operations SET status='applied' WHERE request_id='po-1'; RAISE EXCEPTION 'should fail';
  EXCEPTION WHEN others THEN IF SQLERRM<>'reorganization_preview_only' THEN RAISE; END IF; END;
  BEGIN PERFORM set_config('gi.reorganization_mutation','on',true);
-  UPDATE gastos SET deleted_at=now() WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL; RAISE EXCEPTION 'should fail';
+  UPDATE gastos SET descricao=descricao||'' WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL; RAISE EXCEPTION 'should fail';
  EXCEPTION WHEN others THEN IF SQLERRM<>'reorganization_preview_only' THEN RAISE; END IF; END;
  RAISE NOTICE 'PASS: preview-only: forced status change and privileged row writes refused';
 END $$;
