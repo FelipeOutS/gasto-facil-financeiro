@@ -73,6 +73,7 @@ import {
 } from "./whatsapp-consultas.server";
 
 import { detectConsultaShape } from "./whatsapp-query-guard.server";
+import { evaluateIntentGate, intentGateMsgs } from "./whatsapp-intent-gate.server";
 import { isListarCartoesIntent } from "./whatsapp-listar-cartoes";
 import {
   recordContas as shortRecordContas,
