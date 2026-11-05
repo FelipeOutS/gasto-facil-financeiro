@@ -69,7 +69,7 @@ describe("AJUSTES-07 — regressões de UX da Central de Ajustes", () => {
     const src = read("src/routes/app_.privacidade.tsx");
     expect(src).toContain("isConfirmChecked");
     expect(src).toContain("<Dialog");
-    expect(src).toContain("disabled={!isConfirmChecked || isDeleting}");
+    expect(src).toContain("disabled={!isConfirmChecked || isDeleting || isBlocked || totalRecords === 0}");
     expect(src).not.toMatch(/placeholder="EXCLUIR"/);
     expect(src).not.toContain("confirmationInput");
   });
