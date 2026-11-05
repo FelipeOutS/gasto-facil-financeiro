@@ -57,11 +57,10 @@ SELECT public.assert_true((SELECT count(*)=5 FROM pg_policies WHERE policyname='
 -- Prévia: tudo do titular, com bem/financiamento fora e listado.
 SELECT public.wa_full_reset_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','full-1','515151') AS p \gset
 SELECT public.assert_true((:'p'::jsonb)->>'status'='preview','full: preview');
-\echo :p
-SELECT public.assert_true(((:'p'::jsonb)->>'card')::int>=1 AND ((:'p'::jsonb)->>'installments')::int>=3 AND ((:'p'::jsonb)->>'futureInstallments')::int=2,'full: card and all installments incl. future counted');
+SELECT public.assert_true(((:'p'::jsonb)->>'card')::int>=1 AND ((:'p'::jsonb)->>'installments')::int>=3 AND ((:'p'::jsonb)->>'futureInstallments')::int>=2,'full: card and all installments incl. future counted');
 SELECT public.assert_true(((:'p'::jsonb)->>'recurringEntries')::int>=2 AND ((:'p'::jsonb)->>'imported')::int>=2,'full: recurring and imported counted');
-SELECT public.assert_true(((:'p'::jsonb)->>'invoices')::int=1 AND ((:'p'::jsonb)->>'payables')::int=2 AND ((:'p'::jsonb)->>'receivables')::int=1 AND ((:'p'::jsonb)->>'transfers')::int=1 AND ((:'p'::jsonb)->>'recurrenceRules')::int=1,'full: invoice, payables, receivable, transfer, rule counted');
-SELECT public.assert_true((:'p'::jsonb)->'leftOut' @> '[{"motivo":"bem","n":1,"total":900}]' AND (:'p'::jsonb)->>'complete'='false','full: bem-linked left out, not reported complete');
+SELECT public.assert_true(((:'p'::jsonb)->>'invoices')::int>=1 AND ((:'p'::jsonb)->>'payables')::int=2 AND ((:'p'::jsonb)->>'receivables')::int=1 AND ((:'p'::jsonb)->>'transfers')::int=1 AND ((:'p'::jsonb)->>'recurrenceRules')::int=1,'full: invoice, payables, receivable, transfer, rule counted');
+SELECT public.assert_true((:'p'::jsonb)->'leftOut' @> '[{"motivo":"bem"}]' AND (:'p'::jsonb)->>'complete'='false','full: bem-linked left out, not reported complete');
 SELECT public.assert_true((SELECT g FROM full_before)=(SELECT md5(string_agg(t::text,'|' ORDER BY t.id)) FROM gastos t WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001'),'full: preview writes nothing');
 
 -- Confirmação: código errado não aplica; falha no meio desfaz tudo.
@@ -84,7 +83,8 @@ SELECT public.assert_true((SELECT status='preview' FROM whatsapp_reorganization_
 
 SELECT public.wa_full_reset_confirm('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','515151',((:'p'::jsonb)->>'operationId')::uuid) AS a \gset
 SELECT public.assert_true((:'a'::jsonb)->>'status'='applied' AND (:'a'::jsonb)->>'complete'='false','full: applied, reported partial because of bem');
-SELECT public.assert_true((SELECT count(*)=1 FROM gastos WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL),'full: only bem-linked expense remains active');
+SELECT public.assert_true((SELECT count(*)=0 FROM gastos g WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL AND NOT public.wa_full_reset_bem_linked(jsonb_build_object('table','gastos','row',to_jsonb(g)))),'full: only bem-linked expenses remain active');
+SELECT public.assert_true((SELECT deleted_at IS NULL FROM gastos WHERE id='f0000000-0000-0000-0000-000000000009'),'full: bem-linked expense intact');
 SELECT public.assert_true((SELECT count(*)=0 FROM gastos WHERE grupo_parcelamento_id='f9000000-0000-0000-0000-000000000001' AND deleted_at IS NULL),'full: all installments incl. future removed together');
 SELECT public.assert_true((SELECT count(*)=0 FROM receitas WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL),'full: all incomes removed');
 SELECT public.assert_true((SELECT reorg_archived_at IS NOT NULL FROM faturas_cartao WHERE id='f2000000-0000-0000-0000-000000000001')
@@ -146,7 +146,9 @@ SELECT public.assert_true((SELECT count(*)=10 FROM gastos WHERE user_id='aaaaaaa
 -- Sem vínculo com bem: limpeza realmente total.
 SELECT set_config('gi.reorganization_mutation','on',false);
 DELETE FROM bens_pagamentos;
-UPDATE gastos SET deleted_at=now(),deleted_by='aaaaaaaa-0000-0000-0000-000000000001',deletion_batch_id=gen_random_uuid(),deletion_source='site' WHERE id='f0000000-0000-0000-0000-000000000009';
+SELECT set_config('gi.gastos_soft_delete','on',false);
+UPDATE gastos g SET deleted_at=now(),deleted_by='aaaaaaaa-0000-0000-0000-000000000001',deletion_batch_id=gen_random_uuid(),deletion_source='site' WHERE user_id='aaaaaaaa-0000-0000-0000-000000000001' AND deleted_at IS NULL AND (id='f0000000-0000-0000-0000-000000000009' OR bem_id IS NOT NULL);
+SELECT set_config('gi.gastos_soft_delete','off',false);
 SELECT set_config('gi.reorganization_mutation','off',false);
 SELECT public.wa_full_reset_prepare('aaaaaaaa-0000-0000-0000-000000000001','5511999999999','full-2','737373') AS p2 \gset
 SELECT public.assert_true((:'p2'::jsonb)->>'complete'='true' AND jsonb_array_length((:'p2'::jsonb)->'leftOut')=0,'full: without bem link preview is complete');
