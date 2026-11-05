@@ -48,3 +48,6 @@ if grep -q '"applied"' "$D/r1" "$D/r2" && grep -q '"replay"' "$D/r1" "$D/r2"; th
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/120-total-scope-voice.sql"
 "${P[@]}" -f "$ROOT/docs/migrations-candidate/whatsapp-reorganizacao-owner-allowlist.sql"
 "${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/130-owner-allowlist-full-cycle.sql"
+"${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/140-full-reset-stub.sql"
+"${P[@]}" -f "$ROOT/docs/migrations-candidate/whatsapp-reorganizacao-full-reset.sql"
+"${P[@]}" -f "$ROOT/tests/sql/whatsapp-reorganizacao/150-full-reset.sql"
