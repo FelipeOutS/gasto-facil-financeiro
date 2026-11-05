@@ -1,4 +1,4 @@
-import { confirmationCode, spokenConfirmationCode, operationConfirmation, interpretReorganization, randomConfirmationCode, type FinancialScope, type NewIncome } from "@/lib/whatsapp-reorganizacao";
+import { confirmationCode, spokenConfirmationCode, restoreCodeOnly, operationConfirmation, interpretReorganization, randomConfirmationCode, type FinancialScope, type NewIncome } from "@/lib/whatsapp-reorganizacao";
 import type { OpeningBalanceRequest } from "@/lib/account-opening-balance";
 
 /** Preparation only. This gate cannot be enabled through caller input. */
@@ -37,7 +37,7 @@ export function fullBlocksText(r: ReorganizationResult): string {
   return `\nInclui: ${n(r.card)} compra(s) de cartão, ${n(r.installments)} parcela(s) (${n(r.futureInstallments)} futura(s)), ${n(r.recurringEntries)} lançamento(s) recorrente(s), ${n(r.imported)} importado(s), ${n(r.invoices)} fatura(s), ${n(r.payables)} conta(s) a pagar, ${n(r.receivables)} conta(s) a receber, ${n(r.transfers)} transferência(s). ${n(r.recurrenceRules)} regra(s) de recorrência serão pausadas para não recriar lançamentos. Importações não serão trazidas de novo enquanto a limpeza valer.\nPreservados: bancos, cartões, metas, investimentos e sua conta.`;
 }
 function response(result: ReorganizationResult): string {
-  if (result.status === "restore_preview" && result.operationId && result.code) return `Prévia de restauração do lote ${result.operationId}: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas. Registros alterados ou com novos vínculos serão preservados. A receita criada pela limpeza será desfeita somente se permanecer intacta.\nConfirme com RESTAURAR ${result.operationId} ${result.code}. Válido até ${result.expiresAt}. Nada foi restaurado.`;
+  if (result.status === "restore_preview" && result.operationId && result.code) return `Prévia de restauração do lote ${result.operationId}: ${result.expenses ?? 0} gastos e ${result.incomes ?? 0} receitas. Registros alterados ou com novos vínculos serão preservados. A receita criada pela limpeza será desfeita somente se permanecer intacta.\nConfirme com RESTAURAR ${result.operationId} ${result.code}${result.mode === "full" ? ` — por áudio, diga "restaurar" e os seis números do código` : ""}. Válido até ${result.expiresAt}. Nada foi restaurado.`;
   if (result.status === "preview" && result.code && result.expiresAt) {
     const scope = result.scope;
     // Escopo total (sem datas) significa histórico completo, INCLUINDO o mês
@@ -74,6 +74,9 @@ export async function runReorganization(input: ReorganizationInput, store: Reorg
     if (code) return response(await store.confirm(input, code, operationConfirmation(input.text, "APAGAR")?.operationId));
     const restoreConfirmation = operationConfirmation(input.text, "RESTAURAR");
     if (restoreConfirmation) return store.confirmRestore ? response(await store.confirmRestore(input, restoreConfirmation.operationId, restoreConfirmation.code)) : unavailable;
+    // Restauração por voz sem identificador: o código da prévia de restauração basta.
+    const restoreCode = restoreCodeOnly(input.text);
+    if (restoreCode) return store.confirmRestore ? response(await store.confirmRestore(input, "", restoreCode)) : unavailable;
     const restoreRequest = /^restaurar(?: a)? limpeza\s+([\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12})$/i.exec(input.text.trim());
     if (restoreRequest) return store.prepareRestore ? response(await store.prepareRestore(input, restoreRequest[1], randomConfirmationCode())) : unavailable;
     // Restauração por voz: "restaurar última limpeza" resolve o lote aplicado
@@ -104,7 +107,7 @@ export function blockedReorganizationReply(text: string, pendingSession: boolean
   const intent = interpretReorganization(text, "2000-01-01");
   const control =
     /^(apagar\s+(?:[\da-f-]+\s+)?\d+|restaurar\s+[\da-f-]+\s+\d+|consultar limpeza|restaurar( a)? limpeza(?:\s+[\da-f-]+)?|restaurar\s+(?:a\s+)?(?:minha\s+)?(?:ultima|última)\s+limpeza|cancel(?:ar|a)( a)? limpeza)[.!]?$/i.test(text.trim()) ||
-    spokenConfirmationCode(text) !== null;
+    spokenConfirmationCode(text) !== null || restoreCodeOnly(text) !== null;
   if (intent.kind === "ignore" && !control) return null;
   if (pendingSession) return "Há outra solicitação pendente. Conclua ou cancele essa solicitação antes da limpeza. Nenhum valor deste pedido foi cadastrado.";
   if (intent.kind === "unsupported_balance" || intent.kind === "balance") return "Saldo de conta não é receita. A atualização por este fluxo ainda está bloqueada; nenhum valor foi cadastrado.";

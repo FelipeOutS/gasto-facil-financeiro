@@ -32,8 +32,8 @@ export function createReorganizationStore(db: ReorganizationRpcClient, opts: { p
       ? call("wa_full_reset_prepare", { ...identity(input), p_request: input.externalId, p_code: code })
       : call(`wa_reorganization_prepare${v2}`, { ...identity(input), p_request: input.externalId, p_scope: scope, p_income: income, p_code: code, ...(balance ? { p_balance: balance } : {}) }),
     confirm: async (input, code, operationId) => {
-      if (opts.fullReset && operationId) {
-        const r = await call("wa_full_reset_confirm", { ...identity(input), p_code: code, p_operation: operationId });
+      if (opts.fullReset) {
+        const r = await call("wa_full_reset_confirm", { ...identity(input), p_code: code, p_operation: operationId ?? null });
         if (r.status !== "not_found") return r;
       }
       return call(`wa_reorganization_confirm${v2}`, { ...identity(input), p_code: code, p_operation: operationId ?? null });
@@ -51,9 +51,11 @@ export function createReorganizationStore(db: ReorganizationRpcClient, opts: { p
     },
     confirmRestore: async (input, operationId, code) => {
       if (opts.fullReset) {
-        const r = await call("wa_full_reset_restore_confirm", { ...identity(input), p_operation: operationId, p_code: code });
+        const r = await call("wa_full_reset_restore_confirm", { ...identity(input), p_operation: operationId || null, p_code: code });
         if (r.status !== "not_found") return r;
+        if (!operationId) return { status: "wrong_code" };
       }
+      if (!operationId) return { status: "wrong_code" };
       return call("wa_reorganization_control", { ...identity(input), p_action: `restore:${operationId}:${code}` });
     },
     // Voz: resolve o ID do lote aplicado mais recente; a restauração em si

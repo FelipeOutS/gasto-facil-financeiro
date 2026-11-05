@@ -128,6 +128,16 @@ export function spokenConfirmationCode(text: string): string | null {
   if (digits.some((d) => d === undefined)) return null;
   return digits.join("");
 }
+/** "restaurar 123456" ou "restaurar" + seis dígitos falados; sem identificador do lote. */
+export function restoreCodeOnly(text: string): string | null {
+  const t = normalizeReorganization(text).replace(/[.,!?;:]+/g, " ").replace(/\s+/g, " ").trim();
+  const typed = /^restaurar(?:\s+(?:o\s+)?(?:codigo|numero))?\s+(\d{6})$/.exec(t);
+  if (typed) return typed[1];
+  const m = /^restaurar(?:\s+(?:o\s+)?(?:codigo|numero))?\s+([a-z]+(?:\s+[a-z]+){5})$/.exec(t);
+  if (!m) return null;
+  const digits = m[1].split(" ").map((w) => SPOKEN_DIGITS[w]);
+  return digits.some((d) => d === undefined) ? null : digits.join("");
+}
 export function operationConfirmation(text: string, action: "APAGAR" | "RESTAURAR"): { operationId: string; code: string } | null {
   const m = new RegExp(`^${action}\\s+([\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12})\\s+(\\d{6})$`, "i").exec(text.trim());
   return m ? { operationId: m[1], code: m[2] } : null;
