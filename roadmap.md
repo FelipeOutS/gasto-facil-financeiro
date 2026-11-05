@@ -20,3 +20,4 @@ Bloqueios externos: instruções no chat do Draft 2; app Meta de teste com crede
 - [x] Trava somente prévia (servidor + banco) e pacote único com pré-checagem, pós-checagem e reversão testados
 - [ ] Exportação de dados (titular) → autorizar aplicar pacote + publicar travado → liberar só a conta em modo prévia → teste da prévia pelo WhatsApp
 - [ ] Itens 4 e 5 (banco real + publicação) — aguardando autorização
+- [ ] LGPD /app/privacidade: código corrigido (não publicado). Pendente autorização: aplicar `docs/migrations-candidate/privacy-deletion-hardening.sql` (fecha execução sem login) e publicar.
