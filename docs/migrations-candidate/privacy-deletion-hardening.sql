@@ -14,6 +14,7 @@ DECLARE
     v_results JSONB := '{}'::JSONB;
     v_cat TEXT;
     v_count INTEGER;
+    v_total INTEGER;
     v_scope TEXT;
 BEGIN
     -- 1. Security check: p_user_id must match auth.uid()
@@ -116,9 +117,12 @@ BEGIN
             v_results := v_results || jsonb_build_object('budgets', v_count);
 
         ELSIF v_cat = 'goals' THEN
+            v_total := 0;
             DELETE FROM public.movimentacoes_meta WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.metas_financeiras WHERE user_id = p_user_id;
-            GET DIAGNOSTICS v_count = ROW_COUNT;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
+            v_count := v_total;
             v_results := v_results || jsonb_build_object('goals', v_count);
 
         ELSIF v_cat = 'savings' THEN
@@ -127,33 +131,51 @@ BEGIN
             v_results := v_results || jsonb_build_object('savings', v_count);
 
         ELSIF v_cat = 'investments' THEN
+            v_total := 0;
             DELETE FROM public.investimentos_movimentacoes WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.investimentos_rendimentos WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.investimentos_atualizacoes WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.investimentos_ativos WHERE user_id = p_user_id;
-            GET DIAGNOSTICS v_count = ROW_COUNT;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
+            v_count := v_total;
             v_results := v_results || jsonb_build_object('investments', v_count);
 
         ELSIF v_cat = 'cards' THEN
+            v_total := 0;
             DELETE FROM public.faturas_cartao WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.cartoes WHERE user_id = p_user_id;
-            GET DIAGNOSTICS v_count = ROW_COUNT;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
+            v_count := v_total;
             v_results := v_results || jsonb_build_object('cards', v_count);
 
         ELSIF v_cat = 'market' THEN
+            v_total := 0;
             DELETE FROM public.mercado_orcamentos WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.mercado_precos_usuario WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.mercado_listas WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.mercado_historico_compras WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.mercado_mercados_salvos WHERE user_id = p_user_id;
-            GET DIAGNOSTICS v_count = ROW_COUNT;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
+            v_count := v_total;
             v_results := v_results || jsonb_build_object('market', v_count);
 
         ELSIF v_cat = 'imports' THEN
+            v_total := 0;
             DELETE FROM public.imported_transactions WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.investimentos_importacoes WHERE user_id = p_user_id;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
             DELETE FROM public.extratos_importados WHERE user_id = p_user_id;
-            GET DIAGNOSTICS v_count = ROW_COUNT;
+            GET DIAGNOSTICS v_count = ROW_COUNT; v_total := v_total + v_count;
+            v_count := v_total;
             v_results := v_results || jsonb_build_object('imports', v_count);
         END IF;
     END LOOP;

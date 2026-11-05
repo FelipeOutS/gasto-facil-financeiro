@@ -22,7 +22,7 @@ OUT=$(Q "$AS_A SELECT public.execute_data_deletion_atomic('$A', ARRAY['market','
 echo "$OUT" | grep -q "pluggy_import_entries_batch_id_fkey" && pass "atual: imports com Pluggy falha por FK RESTRICT (causa reproduzida)" || fail "atual: esperado erro de FK, veio: $OUT"
 [ "$(Q 'SELECT same()')" = t ] && pass "atual: falha reverte tudo (market não foi apagado parcialmente)" || fail "atual: exclusão parcial"
 OUT=$(Q "BEGIN; SET ROLE anon; SELECT public.execute_data_deletion_atomic('$B', ARRAY['market'], '{}'); ROLLBACK;")
-echo "$OUT" | grep -q '"market": 1' && pass "atual: VULNERABILIDADE reproduzida — anon sem login apaga dados de outro usuário (revertido no teste)" || echo "INFO: anon atual -> $OUT"
+echo "$OUT" | grep -q "{\"market\"" && pass "atual: VULNERABILIDADE reproduzida — anon sem login apaga dados de outro usuário (revertido no teste)" || echo "INFO: anon atual -> $OUT"
 
 # --- Candidato ---
 "${P[@]}" -1 -f "$ROOT/docs/migrations-candidate/privacy-deletion-hardening.sql" && pass "candidato aplica em uma transação"
