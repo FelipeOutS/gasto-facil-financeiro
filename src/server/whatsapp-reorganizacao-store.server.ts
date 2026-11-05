@@ -35,5 +35,13 @@ export function createReorganizationStore(db: ReorganizationRpcClient, opts: { p
     restore: async () => ({ status: "blocked" }),
     prepareRestore: (input, operationId, code) => call("wa_reorganization_restore_prepare", { ...identity(input), p_operation: operationId, p_code: code }),
     confirmRestore: (input, operationId, code) => call("wa_reorganization_control", { ...identity(input), p_action: `restore:${operationId}:${code}` }),
+    // Voz: resolve o ID do lote aplicado mais recente; a restauração em si
+    // continua exigindo prévia + código exclusivo (prepareRestore/confirmRestore).
+    // RPC candidata wa_reorganization_last_applied; ausente → null (falha fechada).
+    resolveLastApplied: async (input) => {
+      const result = await db.rpc("wa_reorganization_last_applied", identity(input));
+      if (result.error || typeof result.data !== "string") return null;
+      return result.data;
+    },
   };
 }

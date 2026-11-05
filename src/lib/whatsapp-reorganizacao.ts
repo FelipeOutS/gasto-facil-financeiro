@@ -19,6 +19,15 @@ const months = ["janeiro", "fevereiro", "marco", "abril", "maio", "junho", "julh
 const isoMonth = (year: number, month: number) => `${year}-${String(month).padStart(2, "0")}-01`;
 const nextMonth = (year: number, month: number) => isoMonth(month === 12 ? year + 1 : year, month === 12 ? 1 : month + 1);
 
+/**
+ * Marcadores de histórico COMPLETO (inclui o mês atual). Distintos de
+ * "meses anteriores", que preservam o mês atual (limite exclusivo).
+ * "tudo"/"até agora" só contam como histórico completo quando o pedido
+ * tem verbo de exclusão e escopo de tabelas — decidido pelas regras abaixo.
+ */
+const WHOLE_HISTORY_RE =
+  /\b(todos os meses|todo o historico|historico inteiro|historico financeiro|meu historico|todos os meus gastos|todas as minhas despesas|todas as minhas receitas|todos os lancamentos|todas as movimentacoes|todos os registros|minhas financas|tudo|ate agora|desde o inicio|desde sempre)\b/;
+
 /** Local date is supplied by the user's existing timezone resolver, not machine UTC. */
 export function interpretReorganization(text: string, localDate: string): ReorganizationIntent {
   const t = normalizeReorganization(text);
@@ -42,13 +51,19 @@ export function interpretReorganization(text: string, localDate: string): Reorga
   const tables: FinancialScope["tables"] = [];
   if (/\b(gastos|despesas)\b/.test(deletion)) tables.push("gastos");
   if (/\b(receitas|rendas)\b/.test(deletion)) tables.push("receitas");
+  // "lançamentos/movimentações/registros" cobrem as duas tabelas.
+  if (!tables.length && /\b(lancamentos|movimentacoes|registros)\b/.test(deletion)) tables.push("gastos", "receitas");
+  // Domínio financeiro total ("zerar meu histórico financeiro", "limpar
+  // minhas finanças") também cobre as duas tabelas. "Limpa tudo" sem
+  // palavra de domínio continua ambíguo e pede esclarecimento.
+  if (!tables.length && /\b(historico financeiro|meu historico|minhas financas)\b/.test(deletion) && /\b(tudo|todo|toda|zer\w+)\b/.test(deletion)) tables.push("gastos", "receitas");
   if (!tables.length) return { kind: "clarify", question: "Quais dados deseja excluir reversivelmente: gastos, receitas ou ambos? Nada foi alterado." };
   let start: string | null = null; let end: string | null = null;
   const explicitPeriod = months.some((m) => new RegExp(`\\b${m}\\b`).test(deletion)) || /\b\d{1,2}\/20\d{2}\b/.test(deletion);
   if (/\b(meses anteriores|anteriores|antigas|antigos)\b/.test(deletion) && explicitPeriod) return { kind: "clarify", question: "Você citou meses anteriores e um período específico. Confirme as datas exatas da limpeza." };
   if (/\b(meses anteriores|anteriores|antigas|antigos)\b/.test(deletion)) {
     end = `${localDate.slice(0, 7)}-01`;
-  } else if (explicitPeriod || !/\b(todos os meses|todo o historico|historico inteiro|todos os meus gastos|todas as minhas despesas|todas as minhas receitas)\b/.test(deletion)) {
+  } else if (explicitPeriod || !WHOLE_HISTORY_RE.test(deletion)) {
     const yearMatch = deletion.match(/\b(20\d{2})\b/);
     const named = [...deletion.matchAll(new RegExp(`\\b(${months.join("|")})\\b`, "g"))];
     const numeric = deletion.match(/\b(0?[1-9]|1[0-2])\/(20\d{2})\b/);
@@ -92,6 +107,26 @@ export function interpretReorganization(text: string, localDate: string): Reorga
 export function confirmationCode(text: string): string | null {
   const match = /^APAGAR\s+(?:[\da-f]{8}-[\da-f]{4}-[\da-f]{4}-[\da-f]{4}-[\da-f]{12}\s+)?(\d{6})$/i.exec(text.trim());
   return match?.[1] ?? null;
+}
+
+/**
+ * Confirmação por voz: "apagar zero zero quatro oito dois um".
+ * Exige EXATAMENTE seis dígitos falados após "apagar" — frases aproximadas
+ * ("apagar quatro oito dois um") nunca confirmam. O código continua sendo
+ * o mesmo da prévia (por operação, com expiração), então a confirmação
+ * falada permanece explícita e vinculada à prévia apresentada.
+ */
+const SPOKEN_DIGITS: Record<string, string> = {
+  zero: "0", um: "1", uma: "1", dois: "2", duas: "2", tres: "3",
+  quatro: "4", cinco: "5", seis: "6", sete: "7", oito: "8", nove: "9",
+};
+export function spokenConfirmationCode(text: string): string | null {
+  const t = normalizeReorganization(text).replace(/[.,!?;:]+/g, " ").replace(/\s+/g, " ").trim();
+  const m = /^apagar(?:\s+(?:o\s+)?(?:codigo|numero))?\s+([a-z]+(?:\s+[a-z]+){5})$/.exec(t);
+  if (!m) return null;
+  const digits = m[1].split(" ").map((w) => SPOKEN_DIGITS[w]);
+  if (digits.some((d) => d === undefined)) return null;
+  return digits.join("");
 }
 export function operationConfirmation(text: string, action: "APAGAR" | "RESTAURAR"): { operationId: string; code: string } | null {
   const m = new RegExp(`^${action}\\s+([\\da-f]{8}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{4}-[\\da-f]{12})\\s+(\\d{6})$`, "i").exec(text.trim());
