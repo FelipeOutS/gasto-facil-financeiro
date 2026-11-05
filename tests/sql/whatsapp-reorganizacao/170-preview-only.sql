@@ -42,8 +42,8 @@ DO $$ BEGIN
 END $$;
 SELECT public.assert_true((SELECT g FROM po_before)=(SELECT md5(string_agg(t::text,'|' ORDER BY t.id)) FROM gastos t WHERE user_id=:U),'preview-only: period attempt changed nothing');
 -- Normal site/WhatsApp entries keep working while the lock is on.
-INSERT INTO gastos(id,user_id,descricao,valor,data,forma_pagamento) VALUES ('e0000000-0000-0000-0000-0000000000p1',:U,'Normal',3,'2030-02-10','pix');
-DELETE FROM gastos WHERE id='e0000000-0000-0000-0000-0000000000p1';
+INSERT INTO gastos(id,user_id,descricao,valor,data,forma_pagamento) VALUES ('e0000000-0000-0000-0000-0000000000a9',:U,'Normal',3,'2030-02-10','pix');
+DELETE FROM gastos WHERE id='e0000000-0000-0000-0000-0000000000a9';
 DO $$ BEGIN RAISE NOTICE 'PASS: preview-only: ordinary entries unaffected'; END $$;
 -- Only explicit policy change unlocks (proves the lock is the cause).
 UPDATE public.whatsapp_reorganization_policy SET preview_only=false;
