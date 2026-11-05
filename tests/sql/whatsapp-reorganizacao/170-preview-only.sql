@@ -49,7 +49,7 @@ DO $$ BEGIN RAISE NOTICE 'PASS: preview-only: ordinary entries unaffected'; END 
 UPDATE public.whatsapp_reorganization_policy SET preview_only=false;
 SELECT public.wa_full_reset_prepare(:U,'5511999999999','po-3','343434');
 SELECT public.assert_true(public.wa_full_reset_confirm(:U,'5511999999999','343434',NULL)->>'status'='applied','preview-only: off → confirm works');
-SELECT public.wa_full_reset_restore_prepare(:U,'5511999999999',NULL::uuid,'353535');
+SELECT public.wa_full_reset_restore_prepare(:U,'5511999999999',(SELECT id FROM whatsapp_reorganization_full_operations WHERE request_id='po-3'),'353535');
 UPDATE public.whatsapp_reorganization_policy SET preview_only=true;
 SELECT public.assert_true((SELECT status FROM whatsapp_reorganization_full_operations WHERE request_id='po-3')='applied','preview-only: back on');
 DO $$ BEGIN
