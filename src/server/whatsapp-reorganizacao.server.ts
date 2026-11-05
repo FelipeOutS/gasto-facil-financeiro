@@ -3,6 +3,9 @@ import type { OpeningBalanceRequest } from "@/lib/account-opening-balance";
 
 /** Preparation only. This gate cannot be enabled through caller input. */
 export const WHATSAPP_REORGANIZACAO_RELEASE_AUTHORIZED = false;
+/** Somente prévia: com a liberação ligada, mostra a prévia mas nunca executa nem restaura. O banco tem trava própria (preview_only). */
+export const WHATSAPP_REORGANIZACAO_PREVIEW_ONLY = true;
+export const previewOnlyReply = "Modo somente prévia: a limpeza ainda não pode ser executada nem restaurada por aqui. Nada foi alterado; peça uma nova prévia quando quiser conferir.";
 export type ReorganizationInput = { userId: string; phone: string; externalId: string; text: string; localDate: string; pendingSession: boolean };
 export type ReorganizationResult = { status: string; expenses?: number; incomes?: number; kept?: number; incomeId?: string | null; operationId?: string; code?: string; expiresAt?: string; totalExpenses?: number; totalIncomes?: number; scope?: FinancialScope; income?: NewIncome | null; openingBalance?: OpeningBalanceRequest | null; balanceId?: string | null; cashBeforeCents?: number|null; cashAdjustmentCents?: number|null; leftOut?: LeftOut[]; mode?: "full"; complete?: boolean; card?: number; installments?: number; futureInstallments?: number; recurringEntries?: number; imported?: number; invoices?: number; payables?: number; receivables?: number; transfers?: number; recurrenceRules?: number };
 export type LeftOut = { table: "gastos" | "receitas"; motivo: string; n: number; total: number };
@@ -66,11 +69,12 @@ function response(result: ReorganizationResult): string {
 }
 
 /** Isolated orchestration contract. Production wrapper below never injects a writer. */
-export async function runReorganization(input: ReorganizationInput, store: ReorganizationStore): Promise<string | null> {
+export async function runReorganization(input: ReorganizationInput, store: ReorganizationStore, opts: { previewOnly?: boolean } = {}): Promise<string | null> {
   try {
     if (!await store.authorize(input.userId, input.phone)) return "Não foi possível validar seu vínculo e sua autorização. A operação não foi executada.";
     if (input.pendingSession) return "Há outra solicitação pendente. Conclua ou cancele essa solicitação antes de iniciar uma limpeza; nenhum valor deste pedido foi cadastrado.";
     const code = confirmationCode(input.text) ?? spokenConfirmationCode(input.text);
+    if (opts.previewOnly && (code || operationConfirmation(input.text, "RESTAURAR") || restoreCodeOnly(input.text) || /^restaurar\b/i.test(input.text.trim()))) return previewOnlyReply;
     if (code) return response(await store.confirm(input, code, operationConfirmation(input.text, "APAGAR")?.operationId));
     const restoreConfirmation = operationConfirmation(input.text, "RESTAURAR");
     if (restoreConfirmation) return store.confirmRestore ? response(await store.confirmRestore(input, restoreConfirmation.operationId, restoreConfirmation.code)) : unavailable;
