@@ -41,6 +41,7 @@ import {
 } from "./contas-vencimento.server";
 import { nowInAppTz } from "./cartao-fatura.server";
 import type { CategoriaPickerState, CategoriaPickerRow } from "./whatsapp-comprovantes.server";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 
 // Live-binding para permitir mock.module() em testes (padrão WA-C3/WA-F3).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -569,11 +570,11 @@ async function buscarContaPorId(
   userId: string,
   contaId: string,
 ): Promise<ContaVencimentoRow | null> {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
     .select(
       "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia,recorrencia_id",
-    )
+    ))
     .eq("user_id", userId)
     .eq("id", contaId)
     .maybeSingle();
@@ -595,9 +596,9 @@ async function getRecorrenciaIdDaConta(contaId: string, userId: string): Promise
   // Defesa em profundidade: além do contaId já validado upstream, escopamos
   // explicitamente por user_id para impedir qualquer leitura cruzada caso a
   // função venha a ser invocada em outro contexto.
-  const { data } = await supabaseAdmin
+  const { data } = await reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
-    .select("recorrencia_id")
+    .select("recorrencia_id"))
     .eq("id", contaId)
     .eq("user_id", userId)
     .maybeSingle();
@@ -741,9 +742,9 @@ async function applyUpdate(
 
   // ESCOPO ÚNICO — update condicional na linha selecionada.
   if (sess.recurrenceScope !== "future_pending") {
-    const q = supabaseAdmin
+    const q = reorgAtivos(supabaseAdmin
       .from("contas_a_pagar")
-      .update(payload)
+      .update(payload))
       .eq("id", sess.contaId)
       .eq("user_id", userId)
       .eq("status", "pendente")
@@ -780,9 +781,9 @@ async function applyUpdate(
     return { ok: false, affected: 0, error: "invalid_state" };
   }
   // Nome/cancelamento aplicam a todas; vencimento/valor/categoria também.
-  const q = supabaseAdmin
+  const q = reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
-    .update(payload)
+    .update(payload))
     .eq("user_id", userId)
     .eq("recorrencia_id", sess.recorrenciaId)
     .eq("status", "pendente")

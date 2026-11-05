@@ -19,6 +19,7 @@
  */
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { nowInAppTz } from "./cartao-fatura.server";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 
 export type ContaVencimentoRow = {
   id: string;
@@ -117,11 +118,11 @@ export async function getVencimentosPorPeriodo(
   startISO: string,
   endISO: string,
 ): Promise<ContaVencimentoRow[]> {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
     .select(
       "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia",
-    )
+    ))
     .eq("user_id", userId)
     .eq("status", "pendente")
     .gte("data_vencimento", startISO)
@@ -145,11 +146,11 @@ export async function getVencimentosComStatusAnterior(
   userId: string,
   referenceISO: string,
 ): Promise<ContaVencimentoRow[]> {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
     .select(
       "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia",
-    )
+    ))
     .eq("user_id", userId)
     .eq("status", "pendente")
     .lt("data_vencimento", referenceISO);
@@ -187,11 +188,11 @@ export async function findVencimentoByTerm(
 ): Promise<ContaVencimentoRow[]> {
   const t = norm(term);
   if (!t) return [];
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
     .select(
       "id,nome,valor,data_vencimento,status,data_pagamento,categoria_id,recorrente,frequencia_recorrencia",
-    )
+    ))
     .eq("user_id", userId)
     .eq("status", "pendente");
   if (error || !Array.isArray(data)) return [];

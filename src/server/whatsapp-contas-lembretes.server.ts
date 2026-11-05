@@ -27,6 +27,7 @@ import {
   cancelByEntity,
   type NotificationRow,
 } from "./whatsapp-notifications.server";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 
 export type LembreteContaType =
   | "conta_vencendo_hoje"
@@ -160,9 +161,9 @@ function scheduledAtForLocalHour(dayISO: string, tz: string, hour: number, now: 
 async function fetchContas(userId: string, deps?: LembretesDeps): Promise<ContaPendenteMinimal[]> {
   if (deps?.fetchContasPendentes) return deps.fetchContasPendentes(userId);
   const c = client(deps);
-  const { data, error } = await c
+  const { data, error } = await reorgAtivos(c
     .from("contas_a_pagar")
-    .select("id,nome,valor,data_vencimento,status,recorrente")
+    .select("id,nome,valor,data_vencimento,status,recorrente"))
     .eq("user_id", userId)
     .eq("status", "pendente");
   if (error || !Array.isArray(data)) return [];
@@ -332,9 +333,9 @@ export async function revalidateContaForDispatch(
   if (!contaId || !n.user_id) return { ok: false, reason: "payable_not_found" };
 
   const c = client(deps);
-  const { data, error } = await c
+  const { data, error } = await reorgAtivos(c
     .from("contas_a_pagar")
-    .select("id, status, data_vencimento, valor, user_id")
+    .select("id, status, data_vencimento, valor, user_id"))
     .eq("id", contaId)
     .eq("user_id", n.user_id)
     .maybeSingle();
