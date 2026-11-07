@@ -114,7 +114,7 @@ describe("F3 — guarda: novas leituras de gastos sem filtro", () => {
     }
     expect(sem).toEqual([]);
     // Exceções revisadas (mudança aqui exige revisão consciente).
-    expect(excecoes.length).toBe(10); // +2 P0 Desfazer (bot e site) +1 P0 reversão de extrato
+    expect(excecoes.length).toBe(13); // LGPD /app/privacidade: 3 leituras de vínculos (bem, cartão, recorrência) contam linhas ocultas porque o RPC apaga todas. +1 importação aguardável: reler manifest por ID, incluindo tombstones, sem restaurar.
   });
 
   it("leitores dinâmicos (gastos|receitas) filtram as duas tabelas", () => {

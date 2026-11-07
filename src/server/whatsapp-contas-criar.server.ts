@@ -34,6 +34,7 @@ import {
   assertFinancialActionQuotaForWhatsApp,
   financialQuotaBlockedReply,
 } from "@/server/whatsapp-financial-quota-gate.server";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 
 // Live-binding para permitir mock.module() em testes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1238,9 +1239,9 @@ export async function persistir(args: {
 
   // Readback obrigatório: confirma que TODAS as ocorrências foram gravadas.
   const ids = rows.map((r) => r.id as string);
-  const { data: readback, error: readErr } = await supabaseAdmin
+  const { data: readback, error: readErr } = await reorgAtivos(supabaseAdmin
     .from("contas_a_pagar")
-    .select("id")
+    .select("id"))
     .eq("user_id", userId)
     .in("id", ids);
   const got: Array<{ id: string }> = Array.isArray(readback) ? readback : [];

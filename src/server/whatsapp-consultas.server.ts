@@ -20,6 +20,7 @@ import {
   mesLabel as _mesLabel,
   detectMesNoTexto as _detectMesNoTexto,
 } from "./whatsapp-mes-nomeado";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 
 export type ConsultaParams = { month?: number; year?: number; texto?: string };
 export const detectConsultaMensalNomeada = _detectConsultaMensalNomeada;
@@ -709,9 +710,9 @@ type TransferenciaRow = {
 };
 
 async function handleListarTransferencias(userId: string): Promise<ConsultaResult> {
-  const { data: raw } = await supabaseAdmin
+  const { data: raw } = await reorgAtivos(supabaseAdmin
     .from("transferencias_internas")
-    .select("id, descricao, valor, data, horario, origem, destino, observacao")
+    .select("id, descricao, valor, data, horario, origem, destino, observacao"))
     .eq("user_id", userId);
   const rows = (Array.isArray(raw) ? raw : []) as TransferenciaRow[];
 
@@ -892,9 +893,9 @@ type ContaReceberRow = {
 };
 
 async function handleListarContasReceber(userId: string): Promise<ConsultaResult> {
-  const { data: raw } = await supabaseAdmin
+  const { data: raw } = await reorgAtivos(supabaseAdmin
     .from("contas_a_receber")
-    .select("id, titulo, pagador_nome, valor_total, valor_restante, data_prevista, status")
+    .select("id, titulo, pagador_nome, valor_total, valor_restante, data_prevista, status"))
     .eq("user_id", userId)
     .in("status", ["pendente", "parcial"]);
   const rows = (Array.isArray(raw) ? raw : []) as ContaReceberRow[];
@@ -991,17 +992,17 @@ export function groupContasRecorrentes(
 
 async function handleListarRecorrencias(userId: string): Promise<ConsultaResult> {
   const [recosRes, contasRecRes] = await Promise.all([
-    supabaseAdmin
+    reorgAtivos(supabaseAdmin
       .from("recorrencias")
-      .select("id, nome, valor, frequencia, proxima_cobranca, forma_pagamento, categoria_id")
+      .select("id, nome, valor, frequencia, proxima_cobranca, forma_pagamento, categoria_id"))
       .eq("user_id", userId)
       .eq("status", "ativa"),
     // Contas a pagar recorrentes (ex.: criadas pelo WhatsApp) vivem em
     // `contas_a_pagar`, não em `recorrencias` — incluímos para que
     // "minhas assinaturas"/"contas recorrentes" as encontrem.
-    supabaseAdmin
+    reorgAtivos(supabaseAdmin
       .from("contas_a_pagar")
-      .select("nome, valor, data_vencimento, frequencia_recorrencia, recorrencia_id, status")
+      .select("nome, valor, data_vencimento, frequencia_recorrencia, recorrencia_id, status"))
       .eq("user_id", userId)
       .eq("recorrente", true)
       .eq("status", "pendente"),

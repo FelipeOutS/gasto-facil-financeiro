@@ -90,7 +90,9 @@ export async function downloadWhatsappMediaBounded(
   const auth = { Authorization: `Bearer ${args.token}` };
   try {
     if (!isTrustedMetaUrl(args.lookupUrl, true)) return { ok: false, reason: "invalid" };
-    const lookup = await fetchWithTimeout(args.lookupUrl, { headers: auth, redirect: "error" }, opts.lookupTimeoutMs ?? MEDIA_LOOKUP_TIMEOUT_MS, f);
+    // Workers support manual/follow only. Manual keeps redirect rejection
+    // explicit: non-2xx is never followed and credentials stay on this host.
+    const lookup = await fetchWithTimeout(args.lookupUrl, { headers: auth, redirect: "manual" }, opts.lookupTimeoutMs ?? MEDIA_LOOKUP_TIMEOUT_MS, f);
     if (!lookup.ok) {
       await lookup.body?.cancel().catch(() => {});
       return { ok: false, reason: "http_error" };
@@ -100,7 +102,7 @@ export async function downloadWhatsappMediaBounded(
     try { meta = JSON.parse(metaBuf.toString("utf8")); } catch { return { ok: false, reason: "invalid" }; }
     if (typeof meta.url !== "string" || !isTrustedMetaUrl(meta.url)) return { ok: false, reason: "invalid" };
     const dlTimeout = opts.downloadTimeoutMs ?? MEDIA_DOWNLOAD_TIMEOUT_MS;
-    const dl = await fetchWithTimeout(meta.url, { headers: auth, redirect: "error" }, dlTimeout, f);
+    const dl = await fetchWithTimeout(meta.url, { headers: auth, redirect: "manual" }, dlTimeout, f);
     if (!dl.ok) {
       await dl.body?.cancel().catch(() => {});
       return { ok: false, reason: "http_error" };

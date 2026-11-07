@@ -1158,7 +1158,11 @@ test("Cancelar encerra sessão de comprovante e depois 'categoria' volta ao flux
     texto: "categoria",
     external_id: "g5a31-after-cancel",
   });
-  expect(after.resposta).toContain("Qual foi o valor de Categoria");
+  // WA-INTENT-GATE: palavra solta sem sinal financeiro não vira gasto —
+  // o portão pede esclarecimento e nenhuma sessão/escrita é criada.
+  expect(after.status).toBe("consulta");
+  expect(after.resposta).toMatch(/não identifiquei um gasto ou receita/i);
+  expect(state.pendingRow).toBeNull();
 });
 
 // ============================================================

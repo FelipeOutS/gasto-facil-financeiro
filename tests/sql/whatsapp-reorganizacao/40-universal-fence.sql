@@ -1,0 +1,11 @@
+SET ROLE service_role;
+DO $$ BEGIN INSERT INTO receitas(user_id,descricao,valor,data) VALUES('aaaaaaaa-0000-0000-0000-000000000001','Legacy webhook',5000,'2027-02-04'); RAISE EXCEPTION 'expected rejection'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'financial_writer_requires_operation_context' THEN RAISE; END IF; END $$;
+RESET ROLE;
+SELECT public.assert_true(NOT EXISTS(SELECT 1 FROM receitas WHERE descricao='Legacy webhook'),'service role legacy nonoffline webhook denied');
+SET ROLE service_role;
+DO $$ BEGIN UPDATE gastos SET descricao='Legacy edited' WHERE descricao='Compra isolada'; RAISE EXCEPTION 'expected rejection'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'financial_writer_requires_operation_context' THEN RAISE; END IF; END $$;
+DO $$ BEGIN DELETE FROM gastos WHERE descricao='Compra isolada'; RAISE EXCEPTION 'expected rejection'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'financial_physical_delete_forbidden' THEN RAISE; END IF; END $$;
+DO $$ BEGIN UPDATE receitas SET offline_client_id=NULL WHERE descricao='Current generation'; RAISE EXCEPTION 'expected rejection'; EXCEPTION WHEN raise_exception THEN IF SQLERRM<>'financial_writer_requires_operation_context' THEN RAISE; END IF; END $$;
+RESET ROLE;
+SELECT public.assert_true(EXISTS(SELECT 1 FROM gastos WHERE descricao='Compra isolada'),'legacy delete and edit do not change original');
+SELECT public.assert_true((SELECT offline_client_id IS NOT NULL FROM receitas WHERE descricao='Current generation'),'cannot clear offline identity');

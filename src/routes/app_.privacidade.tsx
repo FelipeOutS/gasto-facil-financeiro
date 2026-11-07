@@ -30,6 +30,7 @@ import {
   executeDataDeletion,
   type DeletionSelection,
 } from "@/lib/privacy.functions";
+import type { Blocker } from "@/lib/privacy-deletion-policy";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { SettingsPageHeader } from "@/components/SettingsPageHeader";
@@ -52,9 +53,7 @@ function PrivacyPage() {
   const [selections, setSelections] = useState<SelectionState[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [previewData, setPreviewData] = useState<Record<string, number>>({});
-  const [dependencies, setDependencies] = useState<
-    { type: string; count: number; action: string }[]
-  >([]);
+  const [blockers, setBlockers] = useState<Blocker[]>([]);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
   const [isConfirmChecked, setIsConfirmChecked] = useState(false);
@@ -113,11 +112,16 @@ function PrivacyPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tipagem do input do server fn não é inferida no cliente
         data: { selections: selections as DeletionSelection[] } as any,
       });
+      if (!res.ok) {
+        toast.error(res.message);
+        return;
+      }
       setPreviewData(res.stats);
-      setDependencies(res.dependencies || []);
+      setBlockers(res.blockers);
+      setIsConfirmChecked(false);
       setStep("review");
-    } catch (err) {
-      toast.error("Erro ao carregar prévia dos dados");
+    } catch {
+      toast.error("Não foi possível carregar a prévia. Nada foi excluído.");
     } finally {
       setIsLoadingPreview(false);
     }
@@ -127,18 +131,27 @@ function PrivacyPage() {
     setIsDeleting(true);
     try {
       // For legacy reasons we send "EXCLUIR" to the server but we don't ask the user to type it
-      await deleteFn({
+      const res = await deleteFn({
         data: {
           selections: selections as DeletionSelection[],
           confirmationText: "EXCLUIR",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tipagem do input do server fn não é inferida no cliente
         } as any,
       });
+      if (!res.ok) {
+        setIsModalOpen(false);
+        if (res.blockers) setBlockers(res.blockers);
+        toast.error(res.message);
+        return;
+      }
       setStep("success");
       setIsModalOpen(false);
       toast.success(t("manageData.success.title"));
-    } catch (err) {
-      toast.error("Erro ao excluir dados");
+    } catch {
+      setIsModalOpen(false);
+      toast.error(
+        "Não conseguimos confirmar o resultado. Atualize a página e confira seus dados antes de tentar de novo.",
+      );
     } finally {
       setIsDeleting(false);
     }
@@ -215,6 +228,7 @@ function PrivacyPage() {
 
   const renderReviewStep = () => {
     const totalRecords = Object.values(previewData).reduce((a, b) => a + b, 0);
+    const isBlocked = blockers.length > 0;
 
     return (
       <div className="space-y-6">
@@ -248,6 +262,34 @@ function PrivacyPage() {
             </div>
           </div>
         </div>
+
+        {isBlocked && (
+          <div
+            role="alert"
+            className="rounded-xl border border-destructive/40 bg-destructive/10 p-4 space-y-3"
+          >
+            <div className="flex items-center space-x-2 text-destructive">
+              <Lock className="h-5 w-5" />
+              <span className="font-semibold text-sm">Exclusão indisponível para esta seleção</span>
+            </div>
+            <ul className="space-y-2 text-sm text-foreground">
+              {blockers.map((b) => (
+                <li key={b.code}>
+                  <span className="font-medium">
+                    {t(`manageData.categories.${b.category}.title`)} ({b.count} vínculos):
+                  </span>{" "}
+                  {b.message}
+                </li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted-foreground">
+              Desmarque essas categorias para excluir as demais. Nada foi excluído.
+            </p>
+          </div>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Esta exclusão é permanente. "Zerar histórico reversivelmente por WhatsApp" é outra função, que oculta lançamentos e permite restaurar; ela ainda não está disponível.
+        </p>
 
         <div className="space-y-4 rounded-xl border p-4 bg-muted/30">
           <div className="flex items-center space-x-2 text-brand">
@@ -293,7 +335,7 @@ function PrivacyPage() {
             <Button
               variant="destructive"
               className="font-bold"
-              disabled={!isConfirmChecked || isDeleting}
+              disabled={!isConfirmChecked || isDeleting || isBlocked || totalRecords === 0}
               onClick={() => setIsModalOpen(true)}
             >
               Excluir {totalRecords} registros
@@ -314,7 +356,7 @@ function PrivacyPage() {
               <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={isDeleting}>
                 Cancelar
               </Button>
-              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting || isBlocked}>
                 {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Excluir dados
               </Button>

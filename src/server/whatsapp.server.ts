@@ -73,6 +73,7 @@ import {
 } from "./whatsapp-consultas.server";
 
 import { detectConsultaShape } from "./whatsapp-query-guard.server";
+import { evaluateIntentGate, intentGateMsgs } from "./whatsapp-intent-gate.server";
 import { isListarCartoesIntent } from "./whatsapp-listar-cartoes";
 import {
   recordContas as shortRecordContas,
@@ -166,6 +167,9 @@ import {
 } from "./whatsapp-contas-editar.server";
 import { detectEdicaoAntiga, detectExclusaoAntiga, detectRestauracaoAntiga, handleEdicaoAntiga } from "./whatsapp-editar-antigo.server";
 import { detectLoteMes, handleLoteMes } from "./whatsapp-lote-mes.server";
+import { dispatchReorganization } from "./whatsapp-reorganization-dispatch.server";
+import { createReorganizationStore } from "./whatsapp-reorganizacao-store.server";
+import { getUserTimezone } from "./whatsapp-notification-gates.server";
 import {
   detectSavePixIntent,
   detectQueryPixIntent,
@@ -1544,6 +1548,7 @@ type WhatsAppAuditRoute =
   | "consulta_handler"
   | "conversational_handler"
   | "reset_handler"
+  | "intent_gate"
   | "fatura_escolha";
 
 export function logWhatsAppInboundReceived(args: {
@@ -2982,6 +2987,14 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   }
 
   const recebidaEm = msg.recebida_em ?? new Date().toISOString();
+
+  // Preparation-only guard: a reset+income request must never become a simple income.
+  // Existing explicit single-month flow keeps its own disabled gate.
+  if (!msg.flowReply && !msg.image && !msg.document &&
+      (detectLoteMes(texto) === null || /\b(depois|adicion\w*|cadastr\w*|anteriores|historico|todos os meses)\b/i.test(texto))) {
+    const blocked = await dispatchReorganization({userId,phone:msg.telefone,externalId:msg.external_id ?? "",text:texto,localDate:new Intl.DateTimeFormat('en-CA',{timeZone:await getUserTimezone(userId),year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(recebidaEm)),pendingSession:Boolean(await buscarSessaoAtiva(userId,msg.telefone))},async()=>createReorganizationStore(supabaseAdmin,{partialScope:true,fullReset:true}),async()=>{const d=await import("./whatsapp-reorganizacao-diagnostico.server");return d.buildReorganizationDiagnostic(d.supabaseDiagReader(supabaseAdmin,userId));});
+    if (blocked) return { status: "consulta", resposta: blocked };
+  }
 
   // A ação rápida usa ID opaco, usuário e telefone resolvidos pelo gate.
   // Também atende as próximas respostas de um fluxo de edição em andamento.
@@ -5719,6 +5732,35 @@ export async function processarMensagemWhatsApp(msg: WhatsAppMessageRow): Promis
   // se a state machine não foi acionada (defensivo — não deve ocorrer).
   void handlePagarPessoaIntent;
 
+  // ---- WA-INTENT-GATE: portão de intenção antes do parser genérico ----
+  // Sem sessão ativa e sem SINAL FINANCEIRO claro (valor, dígito, verbo de
+  // lançamento ou comando explícito de registro), a mensagem NÃO vira gasto:
+  // perguntas sobre o assistente recebem confirmação de entendimento e
+  // mensagens ambíguas recebem pedido de esclarecimento. A ausência de
+  // valor monetário nunca classifica a mensagem como despesa incompleta.
+  // Áudio e texto passam pelo mesmo portão (o áudio já chega transcrito).
+  if (!sessao && decisao === "outro") {
+    const gate = evaluateIntentGate(texto);
+    if (gate.kind !== "pass") {
+      const resposta =
+        gate.kind === "capability"
+          ? intentGateMsgs.capability(msg.source)
+          : intentGateMsgs.clarify();
+      logWaRouteDecision(msg, "intent_gate", gate.kind);
+      await gravarSessao(
+        userId,
+        msg.telefone,
+        msg.external_id,
+        texto,
+        recebidaEm,
+        "sem_pendencia",
+        { nome: "", valor: 0, data: todayLocalISO(), mensagemOriginal: texto },
+        resposta,
+      );
+      return { status: "consulta", resposta };
+    }
+  }
+
   if (msg.source === "audio") {
     // Transcrição de voz: valor sem "R$"/"reais" só conta na posição de
     // valor do lançamento. Texto digitado não passa por aqui.
@@ -6052,9 +6094,13 @@ async function sendWhatsAppRaw(
 ): Promise<{ sent: boolean; reason?: string; status?: number; providerMessageId?: string | null }> {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
   const phoneId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  if (!token || !phoneId) return { sent: false, reason: "not_configured" };
+  if (!token || !phoneId) {
+    console.error({ event: "wa_send_not_configured", tokenSet: !!token, phoneIdSet: !!phoneId });
+    return { sent: false, reason: "not_configured" };
+  }
   const built = buildWhatsAppGraphUrl({ kind: "messages", phoneNumberId: phoneId });
   if (!built.ok) {
+    console.error({ event: "wa_send_config_error", reason: built.reason, configReason: built.configReason ?? null });
     // META-GRAPH-UPGRADE-01 — fail-closed: sem versão autorizada,
     // nenhuma mensagem sai. Não expor conteúdo do erro.
     return { sent: false, reason: "configuration_error" };

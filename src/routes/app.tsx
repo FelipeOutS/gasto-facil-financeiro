@@ -1,4 +1,5 @@
 import { DashboardOverview, DashboardCards } from "@/components/dashboard/DashboardOverview";
+import { AccountBaselines } from "@/components/AccountBaselines";
 import { LimiteMensalCard, RecentTransactionsCard } from "@/components/dashboard/DashboardFinancialCards";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
@@ -94,6 +95,11 @@ export const Route = createFileRoute("/app")({
   head: () => ({
     meta: [
       { title: "Gasto Inteligente" },
+      { name: "description", content: "Painel financeiro do Gasto Inteligente: receitas, despesas e saldos informados separados." },
+      { property: "og:title", content: "Painel financeiro — Gasto Inteligente" },
+      { property: "og:description", content: "Acompanhe receitas, despesas e saldos informados de suas contas." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       { name: "robots", content: "noindex,nofollow" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
     ],
@@ -357,6 +363,7 @@ function Index() {
   if (isEmpty) {
     return (
       <MobileShell wide className="premium-dashboard">
+        <AccountBaselines />
         <div className="pt-2 animate-rise">
           <AppModuleBanner
             tone="relatorios"
@@ -502,6 +509,7 @@ function Index() {
       </div>
 
       {/* LINHA 2 — KPIs: Saldo maior + Receitas / Despesas / A pagar */}
+      <AccountBaselines />
       <DashboardOverview saldo={saldo} totalEntradas={totalEntradas} total={total} totalGuardado={totalGuardado} aPagar={contasResumo.pendente} atrasadasCount={contasResumo.atrasadasCount} pendentesCount={contasResumo.pendentesCount}
  chart={<FluxoCaixaChart compact ano={ym.ano} mes={ym.mes} gastos={gastosConfirmados} receitas={receitas} />}
  budget={<LimiteMensalCard total={total} limiteTotal={limiteTotal ?? 0} usoLimite={usoLimite} passouLimite={!!passouLimite} proximoLimite={!!proximoLimite} />}

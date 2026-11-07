@@ -1,4 +1,8 @@
 import { calcMetaProgresso } from "./metas-progresso";
+import { refreshFinancialGeneration } from "./offline/financial-generation-reader";
+import { financialCashColumns, type FinancialCashInput } from "./financial-cash-input";
+import { FINANCIAL_GROUP_WRITER_AUTHORIZED, writeFinancialGroup, type FinancialGroupRequest } from "./financial-group-writer";
+import { commitFinancialImport } from "./financial-import-transport";
 import {
   addMonthsYm,
   cicloParaCompetencia,
@@ -230,6 +234,7 @@ let memContasCanceladas: ContaAPagar[] = EMPTY_CONTAS;
 let memTransferencias: TransferenciaInterna[] = EMPTY_TRANSFERENCIAS;
 let memExtratos: ExtratoImportado[] = EMPTY_EXTRATOS;
 let memFaturas: FaturaCartao[] = [];
+let memCardFacts: import("./financial-accounting").CardFact[] = [];
 
 // Lookup uuid by client-side key (legacy_id or uuid) for FK writes / id mapping
 const categoriaKeyToUuid = new Map<string, string>();
@@ -274,6 +279,7 @@ export function setActiveUserId(uid: string | null) {
   memTransferencias = EMPTY_TRANSFERENCIAS;
   memExtratos = EMPTY_EXTRATOS;
   memFaturas = [];
+  memCardFacts = [];
   categoriaKeyToUuid.clear();
   bancoKeyToUuid.clear();
   metaKeyToUuid.clear();
@@ -352,6 +358,8 @@ type GastoRow = {
   import_batch_id?: string | null;
   id_operacao_banco?: string | null;
   fornecedor_id?: string | null;
+  financial_bank_id?: string | null;
+  cash_effective_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -384,6 +392,8 @@ function rowToGasto(r: GastoRow, catUuidToKey: Map<string, string>): Gasto {
     importBatchId: r.import_batch_id ?? undefined,
     idOperacaoBanco: r.id_operacao_banco ?? undefined,
     fornecedorId: r.fornecedor_id ?? undefined,
+    financialBankId: r.financial_bank_id ?? undefined,
+    cashEffectiveAt: r.cash_effective_at ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -578,6 +588,8 @@ type ReceitaRow = {
   import_batch_id?: string | null;
   id_operacao_banco?: string | null;
   cliente_id?: string | null;
+  financial_bank_id?: string | null;
+  cash_effective_at?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -597,6 +609,8 @@ function rowToReceita(r: ReceitaRow): Receita {
     importBatchId: r.import_batch_id ?? undefined,
     idOperacaoBanco: r.id_operacao_banco ?? undefined,
     clienteId: r.cliente_id ?? null,
+    financialBankId: r.financial_bank_id ?? undefined,
+    cashEffectiveAt: r.cash_effective_at ?? undefined,
     criadoEm: r.created_at,
     atualizadoEm: r.updated_at,
   };
@@ -1031,6 +1045,8 @@ export async function hydrateUser(userId: string): Promise<void> {
       if (!isCurrent()) return;
       if (catRes.error) throw catRes.error;
       if (bancoRes.error) throw bancoRes.error;
+      await refreshFinancialGeneration(userId).catch(()=>null);
+      if (!isCurrent()) return;
 
       categoriaKeyToUuid.clear();
       bancoKeyToUuid.clear();
@@ -1145,6 +1161,9 @@ export async function hydrateUser(userId: string): Promise<void> {
       } else {
         memFaturas = (faturasRes.data ?? []).map(rowToFatura);
       }
+      const cardFacts = await sbAny.from("financial_card_facts").select("*").eq("user_id",userId).then((r:any)=>r).catch(()=>({error:true,data:[]}));
+      if(!isCurrent())return;
+      memCardFacts = cardFacts.error ? [] : (cardFacts.data ?? []).map((r:any)=>({id:r.id,userId:r.user_id,cardId:r.cartao_id,cycle:r.cycle,cents:Number(r.amount_cents),kind:r.kind}));
 
       hydratedUserId = userId;
       setHydrationStatus("ready");
@@ -1965,7 +1984,7 @@ export async function refreshFinancialCore(options: FinancialRefreshOptions = {}
 }
 
 // ---------- Gastos ----------
-export type NovoGastoInput = {
+export type NovoGastoInput = FinancialCashInput & {
   descricao?: string;
   valor: number;
   data: string;
@@ -2278,6 +2297,12 @@ function buildGastosFromInput(
     if (fornecedorVal) o.client.fornecedorId = fornecedorVal;
   }
   aplicarCompetenciaFatura(input, out, inputData);
+  const cash = financialCashColumns(input, {credit: input.formaPagamento === "credito",generated: out.length > 1});
+  for (const built of out) {
+    Object.assign(built.row,cash);
+    built.client.financialBankId = input.financialBankId;
+    built.client.cashEffectiveAt = input.cashEffectiveAt;
+  }
   return out;
 }
 
@@ -2388,6 +2413,7 @@ export async function addGastoAwait(
   offlineClientId?: string,
   actorId = userId,
   signal = new AbortController().signal,
+  financialGeneration?: number | null,
 ): Promise<{ ok: boolean; error?: string; duplicate?: boolean }> {
   const generation = userSessionGeneration;
   const authError = await authorizeOfflineWrite(userId, actorId, signal) ?? await validateOwnerReferences(userId, input, signal);
@@ -2398,12 +2424,13 @@ export async function addGastoAwait(
   if (!validateFinancialAmount(input.valor).ok) return { ok: false, error: "Valor inválido." };
   const built = buildGastosFromInput(input, userId, key => categoryMap.get(key) ?? (categories?.some(row => row.id === key) ? key : null));
   const rows = built.map((b, index) => {
-    const row = b.row as GastoInsert & { offline_client_id?: string | null };
+    const row = b.row as GastoInsert & { offline_client_id?: string | null; offline_generation?: number };
     if (offlineClientId) row.offline_client_id = offlineRowKey(offlineClientId, index);
+    if (offlineClientId && financialGeneration !== undefined && financialGeneration !== null) row.offline_generation = financialGeneration;
     return row;
   });
   const insert = async () => {
-    const { error } = await supabase.from("gastos").insert(rows).abortSignal(signal);
+    const { error } = await supabase.from("gastos").insert(rows as GastoInsert[]).abortSignal(signal);
     return { error: error?.message, code: error?.code };
   };
   const result = offlineClientId ? await persistOfflineRows(rows, async () => {
@@ -2466,6 +2493,55 @@ export function addGastosBulk(inputs: NovoGastoInput[]): Gasto[] {
     }
   }
   return created;
+}
+
+const pendingInvoiceImports = new Map<string,{ownerId:string;fingerprint:string;built:{row:GastoInsert;client:Gasto}[];request?:FinancialGroupRequest}>();
+/** Awaited invoice importer: one INSERT is atomic, response loss rereads exact IDs.
+ * Candidate mode additionally requires durable generation + operation context.
+ */
+export async function addGastosBulkAwait(inputs: NovoGastoInput[], operationId: string, pending?: FinancialGroupRequest): Promise<{gastos:Gasto[];request?:FinancialGroupRequest}> {
+  const ownerId = activeUserId;
+  const session = userSessionGeneration;
+  if (!ownerId || !ensureCanWrite("addGastosBulkAwait")) throw new Error("Importação indisponível.");
+  const signal = new AbortController().signal;
+  const authError = await authorizeOfflineWrite(ownerId,ownerId,signal);
+  if (authError) throw new Error(authError);
+  for (const input of inputs) {
+    const refError = await validateOwnerReferences(ownerId,input,signal);
+    if (refError) throw new Error(refError);
+  }
+  const fingerprint=JSON.stringify(inputs);
+  const cached=pendingInvoiceImports.get(operationId);
+  if(cached && (cached.ownerId!==ownerId || cached.fingerprint!==fingerprint)) throw new Error("A prévia mudou; revise a importação antes de continuar.");
+  const built = cached?.built ?? inputs.flatMap(input => buildGastosFromInput(input,ownerId));
+  const manifest=cached ?? {ownerId,fingerprint,built,request:pending};
+  pendingInvoiceImports.set(operationId,manifest);
+  if (!built.length) return {gastos:[]};
+  if (FINANCIAL_GROUP_WRITER_AUTHORIZED) {
+    const version = manifest.request?.generation ?? await refreshFinancialGeneration(ownerId);
+    if (version === null) throw new Error("Versão financeira indisponível; importação preservada para revisão.");
+    const kind = inputs[0]?.origem?.includes("csv") ? "csv" : inputs[0]?.origem?.includes("pdf") ? "pdf" : "image";
+    const request = manifest.request ?? {ownerId,operationId,generation:version,kind,rows:built.map(b=>{
+      const {confirmado, ...row}=b.row;
+      void confirmado;
+      return {table:"gastos" as const,row:row as Record<string,unknown>};
+    })};
+    manifest.request=request;
+    if (request.ownerId !== ownerId || request.operationId !== operationId) throw new Error("A sessão da importação mudou.");
+    const outcome = await writeFinancialGroup(sbAny,request);
+    if (activeUserId === ownerId && session === userSessionGeneration) await refreshGastos();
+    return {gastos:outcome.rows.map(item=>rowToGasto(item.row,new Map([...categoriaKeyToUuid].map(([key,id])=>[id,key])))),request};
+  }
+  // Legacy schema still enforces RLS/quota; generation fencing remains the SQL authority.
+  const rows = built.map(b=>b.row);
+  const ids = rows.map(row=>row.id).filter((id):id is string=>typeof id === "string");
+  await commitFinancialImport(rows as Record<string,unknown>[],async()=>{
+    // soft-delete-exceção: exact committed import manifest must include tombstones; never resurrect.
+    const {data,error}=await supabase.from("gastos").select("*").eq("user_id",ownerId).in("id",ids);
+    return {rows:(data??[]) as Record<string,unknown>[],error:error?.message};
+  },async()=>{const {error}=await supabase.from("gastos").insert(rows);return{error:error?.message};});
+  if (activeUserId === ownerId && session === userSessionGeneration) await refreshGastos();
+  return {gastos:activeUserId===ownerId && session===userSessionGeneration ? memGastos.filter(row=>ids.includes(row.id)) : []};
 }
 
 export function updateGasto(id: string, patch: Partial<Gasto>) {
@@ -2841,7 +2917,7 @@ export function suggestCategory(text: string): string {
 }
 
 // ---------- Receitas ----------
-export type NovaReceitaInput = {
+export type NovaReceitaInput = FinancialCashInput & {
   descricao: string;
   valor: number;
   data: string;
@@ -2887,6 +2963,7 @@ export async function addReceita(input: NovaReceitaInput, ownerId = activeUserId
     throw new Error(msg);
   }
   input = { ...input, valor: amount.value };
+  const cash = financialCashColumns(input,{generated:!!input.recorrente});
   const now = new Date().toISOString();
   const baseDate = new Date(input.data + "T00:00:00");
   const created: Receita[] = [];
@@ -2961,6 +3038,8 @@ export async function addReceita(input: NovaReceitaInput, ownerId = activeUserId
       ...(clienteId ? { cliente_id: clienteId } : {}),
     } as ReceitaInsert);
   }
+  for (const row of rows) Object.assign(row,cash);
+  for (const row of created) { row.financialBankId=input.financialBankId; row.cashEffectiveAt=input.cashEffectiveAt; }
   // Aplica otimisticamente para UI responsiva, mas aguarda o insert e
   // reverte se houver falha — evita toast de sucesso silencioso quando
   // RLS, quota ou trigger rejeita a operação.
@@ -3000,6 +3079,7 @@ export async function addReceitaAwait(
   offlineClientId?: string,
   actorId = userId,
   signal = new AbortController().signal,
+  financialGeneration?: number | null,
 ): Promise<{ ok: boolean; error?: string; duplicate?: boolean }> {
   const generation = userSessionGeneration;
   const authError =
@@ -3007,6 +3087,8 @@ export async function addReceitaAwait(
     (await validateOwnerReferences(userId, input, signal));
   if (authError) return { ok: false, error: authError };
   if (input.recorrente) return { ok: false, error: "A fila offline aceita apenas receita única." };
+  let cash: ReturnType<typeof financialCashColumns>;
+  try { cash=financialCashColumns(input); } catch(error) { return {ok:false,error:error instanceof Error ? error.message : "Vínculo bancário inválido."}; }
   const amountAwait = validateFinancialAmount(input.valor);
   if (!amountAwait.ok) {
     return { ok: false, error: financialAmountMessage(amountAwait.code) };
@@ -3015,7 +3097,7 @@ export async function addReceitaAwait(
   const baseDate = new Date(input.data + "T00:00:00");
   const id = crypto.randomUUID();
   const clienteId = input.clienteId ?? null;
-  const row: ReceitaInsert & { offline_client_id?: string | null } = {
+  const row: ReceitaInsert & { offline_client_id?: string | null; offline_generation?: number } = {
     id,
     user_id: userId,
     descricao: input.descricao,
@@ -3028,9 +3110,11 @@ export async function addReceitaAwait(
     ...(clienteId ? { cliente_id: clienteId } : {}),
   } as ReceitaInsert & { offline_client_id?: string | null };
   if (offlineClientId) row.offline_client_id = offlineClientId;
+  Object.assign(row,cash);
+  if (offlineClientId && financialGeneration !== undefined && financialGeneration !== null) row.offline_generation = financialGeneration;
 
   const insert = async () => {
-    const { error } = await supabase.from("receitas").insert(row).abortSignal(signal);
+    const { error } = await supabase.from("receitas").insert(row as ReceitaInsert).abortSignal(signal);
     return { error: error?.message, code: error?.code };
   };
   let confirmedRows: (ReceitaRow & { deleted_at?: string | null })[] = [];
@@ -3082,6 +3166,8 @@ export async function addReceitaAwait(
         mes: baseDate.getMonth() + 1,
         ano: baseDate.getFullYear(),
         clienteId,
+        financialBankId: input.financialBankId,
+        cashEffectiveAt: input.cashEffectiveAt,
         criadoEm: now,
         atualizadoEm: now,
       },
@@ -5497,11 +5583,21 @@ export function resumoFaturaPorMes(cartaoId: string, mes: number, ano: number) {
   const limite = cartao?.limiteTotal ?? 0;
   const gastos = gastosDaFatura(cartaoId, mes, ano);
   const total = gastos.reduce((s, g) => s + g.valor, 0);
+  const competence = cicloParaCompetencia(`${ano}-${String(mes).padStart(2,"0")}`,cartao?.diaFechamento,cartao?.diaVencimento);
+  const facts = memCardFacts.filter(f=>f.cardId===cartaoId && f.cycle===competence);
+  const charged = facts.filter(f=>f.kind==="charge").reduce((s,f)=>s+f.cents,0)/100;
+  const paid = facts.reduce((s,f)=>s+(["payment","payment_snapshot"].includes(f.kind)?f.cents:["accounting_reversal","bank_refund"].includes(f.kind)?-f.cents:0),0)/100;
+  // Ledger charge snapshots preserve hidden liabilities. Never release limit just by hiding expenses.
+  const accountingTotal = facts.length ? Math.max(total,charged) : total;
+  const pending = facts.length ? Math.max(0,accountingTotal-paid) : total;
   return {
-    total,
+    total:accountingTotal,
+    visibleTotal:total,
+    valorPagoContabil:paid,
+    pendenteContabil:pending,
     limite,
-    disponivel: Math.max(0, limite - total),
-    pct: limite > 0 ? Math.min(100, (total / limite) * 100) : 0,
+    disponivel: Math.max(0, limite - pending),
+    pct: limite > 0 ? Math.min(100, (pending / limite) * 100) : 0,
     qtd: gastos.length,
   };
 }
@@ -5693,19 +5789,20 @@ async function persistirStatusFatura(
         throw new Error("Não foi possível confirmar o pagamento da fatura.");
       }
       persisted = data as FaturaRow;
-    } else if (!paga && existente) {
+    } else if (!paga && existente && existente.status !== "aberta") {
       const { data, error } = await sbAny
         .from("faturas_cartao")
-        .delete()
+        .update({status:"aberta"})
         .eq("user_id", userId)
         .eq("id", existente.id)
-        .select("id")
+        .select("*")
         .single();
       if (error) throw error;
-      if (!data || data.id !== existente.id) {
+      if (!data || data.id !== existente.id || data.status !== "aberta") {
         throw new Error("Não foi possível confirmar a reabertura da fatura.");
       }
-      persisted = null;
+      // Reopening is workflow-only: paid amount/date/history are never erased or refunded.
+      persisted = data as FaturaRow;
     }
     assertSession();
     // Nenhuma alteração otimista: erro mantém o estado anterior e os alertas.

@@ -43,7 +43,9 @@ mock.module("@/lib/store", () => ({
   },
   findPossibleDuplicate: () => null,
 }));
+const actualRouter = await import("@tanstack/react-router");
 mock.module("@tanstack/react-router", () => ({
+  ...actualRouter,
   useNavigate: () => navigate,
   createFileRoute: () => (options: any) => ({ ...options, useSearch: () => ({}) }),
   useRouterState: ({ select }: any) => select({ location: { pathname } }),

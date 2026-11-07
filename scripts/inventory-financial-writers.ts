@@ -1,0 +1,7 @@
+import {readdirSync,readFileSync,writeFileSync} from 'node:fs';
+import {join} from 'node:path';
+const tables=['gastos','receitas','cartoes','faturas_cartao','transferencias_internas','contas_a_pagar','contas_a_receber','recorrencias','bens_pagamentos','bens_amortizacoes','dinheiro_guardado','movimentacoes_meta'];
+const results:Array<{file:string;line:number;table:string;operation:string}>=[];
+function walk(dir:string){for(const e of readdirSync(dir,{withFileTypes:true})){const p=join(dir,e.name);if(e.isDirectory())walk(p);else if(/\.(ts|tsx)$/.test(p)){const text=readFileSync(p,'utf8');const pattern=/\.from\(\s*["']([^"']+)["']\s*\)([\s\S]{0,1600}?)(?=;|\.from\(|$)/g;for(const m of text.matchAll(pattern)){if(!tables.includes(m[1]))continue;const op=/\.(insert|upsert|update|delete)\(/.exec(m[2]);if(op)results.push({file:p,line:text.slice(0,m.index).split('\n').length,table:m[1],operation:op[1]});}for(const m of text.matchAll(/\.rpc\(\s*["']([^"']+)["']/g)){if(/import|revert|restore|mutate|installment|recurring|baixa|undo|edit|planning|reorganization/.test(m[1]))results.push({file:p,line:text.slice(0,m.index).split('\n').length,table:'RPC',operation:m[1]});}}}}
+walk('src');
+const output=process.argv[2]??'/tmp/financial-writers.json';writeFileSync(output,JSON.stringify({note:'Static inventory: review dynamic table names and SQL RPC bodies separately; no completeness claim.',writers:results},null,2));console.log(`${results.length} mutation sites recorded in ${output}`);

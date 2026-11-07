@@ -238,9 +238,11 @@ describe("WA-M1.3 — proteções", () => {
       texto: "categoria",
       external_id: "I-1",
     });
-    // Sem sessão: cai no parser de gasto, vira pendente com falta de valor/descrição.
-    expect(["pendente", "sem_pendencia", "valor_invalido"]).toContain(r.status);
+    // Sem sessão e sem sinal financeiro: o portão de intenção pede
+    // esclarecimento ("consulta") em vez de abrir sessão de gasto.
+    expect(["pendente", "sem_pendencia", "valor_invalido", "consulta"]).toContain(r.status);
     expect(state.pendingRow?.parsed?.manualCategoriaId).toBeUndefined();
+    expect(gastosInserts()).toHaveLength(0);
   });
 
   test("cancelar dentro do picker encerra sem gravar gasto", async () => {

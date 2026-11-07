@@ -13,6 +13,7 @@ import type { NovaReceitaInput } from "@/lib/store";
 import { recordHistoryEvent } from "./offline-sync-history";
 import { validateFinancialAmount } from "../financial-limits";
 import { isValidOfflineDate } from "./offline-validation";
+import { cachedFinancialGeneration } from "./financial-generation";
 
 const DB_NAME = "gf_offline_income";
 const DB_VERSION = 1;
@@ -26,6 +27,7 @@ export type OfflineIncome = {
   user_id: string;
   /** Authenticated creator; legacy items belong to user_id. */
   actor_id?: string;
+  financial_generation?: number | null;
   input: NovaReceitaInput;
   /** Descrição visível na lista de pendências */
   descricao: string;
@@ -139,6 +141,7 @@ export async function enqueueIncome(
     local_id: genId(),
     user_id: userId,
     actor_id: actorId,
+    financial_generation: cachedFinancialGeneration(userId),
     input,
     descricao: (input.descricao || "Receita").trim(),
     valor: input.valor,
@@ -311,6 +314,7 @@ export async function updateIncome(
           local_id: current.local_id,
           user_id: current.user_id,
           actor_id: current.actor_id,
+          financial_generation: current.financial_generation,
           attempts: current.attempts,
           input: patch.input ?? current.input,
           updated_at: Date.now(),

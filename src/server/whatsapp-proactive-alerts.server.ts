@@ -6,6 +6,7 @@ import { canCreateNotificationForUser } from "./whatsapp-c11-gates.server";
 import { getPreferences, getUserTimezone, isChannelOptedIn } from "./whatsapp-notification-gates.server";
 import { enqueueNotification, type NotificationCategory } from "./whatsapp-notifications.server";
 import { resolveAllowedMapping } from "./whatsapp-meta-template-mapping.server";
+import { reorgAtivos } from "@/server/reorg-archive-filter";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = _admin as any;
@@ -99,7 +100,7 @@ export async function collectProactiveCandidates(userId:string,now=new Date()):P
         if(!invoice||invoice.total<=0||!invoice.vencimento) continue;
         const due=invoice.vencimento.toISOString().slice(0,10);
         if(due!==inThree) continue;
-        const {data:paid}=await db.from("faturas_cartao").select("status")
+        const {data:paid}=await reorgAtivos(db.from("faturas_cartao").select("status"))
           .eq("user_id",userId).eq("cartao_id",card.id).eq("ano",invoice.anoRef).eq("mes",invoice.mesRef).maybeSingle();
         if(paid?.status==="paga") continue;
         out.push({type:"gi_fatura_proxima",category:"faturas",
@@ -113,7 +114,7 @@ export async function collectProactiveCandidates(userId:string,now=new Date()):P
 
   if(prefs.renovacao_assinatura===true) {
     const tomorrow=plusDays(today,1);
-    const {data,error}=await db.from("recorrencias").select("id,proxima_cobranca,valor,moeda")
+    const {data,error}=await reorgAtivos(db.from("recorrencias").select("id,proxima_cobranca,valor,moeda"))
       .eq("user_id",userId).eq("status","ativa").eq("proxima_cobranca",tomorrow);
     if(!error) for(const r of data??[]) out.push({type:"gi_assinatura_renovacao",category:"renovacao_assinatura",
       dedupeKey:`wa13:renewal:${r.id}:${tomorrow}`,entityType:"recorrencia",entityId:r.id,

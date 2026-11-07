@@ -40,7 +40,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatBRL } from "@/lib/format";
 import {
-  addGastosBulk,
+  addGastosBulkAwait,
   findDuplicateGastoAdvanced,
   normalizeDescricao,
   getCartoes,
@@ -147,6 +147,8 @@ export function ImportFaturaDialog({
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [origem, setOrigem] = useState<"fatura_imagem" | "fatura_pdf" | "fatura_csv" | null>(null);
   const [saving, setSaving] = useState(false);
+  const importOperationRef = useRef<string | null>(null);
+  const importSavingRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   // Mês da fatura (YYYY-MM) — fonte da verdade para "em qual fatura entram esses gastos"
   const [invoiceMonth, setInvoiceMonth] = useState<string>(() => {
@@ -158,6 +160,7 @@ export function ImportFaturaDialog({
   useEffect(() => {
     if (!open) return;
     setStep("source");
+    importOperationRef.current=null;
     setImages([]);
     setImgLoading(false);
     setImgStage(0);
@@ -498,6 +501,7 @@ export function ImportFaturaDialog({
   }
 
   async function confirmarImportacao() {
+    if(importSavingRef.current) return;
     if (!cartaoId) {
       toast.error(t("errorPickCard"));
       return;
@@ -518,19 +522,18 @@ export function ImportFaturaDialog({
       toast.error(t("errorNoneReady"));
       return;
     }
+    importSavingRef.current=true;
     setSaving(true);
     try {
       // import_batch_id único para essa fatura — permite excluir depois pelo lote.
-      const batchId =
-        typeof crypto !== "undefined" && "randomUUID" in crypto
-          ? crypto.randomUUID()
-          : `imp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const batchId = importOperationRef.current ?? crypto.randomUUID();
+      importOperationRef.current=batchId;
       const inputs = validos.map((it) => {
         const isParcelado = !!it.totalParcelas && it.totalParcelas > 1 && !!it.parcelaAtual;
         return {
           descricao: it.descricao ?? "",
           valor: it.valor ?? 0,
-          data: it.data!,
+          data: it.data ?? "",
           estabelecimento: it.estabelecimento ?? "",
           categoriaId: it.categoriaSugerida || "outros",
           formaPagamento: "credito" as const,
@@ -545,7 +548,7 @@ export function ImportFaturaDialog({
           importBatchId: batchId,
         };
       });
-      const salvos = addGastosBulk(inputs);
+      const {gastos:salvos} = await addGastosBulkAwait(inputs,batchId);
       // Resumo da importação
       const totalItens = items.length;
       const naoConfirmados = items.filter((i) => !i.selecionado).length;
@@ -573,6 +576,7 @@ export function ImportFaturaDialog({
       console.error(err);
       toast.error(t("errorSave"));
     } finally {
+      importSavingRef.current=false;
       setSaving(false);
     }
   }

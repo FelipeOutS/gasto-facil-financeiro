@@ -11,6 +11,7 @@ import { addGastoAwait } from "@/lib/store";
 import { normalizeOfflineError } from "./offline-error-messages";
 import { recordHistoryEvent } from "./offline-sync-history";
 import { withSyncAttempt } from "./sync-attempt";
+import { refreshFinancialGeneration } from "./financial-generation-reader";
 
 const running = new Map<string, Promise<{ synced: number; failed: number }>>();
 /** actorId is the authenticated creator, never the currently displayed owner. */
@@ -20,9 +21,11 @@ export function syncAllForUser(actorId: string): Promise<{ synced: number; faile
   const existing = running.get(actorId);
   if (existing) return existing;
   const task = (async () => {
+    await refreshFinancialGeneration(actorId).catch(()=>null);
     let synced = 0,
       failed = 0;
     for (const candidate of await listExpenses(actorId, actorId, true)) {
+      if (candidate.technical_error?.includes("financial_generation_stale_review_required")) continue;
       if (typeof navigator !== "undefined" && navigator.onLine === false) break;
       try {
         await withSyncAttempt("gf:expense:" + candidate.local_id, async (signal) => {
@@ -35,6 +38,7 @@ export function syncAllForUser(actorId: string): Promise<{ synced: number; faile
               item.local_id,
               actorId,
               signal,
+              item.financial_generation,
             );
             if (signal.aborted) return; // leave the lease recoverable after a timeout
             if (!result.ok) throw new Error(result.error || "Falha ao sincronizar");

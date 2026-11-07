@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { AccountBaselines } from "@/components/AccountBaselines";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -86,7 +87,7 @@ const COLOR_OPTIONS = [
 ];
 
 export const Route = createFileRoute("/guardado")({
-  head: () => ({ meta: [{ title: i18n.t("guardado:meta.title", { lng: i18n.language }) }] }),
+  head: () => ({ meta: [{ title: i18n.t("guardado:meta.title", { lng: i18n.language }) },{name:"description",content:"Reservas e saldos informados das contas no Gasto Inteligente."},{property:"og:title",content:"Contas e reservas — Gasto Inteligente"},{property:"og:description",content:"Acompanhe suas reservas e saldos informados separadamente."},{property:"og:type",content:"website"},{name:"twitter:card",content:"summary_large_image"}] }),
   component: GuardadoPage,
 });
 
@@ -345,6 +346,7 @@ function GuardadoPage() {
       </section>
 
       <section className="mt-6">
+        <AccountBaselines />
         <h2 className="text-sm font-semibold">{t("banks.title")}</h2>
         <ul className="mt-3 grid grid-cols-2 gap-2">
           {bancos.map((b) => {
