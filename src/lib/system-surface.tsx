@@ -6,6 +6,8 @@ export type SystemSurface = "inherit" | "dark" | "light" | "brand";
 type AndroidSystemUiBridge = {
   getInsets?: () => string;
   setSurface?: (surface: Exclude<SystemSurface, "inherit">) => void;
+  getNavigationHidden?: () => boolean;
+  setNavigationHidden?: (hidden: boolean) => void;
 };
 
 declare global {

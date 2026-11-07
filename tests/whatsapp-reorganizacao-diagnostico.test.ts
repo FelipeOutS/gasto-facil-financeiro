@@ -54,3 +54,13 @@ test("failed read shows 'não foi possível consultar' instead of zero", async (
   const txt = await buildReorganizationDiagnostic(supabaseDiagReader(client, "OWNER"));
   expect(txt).toContain("Contas a pagar: não foi possível consultar");
 });
+
+for (const text of ["Mostrar meus gastos excluídos", "Listar receitas excluídas"]) {
+  test(`consulta individual não inicia diagnóstico de limpeza: ${text}`, async () => {
+    expect(isDiagnosticRequest(text)).toBe(false);
+    let calls = 0;
+    const result = await dispatchReorganization({ ...base, text }, noStore, async () => { calls++; return "DIAG"; });
+    expect(result).toBeNull();
+    expect(calls).toBe(0);
+  });
+}

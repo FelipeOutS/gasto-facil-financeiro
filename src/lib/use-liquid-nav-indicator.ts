@@ -17,7 +17,6 @@ export function useLiquidNavIndicator(selected: number) {
     const from = running
       ? new DOMMatrixReadOnly(getComputedStyle(node).transform).m41
       : Math.max(0, fromIndex) * step;
-    const initialScale = running ? new DOMMatrixReadOnly(getComputedStyle(pill).transform).a : 1;
     animations.current.forEach((a) => a.cancel());
     animations.current = [];
     if (
@@ -31,28 +30,15 @@ export function useLiquidNavIndicator(selected: number) {
       return;
 
     const to = selected * step;
-    const distance = to - from;
-    const stretch = 1 + Math.min(0.52, (Math.abs(distance) / Math.max(1, pill.offsetWidth)) * 0.14);
-    const overshoot = Math.sign(distance) * Math.min(3, Math.abs(distance) * 0.025);
-    const duration = 320 + Math.min(60, (Math.abs(distance) / step) * 15);
+    // Frequent navigation needs immediate feedback, not elastic deformation.
+    // Retarget from the rendered position when a second tap interrupts the slide.
     animations.current = [
       node.animate(
         [
           { transform: `translate3d(${from}px,0,0)`, offset: 0 },
-          { transform: `translate3d(${from + distance * 0.18}px,0,0)`, offset: 0.24 },
-          { transform: `translate3d(${to + overshoot}px,0,0)`, offset: 0.8 },
           { transform: `translate3d(${to}px,0,0)`, offset: 1 },
         ],
-        { duration, easing: "cubic-bezier(.2,.75,.25,1)" },
-      ),
-      pill.animate(
-        [
-          { transform: `scaleX(${initialScale})`, offset: 0 },
-          { transform: `scaleX(${stretch})`, offset: 0.24 },
-          { transform: "scaleX(1.02)", offset: 0.8 },
-          { transform: "scaleX(1)", offset: 1 },
-        ],
-        { duration, easing: "cubic-bezier(.2,.75,.25,1)" },
+        { duration: 180, easing: "cubic-bezier(0.23, 1, 0.32, 1)" },
       ),
     ];
   }, [selected]);
