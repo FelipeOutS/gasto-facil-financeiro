@@ -6,6 +6,7 @@ import { useTheme, type ThemeChoice } from "@/lib/theme";
 import { useAccent, ACCENTS } from "@/lib/accent";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { AndroidNavigationSetting } from "@/components/AndroidNavigationSetting";
 
 export const Route = createFileRoute("/app_/ajustes/aparencia")({
   head: () => ({ meta: [{ title: "Aparência — Gasto Inteligente" }] }),
@@ -28,6 +29,7 @@ function AparenciaPage() {
       <SettingsPageHeader title={t("appearance.title")} description={t("appearance.description")} />
 
       <div className="space-y-8 mt-6">
+        <AndroidNavigationSetting />
         <section>
           <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <Palette className="h-4 w-4 text-brand" />

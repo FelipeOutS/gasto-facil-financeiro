@@ -8,6 +8,7 @@ import { useAlertaContas } from "@/lib/contas-alertas";
 import { NAV_GROUPS, type NavLeaf } from "@/lib/nav-groups";
 import { PRODUCT_EVENTS, trackProductEvent } from "@/lib/product-analytics";
 import { useMobileKeyboard } from "@/lib/use-mobile-keyboard";
+import { useNavScrollSize } from "@/lib/use-nav-scroll-size";
 import { useLiquidNavIndicator } from "@/lib/use-liquid-nav-indicator";
 
 // Reuse the destinations/labels/icons of the existing menu, not a second route map.
@@ -42,19 +43,17 @@ export function BottomNav() {
   const keyboardOpen = useMobileKeyboard();
   const selected = mobileTabIndex(pathname);
   const indicator = useLiquidNavIndicator(selected);
+  const nav = useNavScrollSize(pathname, keyboardOpen);
 
   return (
+    <div className="mobile-nav-anchor lg:hidden" hidden={keyboardOpen}>
     <nav
+      ref={nav}
       className="mobile-bottom-nav lg:hidden"
       aria-label={t("aria.primary")}
       hidden={keyboardOpen}
     >
-      <svg className="mobile-nav-surface" viewBox="0 0 420 64" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-        <path
-          d="M26 .5 H158 C172 .5 169 10 178 29 C187 58 233 58 242 29 C251 10 248 .5 262 .5 H394 Q419.5 .5 419.5 26 V38 Q419.5 63.5 394 63.5 H26 Q.5 63.5 .5 38 V26 Q.5 .5 26 .5 Z"
-          vectorEffect="non-scaling-stroke"
-        />
-      </svg>
+      <div className="mobile-nav-surface" aria-hidden="true" />
       <ul className="mobile-nav-track">
         <li
           ref={indicator}
@@ -135,5 +134,6 @@ export function BottomNav() {
         })}
       </ul>
     </nav>
+    </div>
   );
 }

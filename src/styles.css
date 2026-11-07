@@ -861,42 +861,119 @@ body {
 /* Mobile navigation: one fixed, stable capsule. No scroll listener/reveal gesture. */
 :root {
   --mobile-nav-height: 64px;
-  --mobile-nav-bottom: calc(16px + var(--app-safe-bottom));
+  --mobile-nav-bottom: calc(8px + var(--app-safe-bottom));
   --mobile-notifications-bottom: calc(var(--mobile-nav-height) + var(--mobile-nav-bottom) + 20px);
   --mobile-nav-clearance: calc(var(--mobile-notifications-bottom) + 44px + 20px);
 }
-.mobile-bottom-nav {
+.mobile-nav-anchor {
   position: fixed;
   z-index: 40;
   bottom: var(--mobile-nav-bottom);
-  left: 50%;
+  left: 0;
+  right: 0;
+  height: var(--mobile-nav-height);
+  pointer-events: none;
+}
+.mobile-nav-anchor[hidden] { display: none; }
+.mobile-bottom-nav {
+  position: relative;
+  margin-inline: auto;
+  pointer-events: auto;
   width: min(calc(100% - 32px), 420px);
   height: var(--mobile-nav-height);
-  transform: translateX(-50%);
   padding: 5px 6px;
-  border-radius: 26px;
+  border-radius: 999px;
   isolation: isolate;
+  --nav-ink: #202523;
+  --nav-active-ink: #111715;
+  --nav-solid: #e5e7e6;
+  --nav-glass: rgb(255 255 255 / .64);
+  --nav-edge: rgb(255 255 255 / .65);
+  --nav-highlight: rgb(255 255 255 / .35);
+  --nav-selected: rgb(25 30 28 / .12);
+  --nav-selected-edge: transparent;
+  --nav-fade: 244 247 245;
+  color-scheme: light;
+  user-select: none;
+  -webkit-user-select: none;
 }
-/* Only the decorative surface is cut out: controls retain their full hit areas.
-   An actual transparent U follows the button, without painting over page content. */
+.dark .mobile-bottom-nav {
+  --nav-ink: #f0f2f1;
+  --nav-active-ink: #fff;
+  --nav-solid: #222625;
+  --nav-glass: rgb(15 19 18 / .76);
+  --nav-edge: rgb(255 255 255 / .14);
+  --nav-highlight: rgb(255 255 255 / .1);
+  --nav-selected: rgb(255 255 255 / .19);
+  --nav-selected-edge: transparent;
+  --nav-fade: 16 20 18;
+  color-scheme: dark;
+}
+/* Preserve the progressive blur below the menu, stopping before Android navigation. */
+.mobile-bottom-nav::before {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  pointer-events: none;
+  top: 12px;
+  bottom: -8px;
+  left: calc(50% - 50vw);
+  width: 100vw;
+  background: linear-gradient(to bottom, transparent, rgb(var(--nav-fade) / .25) 55%, transparent);
+}
+@supports ((backdrop-filter: blur(12px)) or (-webkit-backdrop-filter: blur(12px))) {
+  .mobile-bottom-nav::before {
+    background: rgb(var(--nav-fade) / .16);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 45%, #000 65%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent, #000 45%, #000 65%, transparent 100%);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .mobile-bottom-nav::before {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: linear-gradient(to bottom, transparent, rgb(var(--nav-fade)) 55%, transparent);
+  }
+}
+/* Opaque fallback first. Blur stays on this small, non-interactive surface. */
 .mobile-nav-surface {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   z-index: -1;
-  overflow: visible;
   pointer-events: none;
-  fill: var(--card);
-  stroke: var(--border);
-  stroke-width: 1px;
-  filter: drop-shadow(0 3px 6px rgb(0 0 0 / 0.07));
+  border-radius: inherit;
+  background: var(--nav-solid);
+  border: 1px solid var(--nav-edge);
+  box-shadow: inset 0 1px 0 var(--nav-highlight), 0 3px 12px rgb(0 0 0 / .12);
+}
+@supports ((backdrop-filter: blur(18px)) or (-webkit-backdrop-filter: blur(18px))) {
+  .mobile-nav-surface {
+    background: var(--nav-glass);
+    -webkit-backdrop-filter: blur(18px) saturate(1.35);
+    backdrop-filter: blur(18px) saturate(1.35);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .mobile-nav-surface {
+    background: var(--nav-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 .mobile-bottom-nav[hidden] {
   display: none;
 }
 /* Secondary views inherit one bottom reservation from the persistent shell. */
 .mobile-shell-content { padding-bottom: var(--mobile-nav-clearance); }
+/* Keep the final focused field above floating controls during scrollIntoView. */
+@media (max-width: 1023px) {
+  html:has(.mobile-bottom-nav:not([hidden])) { scroll-padding-bottom: var(--mobile-nav-clearance); }
+  .mobile-shell-content :is(input, textarea, select, button) { scroll-margin-bottom: 16px; }
+}
 .mobile-shell-content--focused { padding-top: max(0.75rem, var(--app-safe-top)); padding-bottom: 0; }
 @media (min-width: 1024px) { .mobile-shell-content { padding-bottom: 3rem; } }
 .cartoes-carousel-item {
@@ -910,10 +987,6 @@ body {
   .cartoes-carousel { scroll-behavior: auto; }
   .cartoes-carousel-item { transform: none; transition: none; opacity: 0.88; }
   .cartoes-carousel-item[data-primary="true"] { opacity: 1; }
-}
-:root:not(.dark) .mobile-nav-surface {
-  fill: #fff;
-  stroke: #ececef;
 }
 .mobile-nav-track {
   position: relative;
@@ -938,19 +1011,19 @@ body {
   min-height: 44px;
   min-width: 44px;
   border-radius: 999px;
-  color: var(--muted-foreground);
+  color: var(--nav-ink);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
   transition: color 180ms ease;
 }
 .mobile-nav-link[aria-current="page"] {
-  color: var(--foreground);
+  color: var(--nav-active-ink);
 }
 .mobile-nav-label {
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 500;
   line-height: 14px;
   white-space: nowrap;
@@ -958,7 +1031,7 @@ body {
 .mobile-nav-create-item {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
 }
 .mobile-nav-create {
   position: relative;
@@ -967,16 +1040,16 @@ body {
   place-items: center;
   width: 50px;
   height: 50px;
-  margin-top: -13px;
-  border: 0;
+  margin-top: 0;
+  border: 1px solid rgb(255 255 255 / 0.25);
   border-radius: 50%;
   /* Greens from the official symbol and wordmark in public/logos/brand. */
   background: linear-gradient(145deg, #20aa6c, #12a064);
   color: #fff;
-  box-shadow: 0 2px 5px rgb(18 160 100 / 0.24);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25), 0 2px 5px rgb(0 0 0 / 0.2);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 120ms ease-out;
+  transition: transform 120ms cubic-bezier(0.23, 1, 0.32, 1);
 }
 .mobile-nav-create:active { transform: scale(0.96); }
 .mobile-nav-create:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
@@ -1016,12 +1089,13 @@ body {
 }
 .mobile-nav-indicator > span {
   display: block;
-  width: 50px;
-  max-width: 90%;
+  width: 94%;
   height: 100%;
   margin: auto;
   border-radius: 999px;
-  background: color-mix(in srgb, #20aa6c 16%, transparent);
+  background: var(--nav-selected);
+  border: 1px solid var(--nav-selected-edge);
+  box-shadow: none;
 }
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav-indicator,
@@ -1078,3 +1152,24 @@ body {
 .cartoes-form-dialog { padding-left: var(--app-safe-left); padding-right: var(--app-safe-right); }
 @media (min-width: 1024px) { .mobile-shell-content { padding-top: max(1.25rem, var(--app-safe-top)); } }
 [data-safe-drawer] { padding-left: var(--app-safe-left); padding-right: var(--app-safe-right); }
+
+/* Page actions sit above both the navigation and notification touch targets.
+   Dialog/sheet footers are intentionally excluded. Keyboard hides the nav,
+   so the existing bottom: 0 applies again while editing. */
+@media (max-width: 1023px) {
+  .gi-app-shell:has(.mobile-bottom-nav:not([hidden])) .mobile-nav-companion {
+    bottom: var(--mobile-nav-clearance);
+  }
+}
+
+/* Width morphing keeps icons unscaled and the bottom inset unchanged. */
+.mobile-bottom-nav {
+  width: min(92vw, 420px);
+  transition: width 300ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.mobile-bottom-nav[data-compact="true"] {
+  width: min(420px, max(264px, 78vw));
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-bottom-nav { transition: none; }
+}

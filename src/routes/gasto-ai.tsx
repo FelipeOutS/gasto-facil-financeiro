@@ -246,7 +246,7 @@ function GastoAIPage() {
           </div>
 
           {/* Input fixo na base do bloco do chat */}
-          <div className="sticky bottom-0 border-t border-border/60 bg-card/95 p-3 backdrop-blur-md sm:p-4">
+          <div className="mobile-nav-companion sticky bottom-0 border-t border-border/60 bg-card/95 p-3 backdrop-blur-md sm:p-4">
             <form onSubmit={onSubmit} className="flex items-end gap-2">
               <Textarea
                 value={input}

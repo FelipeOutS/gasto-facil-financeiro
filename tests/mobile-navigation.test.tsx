@@ -53,7 +53,7 @@ test("quatro destinos mantêm nomes acessíveis e labels visuais", () => {
   }
 });
 
-test("stretch por distância, retorno direto e interrupção sem acumular indicadores", () => {
+test("seleção desliza sem deformação e retoma da posição renderizada ao interromper", () => {
   const ui = render(<BottomNav />);
   const indicator = ui.container.querySelector(".mobile-nav-indicator") as HTMLElement;
   const pill = indicator.firstElementChild as HTMLElement;
@@ -76,17 +76,15 @@ test("stretch por distância, retorno direto e interrupção sem acumular indica
   try {
     fireEvent.click(ui.getByLabelText("items.cofrePessoal"));
     ui.rerender(<BottomNav />);
-    expect(calls).toHaveLength(2);
+    expect(calls).toHaveLength(1);
     expect(calls[0].frames.at(-1).transform).toBe("translate3d(256px,0,0)");
-    expect(calls[1].frames[1].transform).toBe("scaleX(1.52)");
-    expect(calls[1].frames.at(-1).transform).toBe("scaleX(1)");
-    expect(calls[0].options.duration).toBeLessThanOrEqual(400);
+    expect(calls[0].frames).toHaveLength(2);
+    expect(calls[0].options.duration).toBeLessThanOrEqual(200);
     fireEvent.click(ui.getByLabelText("items.dashboard"));
     ui.rerender(<BottomNav />);
     expect(calls[0].cancel).toHaveBeenCalledTimes(1);
-    expect(calls[1].cancel).toHaveBeenCalledTimes(1);
-    expect(calls[2].frames[0].transform).toBe("translate3d(96px,0,0)");
-    expect(calls[2].frames.at(-1).transform).toBe("translate3d(0px,0,0)");
+    expect(calls[1].frames[0].transform).toBe("translate3d(96px,0,0)");
+    expect(calls[1].frames.at(-1).transform).toBe("translate3d(0px,0,0)");
     for (const item of MOBILE_TABS.slice(1, 3)) {
       fireEvent.click(ui.getByLabelText(`items.${item.labelKey}`));
       ui.rerender(<BottomNav />);

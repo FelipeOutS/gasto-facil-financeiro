@@ -200,7 +200,7 @@ function PrivacyPage() {
         ))}
       </div>
 
-      <div className="sticky bottom-0 bg-background/80 py-4 backdrop-blur-sm border-t mt-8">
+      <div className="mobile-nav-companion sticky bottom-0 bg-background/80 py-4 backdrop-blur-sm border-t mt-8">
         <Button
           className="w-full h-12 text-base font-semibold"
           disabled={selections.length === 0 || isLoadingPreview}
