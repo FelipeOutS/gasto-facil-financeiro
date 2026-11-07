@@ -6,7 +6,7 @@ export function isDiagnosticRequest(text:string):boolean{
   const t=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   if(/\b(apagar|restaur\w*|cancel\w*|consultar)\b/.test(t)||/\d/.test(t)||spokenConfirmationCode(text)!==null||restoreCodeOnly(text)!==null)return false;
   if(interpretReorganization(text,'2000-01-01').kind==='request')return true;
-  return /\b(exclu\w*|zer\w*|limp\w*|delet\w*)\b/.test(t)&&/\b(tudo|historico|gastos|despesas|receitas|contas)\b/.test(t);
+  return /\b(excluir|exclua|excluam|exclui|zer\w*|limp\w*|delet\w*)\b/.test(t)&&/\b(tudo|historico|gastos|despesas|receitas|contas)\b/.test(t);
 }
 export async function dispatchReorganization(input:ReorganizationInput,loadStore:()=>Promise<ReorganizationStore>,loadDiagnostic?:()=>Promise<string>):Promise<string|null> {
   if(!WHATSAPP_REORGANIZACAO_RELEASE_AUTHORIZED){
