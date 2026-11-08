@@ -19,6 +19,8 @@ let settingsReadFails = false;
 let pendingSettings: Promise<any> | null = null;
 let nativeCapable = true;
 let wrongMasterPassword = false;
+let biometricCancelled = false;
+let rotationFails = false;
 const noop = () => {};
 const ok = async () => {};
 const status = () => ({ configured, failedAttempts: lockedUntil ? 5 : 0, lockedUntil });
@@ -37,7 +39,12 @@ mock.module("@/lib/vault/service", () => ({
   updateEntry: ok,
   deleteEntry: ok,
   decryptOne: ok,
-  rotateMasterKey: ok,
+  rotateMasterKey: async (args: any) => {
+    calls.push("rotate");
+    expect(args.currentKey).toBe(key);
+    if (rotationFails) throw Error("Troca não confirmada");
+    return props.settings;
+  },
   buildEncryptedBackup: ok,
   assertCurrentVaultKey: async (id: string, candidate: CryptoKey) => {
     calls.push("validate");
@@ -114,7 +121,8 @@ mock.module("@/lib/vault/quick-unlock", () => ({
   enableBiometricUnlock: ok,
   unlockWithBiometric: async () => {
     calls.push("biometric");
-    return key;
+    if (biometricCancelled) throw Error("Biometria cancelada");
+    return mismatchOnAttempt ? staleKey : key;
   },
   isPlatformAuthenticatorAvailable: async () => true,
   biometricUnavailableReason: async () => null,
@@ -123,7 +131,7 @@ const errors: string[] = [];
 mock.module("sonner", () => ({
   toast: { success: noop, warning: noop, info: noop, error: (s: string) => errors.push(s) },
 }));
-const { UnlockView, QuickUnlockSettingsView } = await import("../src/routes/app_.cofre-pessoal");
+const { UnlockView, QuickUnlockSettingsView, ChangeMasterView } = await import("../src/routes/app_.cofre-pessoal");
 const { rememberQuickCredential, invalidateQuickCredentials, VaultKeyChangedError } =
   await import("../src/lib/vault/quick-unlock-state");
 const props = {
@@ -139,7 +147,52 @@ const props = {
   },
   onUnlocked: () => calls.push("done"),
 };
+
+function recoveryForm() {
+  biometric = true;
+  const ui = render(<ChangeMasterView userId="qa" currentSettings={props.settings}
+    onBack={noop} onChanged={() => calls.push("changed")} />);
+  fireEvent.click(ui.getByRole("button", { name: "Esqueci a senha — confirmar com biometria" }));
+  fireEvent.change(ui.getByLabelText("Nova senha mestra"), { target: { value: "NovaSenhaSegura!42" } });
+  fireEvent.change(ui.getByLabelText("Confirmar nova senha"), { target: { value: "NovaSenhaSegura!42" } });
+  return ui;
+}
+
+test("forgotten master: fresh biometric proof precedes validation and atomic rotation, double click once", async () => {
+  const ui = recoveryForm();
+  const button = ui.getByRole("button", { name: "Alterar senha mestra" });
+  fireEvent.click(button);
+  fireEvent.click(button);
+  await waitFor(() => expect(calls).toEqual(["biometric", "validate", "rotate", "changed"]));
+});
+
+for (const failure of ["cancel", "stale", "network", "rotation"]) {
+  test(`forgotten master: ${failure} never confirms success`, async () => {
+    const ui = recoveryForm();
+    biometricCancelled = failure === "cancel";
+    mismatchOnAttempt = failure === "stale";
+    settingsReadFails = failure === "network";
+    rotationFails = failure === "rotation";
+    fireEvent.click(ui.getByRole("button", { name: "Alterar senha mestra" }));
+    await waitFor(() => expect(errors.length).toBeGreaterThan(0));
+    expect(calls).not.toContain("changed");
+    expect(calls.includes("rotate")).toBe(failure === "rotation");
+  });
+}
+
+test("master password change remains available without configured biometrics", async () => {
+  const ui = render(<ChangeMasterView userId="qa" currentSettings={props.settings}
+    onBack={noop} onChanged={() => calls.push("changed")} />);
+  expect(ui.queryByText("Esqueci a senha — confirmar com biometria")).toBeNull();
+  fireEvent.change(ui.getByLabelText("Senha mestra atual"), { target: { value: "AtualSenha!42" } });
+  fireEvent.change(ui.getByLabelText("Nova senha mestra"), { target: { value: "NovaSenha!42" } });
+  fireEvent.change(ui.getByLabelText("Confirmar nova senha"), { target: { value: "NovaSenha!42" } });
+  fireEvent.click(ui.getByRole("button", { name: "Alterar senha mestra" }));
+  await waitFor(() => expect(calls).toEqual(["master", "validate", "rotate", "changed"]));
+});
 beforeEach(() => {
+  biometricCancelled = false;
+  rotationFails = false;
   rotated = false;
   mismatchOnAttempt = false;
   settingsReadFails = false;
