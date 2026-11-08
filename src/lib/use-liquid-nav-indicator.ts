@@ -12,6 +12,7 @@ export function useLiquidNavIndicator(selected: number) {
     const fromIndex = previous.current;
     previous.current = selected;
     if (!node || !pill) return;
+    if (selected === fromIndex) return;
     const running = animations.current.some((a) => a.playState === "running");
     const step = node.getBoundingClientRect().width;
     const from = running

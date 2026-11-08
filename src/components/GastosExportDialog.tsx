@@ -103,6 +103,9 @@ export function GastosExportDialog({
   );
 
   const rows = useMemo<ExportRow[]>(() => {
+    // The dialog stays mounted while browsing/filtering expenses. Do not build
+    // export rows (including recurrence lookups) until the user opens it.
+    if (!open) return [];
     const cartoes = getCartoes();
     return buildExportRows(selecionados, {
       categoriaNome: (id) => getCategoriaById(id)?.nome ?? t("item.otherCategory"),
@@ -128,7 +131,7 @@ export function GastosExportDialog({
           .filter((g) => g.recorrenciaId === recorrenciaId)
           .map((g) => g.data),
     });
-  }, [selecionados, t, tCommon]);
+  }, [open, selecionados, t, tCommon]);
 
   const summary = useMemo(() => computeSummary(rows), [rows]);
 
