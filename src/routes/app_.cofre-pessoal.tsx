@@ -75,6 +75,7 @@ import {
   clearSecretCache,
 } from "@/lib/vault/use-vault";
 import { CompanyLogo } from "@/components/vault/CompanyLogo";
+import { VaultUnlockHelp } from "@/components/vault/VaultUnlockHelp";
 import { extractDomain } from "@/lib/brand/resolver";
 import { confirmAsync } from "@/components/ConfirmDialog";
 import {
@@ -1028,6 +1029,7 @@ export function UnlockView({
           </form>
         )}
       </Card>
+      <VaultUnlockHelp biometric={!!bio} pin={hasServerPin} busy={busy} onChoose={setMode} />
       <span className="sr-only">{userLabel}</span>
     </>
   );
@@ -1304,7 +1306,6 @@ function VaultMain({
     return (
       <ChangeMasterView
         userId={userId}
-        currentKey={masterKey}
         currentSettings={settings}
         onBack={() => setView({ kind: "list" })}
         onChanged={(newSettings) => {
@@ -2505,20 +2506,21 @@ function EntryForm({
 // =====================================================================
 // Alterar senha mestra
 // =====================================================================
-function ChangeMasterView({
+export function ChangeMasterView({
   userId,
-  currentKey,
   currentSettings,
   onBack,
   onChanged,
 }: {
   userId: string;
-  currentKey: CryptoKey;
   currentSettings: VaultSettingsRow;
   onBack: () => void;
   onChanged: (s: VaultSettingsRow) => void;
 }) {
   const [oldPwd, setOldPwd] = useState("");
+  const [useBiometric, setUseBiometric] = useState(false);
+  const submitting = useRef(false);
+  const hasBiometric = !!getQuickUnlock(userId);
   const [newPwd, setNewPwd] = useState("");
   const [confirmPwd, setConfirmPwd] = useState("");
   const [hint, setHint] = useState(currentSettings.hint ?? "");
@@ -2527,7 +2529,7 @@ function ChangeMasterView({
   const strength = evaluateStrength(newPwd);
 
   async function submit() {
-    if (busy) return;
+    if (submitting.current) return;
     if (newPwd.length < 8) {
       toast.error("A nova senha deve ter pelo menos 8 caracteres");
       return;
@@ -2536,15 +2538,21 @@ function ChangeMasterView({
       toast.error("As novas senhas não conferem");
       return;
     }
+    submitting.current = true;
     setBusy(true);
+    let rotationStarted = false;
     try {
-      // Valida senha atual
-      const verify = await unlockMasterKey(oldPwd, currentSettings);
+      // Always obtain fresh proof; never authorize a rotation from the cached session key.
+      const verify = useBiometric
+        ? await unlockWithBiometric(userId)
+        : await unlockMasterKey(oldPwd, currentSettings);
       if (!verify) {
         toast.error("Senha mestra atual incorreta");
         setBusy(false);
         return;
       }
+      await assertCurrentVaultKey(userId, verify);
+      rotationStarted = true;
       const fresh = await rotateMasterKey({
         userId,
         currentKey: verify,
@@ -2554,9 +2562,10 @@ function ChangeMasterView({
       });
       onChanged(fresh);
     } catch (e) {
-      setMasterKey(null); // Never continue using an old key after an uncertain commit.
+      if (rotationStarted) setMasterKey(null); // Never continue after an uncertain commit.
       toast.error(e instanceof Error ? e.message : i18n.t("cofre:errors.masterPasswordFailed"));
     } finally {
+      submitting.current = false;
       setBusy(false);
     }
   }
@@ -2576,13 +2585,21 @@ function ChangeMasterView({
       <Card className="mb-4 flex items-start gap-3 border-amber-500/40 bg-amber-500/5 p-4">
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-400" />
         <p className="text-xs leading-relaxed text-foreground/90">
-          Se você esquecer a nova senha mestra,{" "}
-          <strong>não será possível recuperar os dados do cofre</strong>. Guarde a nova senha em
-          local seguro antes de continuar.
+          Guarde a nova senha em local seguro. Após a troca, o Cofre será bloqueado e será
+          necessário entrar com a nova senha e configurar novamente o PIN e a biometria.
         </p>
       </Card>
 
       <Card className="space-y-4 p-5">
+        {hasBiometric && (
+          <Button type="button" variant="outline" disabled={busy}
+            onClick={() => { setUseBiometric((value) => !value); setOldPwd(""); }}>
+            {useBiometric ? "Confirmar com senha atual" : "Esqueci a senha — confirmar com biometria"}
+          </Button>
+        )}
+        {useBiometric ? (
+          <p className="text-sm text-muted-foreground">Ao confirmar a troca, solicitaremos novamente a biometria deste Cofre. Seus dados serão recriptografados com a nova senha.</p>
+        ) : (
         <div className="space-y-1.5">
           <Label htmlFor="cm-old">Senha mestra atual</Label>
           <div className="relative">
@@ -2604,6 +2621,7 @@ function ChangeMasterView({
             </button>
           </div>
         </div>
+        )}
         <div className="space-y-1.5">
           <Label htmlFor="cm-new">Nova senha mestra</Label>
           <Input
@@ -2667,7 +2685,7 @@ function ChangeMasterView({
           <Button
             type="button"
             onClick={submit}
-            disabled={busy || !oldPwd || !newPwd || !confirmPwd}
+            disabled={busy || (!useBiometric && !oldPwd) || !newPwd || !confirmPwd}
             className="h-12 w-full bg-brand text-brand-foreground text-base font-semibold shadow-lg shadow-brand/25 ring-1 ring-brand/40 hover:bg-brand/90 sm:h-11 sm:w-auto sm:px-8"
           >
             {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}

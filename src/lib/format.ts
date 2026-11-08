@@ -1,20 +1,25 @@
 import i18n from "@/i18n";
 
+// These formats always use pt-BR/BRL. Reuse the ICU formatters across list
+// rows and animated balances instead of constructing them on every frame.
+const brlFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+const compactBrlFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+  maximumFractionDigits: 1,
+  notation: "compact",
+});
+
 export function formatBRL(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value || 0);
+  return brlFormatter.format(value || 0);
 }
 
 export function formatBRLCompact(value: number): string {
   if (Math.abs(value) >= 1000) {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      maximumFractionDigits: 1,
-      notation: "compact",
-    }).format(value);
+    return compactBrlFormatter.format(value);
   }
   return formatBRL(value);
 }
