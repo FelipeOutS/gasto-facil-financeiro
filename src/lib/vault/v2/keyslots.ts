@@ -44,14 +44,16 @@ export async function wrapDek(dek: CryptoKey, material: Bytes, kind: SlotKind): 
   return { v: 1, kind, salt: b64(salt), iv: b64(iv), ct: b64(new Uint8Array(ct)) };
 }
 
-export async function unwrapDek(env: Envelope, material: Bytes): Promise<CryptoKey> {
+export async function unwrapDek(env: Envelope, material: Bytes, exportable = false): Promise<CryptoKey> {
   const raw = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: unb64(env.iv), additionalData: enc.encode(env.kind) },
     await kek(material, unb64(env.salt), env.kind),
     unb64(env.ct),
   );
-  // não exportável depois de aberta: fica só na memória da sessão
-  return crypto.subtle.importKey("raw", raw, "AES-GCM", false, ["encrypt", "decrypt"]);
+  // por padrão não exportável; exportável só para reembrulhar (novo aparelho/nova chave), nunca persistida
+  const key = await crypto.subtle.importKey("raw", raw, "AES-GCM", exportable, ["encrypt", "decrypt"]);
+  new Uint8Array(raw).fill(0);
+  return key;
 }
 
 // Chave de recuperação: 256 bits em Crockford base32, grupos de 4.

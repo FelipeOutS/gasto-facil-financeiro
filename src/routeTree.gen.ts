@@ -63,6 +63,7 @@ import { Route as ApiMercadoFlyerOcrRouteImport } from './routes/api/mercado-fly
 import { Route as ApiMercadoJoaninImportRouteImport } from './routes/api/mercado-joanin-import'
 import { Route as ApiOcrGastoRouteImport } from './routes/api/ocr-gasto'
 import { Route as AppAjustesRouteImport } from './routes/app_.ajustes'
+import { Route as AppCofreNovoRouteImport } from './routes/app_.cofre-novo'
 import { Route as AppCofrePessoalRouteImport } from './routes/app_.cofre-pessoal'
 import { Route as AppIdiomaRouteImport } from './routes/app_.idioma'
 import { Route as AppMaisRouteImport } from './routes/app_.mais'
@@ -432,6 +433,11 @@ const ApiOcrGastoRoute = ApiOcrGastoRouteImport.update({
 const AppAjustesRoute = AppAjustesRouteImport.update({
   id: '/app_/ajustes',
   path: '/app/ajustes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppCofreNovoRoute = AppCofreNovoRouteImport.update({
+  id: '/app_/cofre-novo',
+  path: '/app/cofre-novo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppCofrePessoalRoute = AppCofrePessoalRouteImport.update({
@@ -1015,6 +1021,7 @@ export interface FileRoutesByFullPath {
   '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app/ajustes': typeof AppAjustesRouteWithChildren
+  '/app/cofre-novo': typeof AppCofreNovoRoute
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
@@ -1170,6 +1177,7 @@ export interface FileRoutesByTo {
   '/api/mercado-flyer-ocr': typeof ApiMercadoFlyerOcrRoute
   '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
+  '/app/cofre-novo': typeof AppCofreNovoRoute
   '/app/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app/idioma': typeof AppIdiomaRoute
   '/app/mais': typeof AppMaisRoute
@@ -1326,6 +1334,7 @@ export interface FileRoutesById {
   '/api/mercado-joanin-import': typeof ApiMercadoJoaninImportRoute
   '/api/ocr-gasto': typeof ApiOcrGastoRoute
   '/app_/ajustes': typeof AppAjustesRouteWithChildren
+  '/app_/cofre-novo': typeof AppCofreNovoRoute
   '/app_/cofre-pessoal': typeof AppCofrePessoalRoute
   '/app_/idioma': typeof AppIdiomaRoute
   '/app_/mais': typeof AppMaisRoute
@@ -1484,6 +1493,7 @@ export interface FileRouteTypes {
     | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
     | '/app/ajustes'
+    | '/app/cofre-novo'
     | '/app/cofre-pessoal'
     | '/app/idioma'
     | '/app/mais'
@@ -1639,6 +1649,7 @@ export interface FileRouteTypes {
     | '/api/mercado-flyer-ocr'
     | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
+    | '/app/cofre-novo'
     | '/app/cofre-pessoal'
     | '/app/idioma'
     | '/app/mais'
@@ -1794,6 +1805,7 @@ export interface FileRouteTypes {
     | '/api/mercado-joanin-import'
     | '/api/ocr-gasto'
     | '/app_/ajustes'
+    | '/app_/cofre-novo'
     | '/app_/cofre-pessoal'
     | '/app_/idioma'
     | '/app_/mais'
@@ -1951,6 +1963,7 @@ export interface RootRouteChildren {
   ApiMercadoJoaninImportRoute: typeof ApiMercadoJoaninImportRoute
   ApiOcrGastoRoute: typeof ApiOcrGastoRoute
   AppAjustesRoute: typeof AppAjustesRouteWithChildren
+  AppCofreNovoRoute: typeof AppCofreNovoRoute
   AppCofrePessoalRoute: typeof AppCofrePessoalRoute
   AppIdiomaRoute: typeof AppIdiomaRoute
   AppMaisRoute: typeof AppMaisRoute
@@ -2421,6 +2434,13 @@ declare module '@tanstack/react-router' {
       path: '/app/ajustes'
       fullPath: '/app/ajustes'
       preLoaderRoute: typeof AppAjustesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app_/cofre-novo': {
+      id: '/app_/cofre-novo'
+      path: '/app/cofre-novo'
+      fullPath: '/app/cofre-novo'
+      preLoaderRoute: typeof AppCofreNovoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/app_/cofre-pessoal': {
@@ -3231,6 +3251,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMercadoJoaninImportRoute: ApiMercadoJoaninImportRoute,
   ApiOcrGastoRoute: ApiOcrGastoRoute,
   AppAjustesRoute: AppAjustesRouteWithChildren,
+  AppCofreNovoRoute: AppCofreNovoRoute,
   AppCofrePessoalRoute: AppCofrePessoalRoute,
   AppIdiomaRoute: AppIdiomaRoute,
   AppMaisRoute: AppMaisRoute,

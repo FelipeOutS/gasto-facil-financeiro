@@ -27,6 +27,10 @@ Q "$(AS $A) INSERT INTO vault_keyslots(vault_id,user_id,kind,envelope) VALUES ('
 echo "$(Q "$(AS $B) INSERT INTO vault_v2_entries(vault_id,user_id,iv,ciphertext) VALUES ('$VA','$B','i','c')")" | grep -qi "row-level" && ok "B não grava no cofre de A" || no "escrita alheia"
 echo "$(Q "$(AS $A) UPDATE vault_keyslots SET vault_id='$VB'")" | grep -qi "row-level" && ok "chave não pode ser movida para cofre alheio" || no "mover chave"
 [ "$(Q "SET ROLE anon; SELECT count(*) FROM vaults" | grep -c 'permission denied')" = 1 ] && ok "sem login não acessa" || no "anon"
+C=cccccccc-0000-0000-0000-000000000003
+Q "CREATE TABLE IF NOT EXISTS user_roles(user_id uuid, role text); INSERT INTO user_roles VALUES ('$C','admin_master'),('$C','owner')" >/dev/null
+[ "$(Q "$(AS $C) SELECT count(*) FROM vault_v2_entries")" = 0 ] && [ "$(Q "$(AS $C) SELECT count(*) FROM vault_keyslots")" = 0 ] && [ "$(Q "$(AS $C) SELECT count(*) FROM vaults")" = 0 ] && ok "admin master/owner não lê cofre, chaves nem registros de outro usuário" || no "admin cruzado"
+echo "$(Q "$(AS $C) UPDATE vault_v2_entries SET ciphertext='x' RETURNING id")" | grep -q '[0-9a-f]\{8\}-' && no "admin alterou" || ok "admin não altera registros de outro usuário"
 echo "$(Q "$(AS $A) DELETE FROM vault_keyslots")" | grep -qi "permission denied" && ok "chaves não são apagadas (só revogadas)" || no "delete chave"
 echo "$(Q "DELETE FROM vaults WHERE id='$VA'")" | grep -qi "foreign key" && ok "apagar cofre não leva registros em cascata" || no "cascata"
 [ "$(Q "$(AS $A) SELECT count(*) FROM vault_entries")" ] && true
