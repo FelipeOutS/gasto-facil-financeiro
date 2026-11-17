@@ -25,6 +25,8 @@ import { evaluateStrength, generateStrongPassword } from "@/lib/vault/strength";
 import { deviceLabel, evaluate, passkeyAvailable, registerPasskey } from "@/lib/vault/v2/passkey";
 import { legacyEntryCount, supabaseVaultStore } from "@/lib/vault/v2/supabase-store";
 import * as V from "@/lib/vault/v2/service";
+import { unlockMasterKey } from "@/lib/vault/crypto";
+import { fetchVaultSettings, fetchEntries as fetchLegacyEntries, decryptOne as decryptLegacy } from "@/lib/vault/service";
 
 export const Route = createFileRoute("/app_/cofre-novo")({
   head: () => ({
@@ -275,6 +277,7 @@ function OpenVault({ store, vault, dek, items, slots, userId, onChange, onLock }
   const [editing, setEditing] = useState<{ id?: string; s: V.Secret } | null>(null);
   const [del, setDel] = useState<Item | null>(null);
   const [devices, setDevices] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [shown, setShown] = useState<Set<string>>(new Set());
   const list = items.filter((i) => (!cat || i.secret.category === cat) && `${i.secret.title} ${i.secret.username} ${i.secret.url}`.toLowerCase().includes(q.toLowerCase()));
   const copy = (t: string, what: string) => { navigator.clipboard.writeText(t); toast.success(`${what} copiado`); setTimeout(() => navigator.clipboard.writeText("").catch(() => {}), 30_000); };
@@ -304,6 +307,7 @@ function OpenVault({ store, vault, dek, items, slots, userId, onChange, onLock }
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
         <Button variant="outline" size="sm" onClick={() => setDevices(true)}><Smartphone className="mr-1.5 h-4 w-4" />Aparelhos</Button>
         <Button variant="outline" size="sm" onClick={exportBackup}><Download className="mr-1.5 h-4 w-4" />Backup</Button>
+        <Button variant="outline" size="sm" onClick={() => setImporting(true)}><Archive className="mr-1.5 h-4 w-4" />Importar do cofre anterior</Button>
         <Button size="sm" variant="secondary" onClick={onLock}><Lock className="mr-1.5 h-4 w-4" />Bloquear</Button>
         </div>
       </Card>
@@ -368,6 +372,7 @@ function OpenVault({ store, vault, dek, items, slots, userId, onChange, onLock }
         </AlertDialogContent>
       </AlertDialog>
 
+      <LegacyImport open={importing} onOpenChange={setImporting} store={store} vault={vault} dek={dek} items={items} userId={userId} onChange={onChange} />
       <Devices open={devices} onOpenChange={setDevices} store={store} vault={vault} dek={dek} slots={slots} userId={userId} onChange={onChange} />
     </div>
   );
@@ -412,6 +417,74 @@ function Devices({ open, onOpenChange, store, vault, dek, slots, userId, onChang
           <Button variant="outline" onClick={async () => setNewKey(await V.rotateRecovery(store, vault, dek))}><Sparkles className="mr-1.5 h-4 w-4" />Nova chave de recuperação</Button>
           <Button disabled={busy || !passkeyAvailable()} onClick={add}>{busy ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Plus className="mr-1.5 h-4 w-4" />}Autorizar este aparelho</Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+type LegacyItem = V.Secret & { legacy_id: string };
+function LegacyImport({ open, onOpenChange, store, vault, dek, items, userId, onChange }: {
+  open: boolean; onOpenChange: (o: boolean) => void; store: V.VaultStore; vault: V.Vault; dek: CryptoKey; items: Item[]; userId: string; onChange: () => Promise<void>;
+}) {
+  const [pwd, setPwd] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [blocked, setBlocked] = useState(false);
+  const [preview, setPreview] = useState<{ toImport: LegacyItem[]; duplicates: LegacyItem[] } | null>(null);
+  const close = (o: boolean) => { onOpenChange(o); if (!o) { setPwd(""); setPreview(null); setBlocked(false); } };
+  const read = async () => {
+    setBusy(true);
+    try {
+      const settings = await fetchVaultSettings(userId);
+      if (!settings) { setBlocked(true); return; }
+      const key = await unlockMasterKey(pwd, settings);
+      setPwd("");
+      if (!key) { setBlocked(true); return; }
+      const rows = await fetchLegacyEntries(userId);
+      const dec = await Promise.all(rows.map((r) => decryptLegacy(key, r)));
+      const legacy: LegacyItem[] = dec.map((d) => ({
+        legacy_id: d.id, title: d.name, username: d.secret.username ?? "", password: d.secret.password ?? "",
+        url: d.site ?? "", category: CATEGORIAS.includes(d.category) ? d.category : "Outros", notes: d.secret.notes ?? "",
+      }));
+      setPreview(V.planLegacyImport(items, legacy));
+    } catch { toast.error("Não foi possível ler o cofre anterior."); } finally { setBusy(false); }
+  };
+  const confirm = async () => {
+    if (!preview) return;
+    setBusy(true);
+    try { const n = await V.importLegacy(store, vault, dek, preview.toImport); await onChange(); toast.success(`${n} registros importados. O cofre anterior continua intacto.`); close(false); }
+    catch { toast.error("A importação não terminou. Abra de novo para importar o que faltou, sem duplicar."); await onChange(); } finally { setBusy(false); }
+  };
+  return (
+    <Dialog open={open} onOpenChange={close}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>Importar do cofre anterior</DialogTitle><DialogDescription>Os registros são abertos neste aparelho e copiados para o Cofre novo. O cofre anterior não é alterado nem apagado.</DialogDescription></DialogHeader>
+        {!preview && !blocked && (
+          <form className="space-y-2" onSubmit={(e) => { e.preventDefault(); read(); }}>
+            <Label htmlFor="old-pwd">Senha mestra do cofre anterior</Label>
+            <Input id="old-pwd" type="password" autoComplete="off" value={pwd} onChange={(e) => setPwd(e.target.value)} />
+            <Button type="submit" className="w-full" disabled={busy || !pwd}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Ver prévia</Button>
+          </form>
+        )}
+        {blocked && (
+          <div className="space-y-3 text-sm">
+            <p className="flex gap-2 font-medium"><TriangleAlert className="h-4 w-4 shrink-0 text-destructive" />Importação bloqueada: a senha mestra não confere.</p>
+            <p className="text-muted-foreground">Sem a senha antiga, ninguém consegue abrir os registros anteriores. Eles continuam guardados. Você pode cadastrar as credenciais de novo pelo botão Nova.</p>
+            <DialogFooter><Button variant="ghost" onClick={() => setBlocked(false)}>Tentar outra senha</Button><Button onClick={() => close(false)}>Cadastrar manualmente</Button></DialogFooter>
+          </div>
+        )}
+        {preview && (
+          <div className="space-y-3">
+            <p className="text-sm">{preview.toImport.length} para importar{preview.duplicates.length ? ` · ${preview.duplicates.length} já importados (serão ignorados)` : ""}</p>
+            <ul className="max-h-64 space-y-1 overflow-y-auto">
+              {[...preview.toImport.map((x) => [x, false] as const), ...preview.duplicates.map((x) => [x, true] as const)].map(([x, dup]) => (
+                <li key={x.legacy_id} className={cn("flex items-center gap-2 rounded-lg border p-2 text-sm", dup && "opacity-50")}>
+                  <span className="flex-1 truncate">{x.title}</span><span className="truncate text-xs text-muted-foreground">{x.username}</span>{dup && <Badge variant="secondary">já importado</Badge>}
+                </li>
+              ))}
+            </ul>
+            <DialogFooter><Button variant="ghost" onClick={() => close(false)}>Cancelar</Button><Button disabled={busy || !preview.toImport.length} onClick={confirm}>{busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Confirmar importação</Button></DialogFooter>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

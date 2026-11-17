@@ -84,3 +84,16 @@ describe("Cofre v2 — serviço", () => {
     await expect(S.setupVault(m.store, null)).rejects.toThrow("ja_configurado");
   });
 });
+
+describe("Cofre v2 — importação do cofre anterior", () => {
+  it("importa só o que falta e não duplica ao repetir", async () => {
+    const m = memStore(); const r = await S.setupVault(m.store, null); await r.commit();
+    const legacy = [1, 2, 3].map((n) => ({ ...secret, title: `Antigo ${n}`, legacy_id: `old-${n}` }));
+    expect(await S.importLegacy(m.store, r.vault, r.dek, legacy.slice(0, 2))).toBe(2);
+    expect(await S.importLegacy(m.store, r.vault, r.dek, legacy)).toBe(1);
+    expect(await S.importLegacy(m.store, r.vault, r.dek, legacy)).toBe(0);
+    const all = await S.readEntries(m.store, r.vault, r.dek);
+    expect(all.map((e) => e.secret.legacy_id).sort()).toEqual(["old-1", "old-2", "old-3"]);
+    expect(m.entries.some((e) => e.ciphertext.includes("Antigo"))).toBe(false);
+  });
+});

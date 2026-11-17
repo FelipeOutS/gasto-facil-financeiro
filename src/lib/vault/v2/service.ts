@@ -14,7 +14,7 @@ export type Slot = {
   revoked_at: string | null; last_used_at: string | null; created_at: string;
 };
 export type EntryRow = { id: string; vault_id: string; iv: string; ciphertext: string; created_at: string; updated_at: string };
-export type Secret = { title: string; username: string; password: string; url: string; category: string; notes: string };
+export type Secret = { title: string; username: string; password: string; url: string; category: string; notes: string; legacy_id?: string };
 
 export interface VaultStore {
   getVault(): Promise<Vault | null>;
@@ -130,4 +130,16 @@ export async function saveEntry(store: VaultStore, vault: Vault, dek: CryptoKey,
   const { iv, ct } = await encryptEntry(dek, JSON.stringify(s));
   if (id) await store.updateEntry(id, iv, ct);
   else await store.insertEntry(vault.id, iv, ct);
+}
+
+/** Importação do cofre anterior: só cria registros novos; nunca escreve no cofre antigo. */
+export function planLegacyImport(existing: { secret: Secret }[], legacy: (Secret & { legacy_id: string })[]) {
+  const done = new Set(existing.map((e) => e.secret.legacy_id).filter(Boolean));
+  return { toImport: legacy.filter((l) => !done.has(l.legacy_id)), duplicates: legacy.filter((l) => done.has(l.legacy_id)) };
+}
+export async function importLegacy(store: VaultStore, vault: Vault, dek: CryptoKey, items: (Secret & { legacy_id: string })[]) {
+  const { toImport } = planLegacyImport(await readEntries(store, vault, dek), items);
+  for (const s of toImport) await saveEntry(store, vault, dek, s);
+  await store.logEvent(vault.id, "legacy_import", `${toImport.length} registros`);
+  return toImport.length;
 }
