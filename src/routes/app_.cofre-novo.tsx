@@ -70,7 +70,7 @@ function CofreNovoPage() {
     if (!store || !user) return;
     setPhase("loading");
     try {
-      legacyEntryCount(user.id).then(setLegacy);
+      legacyEntryCount(user.id).then((n) => (n === null ? new Promise<number | null>((r) => setTimeout(() => legacyEntryCount(user.id).then(r), 1500)) : n)).then(setLegacy);
       const v = await store.getVault();
       const s = v ? await store.listSlots(v.id) : [];
       setVault(v); setSlots(s);
@@ -300,10 +300,12 @@ function OpenVault({ store, vault, dek, items, slots, userId, onChange, onLock }
     <div className="space-y-4 animate-in fade-in">
       <Card className="flex flex-wrap items-center gap-3 p-4">
         <div className="grid h-10 w-10 place-items-center rounded-xl bg-primary/10"><ShieldCheck className="h-5 w-5 text-primary" /></div>
-        <div className="flex-1"><p className="font-semibold">Meu cofre</p><p className="text-xs text-muted-foreground">{items.length} credenciais · bloqueia após {vault.auto_lock_minutes} min sem uso</p></div>
+        <div className="min-w-0 flex-1"><p className="font-semibold">Meu cofre</p><p className="text-xs text-muted-foreground">{items.length} {items.length === 1 ? "credencial" : "credenciais"} · bloqueia após {vault.auto_lock_minutes} min sem uso</p></div>
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
         <Button variant="outline" size="sm" onClick={() => setDevices(true)}><Smartphone className="mr-1.5 h-4 w-4" />Aparelhos</Button>
         <Button variant="outline" size="sm" onClick={exportBackup}><Download className="mr-1.5 h-4 w-4" />Backup</Button>
         <Button size="sm" variant="secondary" onClick={onLock}><Lock className="mr-1.5 h-4 w-4" />Bloquear</Button>
+        </div>
       </Card>
       <div className="flex gap-2">
         <div className="relative flex-1"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input aria-label="Pesquisar" placeholder="Pesquisar" className="pl-9" value={q} onChange={(e) => setQ(e.target.value)} /></div>
@@ -317,17 +319,19 @@ function OpenVault({ store, vault, dek, items, slots, userId, onChange, onLock }
       ) : (
         <ul className="space-y-2">
           {list.map((i) => (
-            <li key={i.id} className="flex items-center gap-3 rounded-xl border bg-card p-4">
+            <li key={i.id} className="flex flex-col gap-2 rounded-xl border bg-card p-4 sm:flex-row sm:items-center sm:gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2"><p className="truncate font-medium">{i.secret.title}</p><Badge variant="secondary" className="shrink-0">{i.secret.category}</Badge></div>
                 <p className="truncate text-sm text-muted-foreground">{i.secret.username || "—"}</p>
-                <p className="font-mono text-sm">{shown.has(i.id) ? i.secret.password : "••••••••"}</p>
+                <p className="break-all font-mono text-sm">{shown.has(i.id) ? i.secret.password : "••••••••"}</p>
               </div>
+              <div className="-ml-2 flex shrink-0 items-center sm:ml-0">
               <Button size="icon" variant="ghost" aria-label="Mostrar ou ocultar senha" onClick={() => setShown((s) => { const n = new Set(s); n.has(i.id) ? n.delete(i.id) : n.add(i.id); return n; })}>{shown.has(i.id) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</Button>
               <Button size="icon" variant="ghost" aria-label="Copiar usuário" disabled={!i.secret.username} onClick={() => copy(i.secret.username, "Usuário")}><Copy className="h-4 w-4" /></Button>
               <Button size="icon" variant="ghost" aria-label="Copiar senha" onClick={() => copy(i.secret.password, "Senha")}><KeyRound className="h-4 w-4" /></Button>
               <Button size="icon" variant="ghost" aria-label="Editar" onClick={() => setEditing({ id: i.id, s: { ...i.secret } })}><Pencil className="h-4 w-4" /></Button>
               <Button size="icon" variant="ghost" aria-label="Excluir" onClick={() => setDel(i)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              </div>
             </li>
           ))}
         </ul>

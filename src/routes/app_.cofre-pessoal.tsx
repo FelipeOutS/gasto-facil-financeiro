@@ -410,7 +410,17 @@ function PageHeader({
 }
 function HeaderHero({ subtitle }: { subtitle: string }) {
   return (
-    <PageHeader title="Cofre Pessoal" subtitle={subtitle} crumbs={[{ label: "Cofre Pessoal" }]} />
+    <>
+      <PageHeader title="Cofre Pessoal" subtitle={subtitle} crumbs={[{ label: "Cofre Pessoal" }]} />
+      <Link
+        to="/app/cofre-novo"
+        className="mb-4 flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3 text-sm transition-colors hover:bg-primary/10"
+      >
+        <Fingerprint className="h-5 w-5 shrink-0 text-primary" />
+        <span className="flex-1"><strong>Cofre novo, sem senha mestra</strong> — abre com Face ID, Touch ID ou chave de recuperação.</span>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
+    </>
   );
 }
 
