@@ -1,4 +1,4 @@
--- CANDIDATO (não aplicado). Cofre v2 sem senha mestra. Somente tabelas novas;
+-- APLICADO em 17/11/2026 (drizzle 0014). Cofre v2 sem senha mestra. Somente tabelas novas;
 -- vault_entries / vault_settings / vault_pin_settings NÃO são tocadas.
 CREATE TABLE public.vaults (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -8,6 +8,7 @@ CREATE TABLE public.vaults (
   auto_lock_minutes int NOT NULL DEFAULT 5 CHECK (auto_lock_minutes BETWEEN 1 AND 60),
   created_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE UNIQUE INDEX vaults_one_per_user ON public.vaults(user_id);
 CREATE TABLE public.vault_keyslots (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   vault_id uuid NOT NULL REFERENCES public.vaults(id) ON DELETE RESTRICT,

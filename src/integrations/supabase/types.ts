@@ -4423,6 +4423,62 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_keyslots: {
+        Row: {
+          created_at: string
+          credential_id: string | null
+          device_label: string | null
+          envelope: Json
+          failed_attempts: number
+          id: string
+          kind: string
+          last_used_at: string | null
+          locked_until: string | null
+          prf_salt: string | null
+          revoked_at: string | null
+          user_id: string
+          vault_id: string
+        }
+        Insert: {
+          created_at?: string
+          credential_id?: string | null
+          device_label?: string | null
+          envelope: Json
+          failed_attempts?: number
+          id?: string
+          kind: string
+          last_used_at?: string | null
+          locked_until?: string | null
+          prf_salt?: string | null
+          revoked_at?: string | null
+          user_id: string
+          vault_id: string
+        }
+        Update: {
+          created_at?: string
+          credential_id?: string | null
+          device_label?: string | null
+          envelope?: Json
+          failed_attempts?: number
+          id?: string
+          kind?: string
+          last_used_at?: string | null
+          locked_until?: string | null
+          prf_salt?: string | null
+          revoked_at?: string | null
+          user_id?: string
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_keyslots_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_pin_settings: {
         Row: {
           created_at: string
@@ -4459,6 +4515,41 @@ export type Database = {
         }
         Relationships: []
       }
+      vault_security_events: {
+        Row: {
+          created_at: string
+          device_label: string | null
+          event: string
+          id: string
+          user_id: string
+          vault_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_label?: string | null
+          event: string
+          id?: string
+          user_id: string
+          vault_id: string
+        }
+        Update: {
+          created_at?: string
+          device_label?: string | null
+          event?: string
+          id?: string
+          user_id?: string
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_security_events_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vault_settings: {
         Row: {
           created_at: string
@@ -4489,6 +4580,71 @@ export type Database = {
           user_id?: string
           verifier?: string
           verifier_iv?: string
+        }
+        Relationships: []
+      }
+      vault_v2_entries: {
+        Row: {
+          ciphertext: string
+          created_at: string
+          id: string
+          iv: string
+          updated_at: string
+          user_id: string
+          vault_id: string
+        }
+        Insert: {
+          ciphertext: string
+          created_at?: string
+          id?: string
+          iv: string
+          updated_at?: string
+          user_id: string
+          vault_id: string
+        }
+        Update: {
+          ciphertext?: string
+          created_at?: string
+          id?: string
+          iv?: string
+          updated_at?: string
+          user_id?: string
+          vault_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vault_v2_entries_vault_id_fkey"
+            columns: ["vault_id"]
+            isOneToOne: false
+            referencedRelation: "vaults"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vaults: {
+        Row: {
+          auto_lock_minutes: number
+          created_at: string
+          id: string
+          kind: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          auto_lock_minutes?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          user_id: string
+        }
+        Update: {
+          auto_lock_minutes?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          name?: string
+          user_id?: string
         }
         Relationships: []
       }
