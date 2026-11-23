@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect } from "bun:test";
 import * as k from "../src/lib/vault/v2/keyslots";
 
 describe("cofre v2 sem senha mestra", () => {
@@ -10,7 +10,9 @@ describe("cofre v2 sem senha mestra", () => {
     const e1 = await k.wrapDek(dek, prf, "passkey_prf");
     const e2 = await k.wrapDek(dek, k.recoveryMaterial(rec), "recovery");
     expect(await k.decryptEntry(await k.unwrapDek(e1, prf), entry)).toBe("segredo");
-    expect(await k.decryptEntry(await k.unwrapDek(e2, k.recoveryMaterial(rec.toLowerCase())), entry)).toBe("segredo");
+    expect(
+      await k.decryptEntry(await k.unwrapDek(e2, k.recoveryMaterial(rec.toLowerCase())), entry),
+    ).toBe("segredo");
   });
   it("recusa passkey de outro aparelho e chave errada", async () => {
     const dek = await k.generateDek();
@@ -37,7 +39,8 @@ describe("cofre v2 sem senha mestra", () => {
   it("chave de recuperação tem 256 bits e IVs não se repetem", async () => {
     expect(k.recoveryMaterial(k.generateRecoveryKey()).length).toBe(32);
     const dek = await k.generateDek();
-    const a = await k.encryptEntry(dek, "x"), b = await k.encryptEntry(dek, "x");
+    const a = await k.encryptEntry(dek, "x"),
+      b = await k.encryptEntry(dek, "x");
     expect(a.iv).not.toBe(b.iv);
   });
 });

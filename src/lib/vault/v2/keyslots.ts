@@ -3,7 +3,7 @@
 // Tudo roda no aparelho; o servidor guarda apenas envelopes cifrados.
 
 type Bytes = Uint8Array<ArrayBuffer>;
-export type SlotKind = "passkey_prf" | "recovery" | "passkey_prf_pin";
+export type SlotKind = "passkey_prf" | "recovery" | "passkey_prf_pin" | "password";
 export type Envelope = { v: 1; kind: SlotKind; salt: string; iv: string; ct: string };
 
 const enc = new TextEncoder();
@@ -44,14 +44,21 @@ export async function wrapDek(dek: CryptoKey, material: Bytes, kind: SlotKind): 
   return { v: 1, kind, salt: b64(salt), iv: b64(iv), ct: b64(new Uint8Array(ct)) };
 }
 
-export async function unwrapDek(env: Envelope, material: Bytes, exportable = false): Promise<CryptoKey> {
+export async function unwrapDek(
+  env: Envelope,
+  material: Bytes,
+  exportable = false,
+): Promise<CryptoKey> {
   const raw = await crypto.subtle.decrypt(
     { name: "AES-GCM", iv: unb64(env.iv), additionalData: enc.encode(env.kind) },
     await kek(material, unb64(env.salt), env.kind),
     unb64(env.ct),
   );
   // por padrão não exportável; exportável só para reembrulhar (novo aparelho/nova chave), nunca persistida
-  const key = await crypto.subtle.importKey("raw", raw, "AES-GCM", exportable, ["encrypt", "decrypt"]);
+  const key = await crypto.subtle.importKey("raw", raw, "AES-GCM", exportable, [
+    "encrypt",
+    "decrypt",
+  ]);
   new Uint8Array(raw).fill(0);
   return key;
 }
@@ -63,11 +70,16 @@ export function generateRecoveryKey(): string {
   let bits = "";
   bytes.forEach((b) => (bits += b.toString(2).padStart(8, "0")));
   let out = "";
-  for (let i = 0; i < bits.length; i += 5) out += ALPH[parseInt(bits.slice(i, i + 5).padEnd(5, "0"), 2)];
+  for (let i = 0; i < bits.length; i += 5)
+    out += ALPH[parseInt(bits.slice(i, i + 5).padEnd(5, "0"), 2)];
   return out.match(/.{1,4}/g)!.join("-");
 }
 export function recoveryMaterial(key: string): Bytes {
-  const clean = key.toUpperCase().replace(/[^0-9A-Z]/g, "").replace(/O/g, "0").replace(/[IL]/g, "1");
+  const clean = key
+    .toUpperCase()
+    .replace(/[^0-9A-Z]/g, "")
+    .replace(/O/g, "0")
+    .replace(/[IL]/g, "1");
   if (clean.length !== 52) throw new Error("chave_recuperacao_invalida");
   let bits = "";
   for (const c of clean) {
