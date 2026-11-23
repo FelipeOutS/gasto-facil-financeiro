@@ -1,12 +1,14 @@
 import { sendLovableEmail } from "@lovable.dev/email-js";
 import { createClient } from "@supabase/supabase-js";
 import { createFileRoute } from "@tanstack/react-router";
+import { vaultCodeExpired } from "@/server/vault-email-delivery-policy";
 
 const MAX_RETRIES = 5;
 const DEFAULT_BATCH_SIZE = 10;
 const DEFAULT_SEND_DELAY_MS = 200;
 const DEFAULT_AUTH_TTL_MINUTES = 15;
 const DEFAULT_TRANSACTIONAL_TTL_MINUTES = 60;
+const emailClient = (url: string, key: string) => createClient(url, key);
 
 // Check if an error is a rate-limit (429) response.
 // Uses EmailAPIError.status when available (email-js >=0.x with structured errors),
@@ -37,12 +39,19 @@ function getRetryAfterSeconds(error: unknown): number {
 
 // Move a message to the dead letter queue and log the reason.
 async function moveToDlq(
-  supabase: any,
+  supabase: ReturnType<typeof emailClient>,
   queue: string,
   msg: { msg_id: number; message: Record<string, unknown> },
   reason: string,
 ): Promise<void> {
-  const payload = msg.message as any;
+  const payload =
+    msg.message.label === "vault-recovery-code"
+      ? {
+          ...msg.message,
+          html: "[expired or failed code removed]",
+          text: "[expired or failed code removed]",
+        }
+      : msg.message;
   await supabase.from("email_send_log").insert({
     message_id: payload.message_id,
     template_name: (payload.label || queue) as string,
@@ -55,7 +64,7 @@ async function moveToDlq(
     dlq_name: `${queue}_dlq`,
     message_id: msg.msg_id,
     payload,
-  } as any);
+  });
   if (error) {
     console.error("Failed to move message to DLQ", { queue, msg_id: msg.msg_id, reason, error });
   }
@@ -86,7 +95,7 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
           return Response.json({ error: "Forbidden" }, { status: 403 });
         }
 
-        const supabase: any = createClient(supabaseUrl, supabaseServiceKey);
+        const supabase = emailClient(supabaseUrl, supabaseServiceKey);
 
         // 1. Check rate-limit cooldown and read queue config
         const { data: state } = await supabase
@@ -129,7 +138,7 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
           const messageIds = Array.from(
             new Set(
               messages
-                .map((msg: any) =>
+                .map((msg: { message?: Record<string, unknown> }) =>
                   msg?.message?.message_id && typeof msg.message.message_id === "string"
                     ? msg.message.message_id
                     : null,
@@ -174,6 +183,10 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
             // Prefer payload.queued_at when present; fall back to PGMQ's enqueued_at
             // which is always set by the queue.
             const queuedAt = payload.queued_at ?? msg.enqueued_at;
+            if (vaultCodeExpired(payload)) {
+              await moveToDlq(supabase, queue, msg, "Vault code expired or missing expiry");
+              continue;
+            }
             if (queuedAt) {
               const ageMs = Date.now() - new Date(queuedAt).getTime();
               const maxAgeMs = ttlMinutes[queue] * 60 * 1000;
@@ -276,7 +289,12 @@ export const Route = createFileRoute("/lovable/email/queue/process")({
               }
               totalProcessed++;
             } catch (error) {
-              const errorMsg = error instanceof Error ? error.message : String(error);
+              const errorMsg =
+                payload.label === "vault-recovery-code"
+                  ? "Vault code delivery failed"
+                  : error instanceof Error
+                    ? error.message
+                    : String(error);
               console.error("Email send failed", {
                 queue,
                 msg_id: msg.msg_id,

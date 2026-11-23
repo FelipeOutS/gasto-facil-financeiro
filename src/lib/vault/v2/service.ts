@@ -2,25 +2,71 @@
 // O armazenamento é injetado (Supabase no app, memória nos testes).
 // Nunca toca vault_entries / vault_settings / vault_pin_settings.
 import {
-  generateDek, wrapDek, unwrapDek, generateRecoveryKey, recoveryMaterial,
-  encryptEntry, decryptEntry, type Envelope, type SlotKind,
+  generateDek,
+  wrapDek,
+  unwrapDek,
+  generateRecoveryKey,
+  recoveryMaterial,
+  encryptEntry,
+  decryptEntry,
+  type Envelope,
+  type SlotKind,
 } from "./keyslots";
+import { wrapPassword, unwrapPassword, type PasswordEnvelope } from "./password";
 
 type Bytes = Uint8Array<ArrayBuffer>;
-export type Vault = { id: string; user_id: string; name: string; auto_lock_minutes: number };
-export type Slot = {
-  id: string; vault_id: string; user_id: string; kind: SlotKind; credential_id: string | null;
-  prf_salt: string | null; device_label: string | null; envelope: Envelope | { revoked: true };
-  revoked_at: string | null; last_used_at: string | null; created_at: string;
+export type Vault = {
+  id: string;
+  user_id: string;
+  name: string;
+  auto_lock_minutes: number;
+  access_version?: number;
 };
-export type EntryRow = { id: string; vault_id: string; iv: string; ciphertext: string; created_at: string; updated_at: string };
-export type Secret = { title: string; username: string; password: string; url: string; category: string; notes: string; legacy_id?: string };
+export type Slot = {
+  id: string;
+  vault_id: string;
+  user_id: string;
+  kind: SlotKind;
+  credential_id: string | null;
+  prf_salt: string | null;
+  device_label: string | null;
+  envelope: Envelope | { revoked: true };
+  revoked_at: string | null;
+  last_used_at: string | null;
+  created_at: string;
+};
+export type EntryRow = {
+  id: string;
+  vault_id: string;
+  iv: string;
+  ciphertext: string;
+  created_at: string;
+  updated_at: string;
+};
+export type Secret = {
+  title: string;
+  username: string;
+  password: string;
+  url: string;
+  category: string;
+  notes: string;
+  legacy_id?: string;
+};
 
 export interface VaultStore {
+  passwordAttempt?(vaultId: string): Promise<Slot>;
+  replacePassword?(
+    vaultId: string,
+    expected: string | null,
+    envelope: PasswordEnvelope | null,
+    recoveryGrant?: string,
+  ): Promise<void>;
   getVault(): Promise<Vault | null>;
   createVault(): Promise<Vault>;
   listSlots(vaultId: string): Promise<Slot[]>;
-  insertSlots(rows: Omit<Slot, "id" | "created_at" | "revoked_at" | "last_used_at" | "user_id">[]): Promise<void>;
+  insertSlots(
+    rows: Omit<Slot, "id" | "created_at" | "revoked_at" | "last_used_at" | "user_id">[],
+  ): Promise<void>;
   updateSlot(id: string, patch: Partial<Slot>): Promise<void>;
   listEntries(vaultId: string): Promise<EntryRow[]>;
   insertEntry(vaultId: string, iv: string, ct: string): Promise<EntryRow>;
@@ -29,10 +75,63 @@ export interface VaultStore {
   logEvent(vaultId: string, event: string, device: string | null): Promise<void>;
 }
 
+export async function unlockWithPassword(store: VaultStore, vault: Vault, password: string) {
+  if (!store.passwordAttempt) throw Error("senha_indisponivel");
+  const slot = await store.passwordAttempt(vault.id);
+  if (!slot) throw Error("senha_indisponivel");
+  if (
+    slot.user_id !== vault.user_id ||
+    slot.vault_id !== vault.id ||
+    slot.kind !== "password" ||
+    !active(slot)
+  )
+    throw Error("envelope_invalido");
+  try {
+    return await unwrapPassword(
+      slot.envelope as PasswordEnvelope,
+      password,
+      vault.user_id,
+      vault.id,
+    );
+  } catch {
+    throw Error("senha_incorreta");
+  }
+}
+
+// Caller must first obtain DEK from an authorized unlock. Never creates/replaces DEK.
+export async function setPassword(
+  store: VaultStore,
+  vault: Vault,
+  dek: CryptoKey,
+  password: string | null,
+  recoveryGrant?: string,
+) {
+  if (!store.replacePassword) throw Error("senha_indisponivel");
+  const slots = activeSlots(await store.listSlots(vault.id));
+  if (slots.some((s) => s.user_id !== vault.user_id)) throw Error("envelope_invalido");
+  const recovery = slots.find((s) => s.kind === "recovery");
+  if (!recovery) throw Error("manter_recuperacao");
+  // Prove that this is the existing vault key, without writing any entry.
+  const probe = await encryptEntry(dek, "password-key-proof");
+  const old = slots.find((s) => s.kind === "password");
+  const envelope =
+    password === null ? null : await wrapPassword(dek, password, vault.user_id, vault.id);
+  if (
+    envelope &&
+    (await decryptEntry(
+      await unwrapPassword(envelope, password!, vault.user_id, vault.id),
+      probe,
+    )) !== "password-key-proof"
+  )
+    throw Error("validacao_falhou");
+  await store.replacePassword(vault.id, old?.id ?? null, envelope, recoveryGrant);
+}
+
 const active = (s: Slot) => !s.revoked_at && "ct" in s.envelope;
 export const activeSlots = (slots: Slot[]) => slots.filter(active);
 /** Configurado = existe ao menos um slot ativo de recuperação (validado antes de gravar). */
-export const isConfigured = (slots: Slot[]) => activeSlots(slots).some((s) => s.kind === "recovery");
+export const isConfigured = (slots: Slot[]) =>
+  activeSlots(slots).some((s) => s.kind === "recovery");
 
 export type PasskeyMaterial = { credentialId: string; prfSalt: string; prf: Bytes; label: string };
 
@@ -44,27 +143,58 @@ export async function setupVault(store: VaultStore, passkey: PasskeyMaterial | n
   const recoveryKey = generateRecoveryKey();
   const recEnv = await wrapDek(dek, recoveryMaterial(recoveryKey), "recovery");
   const probe = await encryptEntry(dek, "probe");
-  if ((await decryptEntry(await unwrapDek(recEnv, recoveryMaterial(recoveryKey)), probe)) !== "probe") throw new Error("validacao_falhou");
+  if (
+    (await decryptEntry(await unwrapDek(recEnv, recoveryMaterial(recoveryKey)), probe)) !== "probe"
+  )
+    throw new Error("validacao_falhou");
   const rows: Parameters<VaultStore["insertSlots"]>[0] = [
-    { vault_id: vault.id, kind: "recovery", credential_id: null, prf_salt: null, device_label: "Chave de recuperação", envelope: recEnv },
+    {
+      vault_id: vault.id,
+      kind: "recovery",
+      credential_id: null,
+      prf_salt: null,
+      device_label: "Chave de recuperação",
+      envelope: recEnv,
+    },
   ];
   if (passkey) {
     const env = await wrapDek(dek, passkey.prf, "passkey_prf");
-    if ((await decryptEntry(await unwrapDek(env, passkey.prf), probe)) !== "probe") throw new Error("validacao_falhou");
-    rows.push({ vault_id: vault.id, kind: "passkey_prf", credential_id: passkey.credentialId, prf_salt: passkey.prfSalt, device_label: passkey.label, envelope: env });
+    if ((await decryptEntry(await unwrapDek(env, passkey.prf), probe)) !== "probe")
+      throw new Error("validacao_falhou");
+    rows.push({
+      vault_id: vault.id,
+      kind: "passkey_prf",
+      credential_id: passkey.credentialId,
+      prf_salt: passkey.prfSalt,
+      device_label: passkey.label,
+      envelope: env,
+    });
   }
   return {
-    vault, recoveryKey, dek,
+    vault,
+    recoveryKey,
+    dek,
     /** Chamado só após o usuário confirmar que guardou a chave. */
     commit: async () => {
       await store.insertSlots(rows);
-      await store.logEvent(vault.id, passkey ? "setup_passkey_recovery" : "setup_recovery_only", passkey?.label ?? null);
+      await store.logEvent(
+        vault.id,
+        passkey ? "setup_passkey_recovery" : "setup_recovery_only",
+        passkey?.label ?? null,
+      );
     },
   };
 }
 
-export async function unlockWithPasskey(store: VaultStore, vault: Vault, got: { credentialId: string; prf: Bytes }, label: string) {
-  const slot = activeSlots(await store.listSlots(vault.id)).find((s) => s.kind === "passkey_prf" && s.credential_id === got.credentialId);
+export async function unlockWithPasskey(
+  store: VaultStore,
+  vault: Vault,
+  got: { credentialId: string; prf: Bytes },
+  label: string,
+) {
+  const slot = activeSlots(await store.listSlots(vault.id)).find(
+    (s) => s.kind === "passkey_prf" && s.credential_id === got.credentialId,
+  );
   if (!slot) throw new Error("aparelho_nao_autorizado");
   try {
     const dek = await unwrapDek(slot.envelope as Envelope, got.prf, true);
@@ -77,7 +207,12 @@ export async function unlockWithPasskey(store: VaultStore, vault: Vault, got: { 
   }
 }
 
-export async function unlockWithRecovery(store: VaultStore, vault: Vault, key: string, label: string) {
+export async function unlockWithRecovery(
+  store: VaultStore,
+  vault: Vault,
+  key: string,
+  label: string,
+) {
   const slot = activeSlots(await store.listSlots(vault.id)).find((s) => s.kind === "recovery");
   if (!slot) throw new Error("sem_recuperacao");
   try {
@@ -91,10 +226,24 @@ export async function unlockWithRecovery(store: VaultStore, vault: Vault, key: s
 }
 
 /** Autoriza um novo aparelho; precisa do cofre aberto (DEK em memória). DEK é exportável só aqui. */
-export async function addPasskey(store: VaultStore, vault: Vault, dek: CryptoKey, p: PasskeyMaterial) {
+export async function addPasskey(
+  store: VaultStore,
+  vault: Vault,
+  dek: CryptoKey,
+  p: PasskeyMaterial,
+) {
   const env = await wrapDek(dek, p.prf, "passkey_prf");
   await unwrapDek(env, p.prf);
-  await store.insertSlots([{ vault_id: vault.id, kind: "passkey_prf", credential_id: p.credentialId, prf_salt: p.prfSalt, device_label: p.label, envelope: env }]);
+  await store.insertSlots([
+    {
+      vault_id: vault.id,
+      kind: "passkey_prf",
+      credential_id: p.credentialId,
+      prf_salt: p.prfSalt,
+      device_label: p.label,
+      envelope: env,
+    },
+  ]);
   await store.logEvent(vault.id, "device_added", p.label);
 }
 
@@ -102,7 +251,10 @@ export async function addPasskey(store: VaultStore, vault: Vault, dek: CryptoKey
 export async function revokeSlot(store: VaultStore, vault: Vault, slot: Slot) {
   const left = activeSlots(await store.listSlots(vault.id)).filter((s) => s.id !== slot.id);
   if (!left.some((s) => s.kind === "recovery")) throw new Error("manter_recuperacao");
-  await store.updateSlot(slot.id, { revoked_at: new Date().toISOString(), envelope: { revoked: true } });
+  await store.updateSlot(slot.id, {
+    revoked_at: new Date().toISOString(),
+    envelope: { revoked: true },
+  });
   await store.logEvent(vault.id, "device_revoked", slot.device_label);
 }
 
@@ -115,8 +267,21 @@ export async function rotateRecovery(store: VaultStore, vault: Vault, dek: Crypt
   return {
     key,
     commit: async () => {
-      await store.insertSlots([{ vault_id: vault.id, kind: "recovery", credential_id: null, prf_salt: null, device_label: "Chave de recuperação", envelope: env }]);
-      for (const s of old) await store.updateSlot(s.id, { revoked_at: new Date().toISOString(), envelope: { revoked: true } });
+      await store.insertSlots([
+        {
+          vault_id: vault.id,
+          kind: "recovery",
+          credential_id: null,
+          prf_salt: null,
+          device_label: "Chave de recuperação",
+          envelope: env,
+        },
+      ]);
+      for (const s of old)
+        await store.updateSlot(s.id, {
+          revoked_at: new Date().toISOString(),
+          envelope: { revoked: true },
+        });
       await store.logEvent(vault.id, "recovery_rotated", null);
     },
   };
@@ -124,20 +289,43 @@ export async function rotateRecovery(store: VaultStore, vault: Vault, dek: Crypt
 
 export async function readEntries(store: VaultStore, vault: Vault, dek: CryptoKey) {
   const rows = await store.listEntries(vault.id);
-  return Promise.all(rows.map(async (r) => ({ id: r.id, updated_at: r.updated_at, secret: JSON.parse(await decryptEntry(dek, { iv: r.iv, ct: r.ciphertext })) as Secret })));
+  return Promise.all(
+    rows.map(async (r) => ({
+      id: r.id,
+      updated_at: r.updated_at,
+      secret: JSON.parse(await decryptEntry(dek, { iv: r.iv, ct: r.ciphertext })) as Secret,
+    })),
+  );
 }
-export async function saveEntry(store: VaultStore, vault: Vault, dek: CryptoKey, s: Secret, id?: string) {
+export async function saveEntry(
+  store: VaultStore,
+  vault: Vault,
+  dek: CryptoKey,
+  s: Secret,
+  id?: string,
+) {
   const { iv, ct } = await encryptEntry(dek, JSON.stringify(s));
   if (id) await store.updateEntry(id, iv, ct);
   else await store.insertEntry(vault.id, iv, ct);
 }
 
 /** Importação do cofre anterior: só cria registros novos; nunca escreve no cofre antigo. */
-export function planLegacyImport(existing: { secret: Secret }[], legacy: (Secret & { legacy_id: string })[]) {
+export function planLegacyImport(
+  existing: { secret: Secret }[],
+  legacy: (Secret & { legacy_id: string })[],
+) {
   const done = new Set(existing.map((e) => e.secret.legacy_id).filter(Boolean));
-  return { toImport: legacy.filter((l) => !done.has(l.legacy_id)), duplicates: legacy.filter((l) => done.has(l.legacy_id)) };
+  return {
+    toImport: legacy.filter((l) => !done.has(l.legacy_id)),
+    duplicates: legacy.filter((l) => done.has(l.legacy_id)),
+  };
 }
-export async function importLegacy(store: VaultStore, vault: Vault, dek: CryptoKey, items: (Secret & { legacy_id: string })[]) {
+export async function importLegacy(
+  store: VaultStore,
+  vault: Vault,
+  dek: CryptoKey,
+  items: (Secret & { legacy_id: string })[],
+) {
   const { toImport } = planLegacyImport(await readEntries(store, vault, dek), items);
   for (const s of toImport) await saveEntry(store, vault, dek, s);
   await store.logEvent(vault.id, "legacy_import", `${toImport.length} registros`);
